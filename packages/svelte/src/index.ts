@@ -70,14 +70,16 @@ export function getCoexistApp(): App {
 }
 
 export function getWorkerClient(): WorkerClient {
-  if (defaultWorkerClient !== undefined) {
-    return defaultWorkerClient;
-  }
-
+  // Component context wins over the global default so nested clients and
+  // per-request (SSR) clients are not shadowed by module-level state.
   const contextClient = getWorkerContextClient();
 
   if (contextClient !== undefined) {
     return contextClient;
+  }
+
+  if (defaultWorkerClient !== undefined) {
+    return defaultWorkerClient;
   }
 
   throw new CoexistError(

@@ -79,7 +79,7 @@ const counter = workerModuleRune<Counter>("counter", { client });
 const count = workerSelectorRune((state) => (state as CounterState).counter.count, { client });
 ```
 
-- `setWorkerClient(client)` / `clearWorkerClient()` / `setWorkerClientContext(client)` register the client; `getWorkerClient()` resolves it.
+- `setWorkerClient(client)` / `clearWorkerClient()` / `setWorkerClientContext(client)` register the client; `getWorkerClient()` resolves it (context → global), matching `getCoexistApp()`.
 - `workerModuleStore<T>(name, client?)` / `workerModuleRune<T>(name, opts?)` → an `AsyncMethodProxy<T>`.
 - `workerSelectorStore(fn, opts?)` / `workerSelectorRune(fn, opts?)` → worker state.
 
