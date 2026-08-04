@@ -74,8 +74,8 @@ A Coexist app is a graph of **modules** wired by a **DI container**:
 | **Module**   | A plain class with state, actions, computed getters, and effects.           |
 | **State**    | Reactive fields merged into the app store under the module's `name`.        |
 | **Action**   | A method whose state writes run inside a transaction.                       |
-| **Computed** | A cached getter that recomputes only when its tracked state changes.        |
-| **Effect**   | A method that runs after init and re-runs when its tracked state changes.   |
+| **Computed** | A getter memoized between committed state changes.                          |
+| **Effect**   | A method that runs after init and re-runs after each committed change.      |
 | **Provider** | A DI registration (`useClass` / `useValue` / `useFactory` / `useExisting`). |
 | **Plugin**   | A lifecycle/store observer (logger, storage, router, devtools).             |
 | **Adapter**  | A framework binding that reads the store with native reactivity.            |
@@ -251,7 +251,7 @@ const counter = app.getModule(Counter);
 counter.increase();
 ```
 
-`@State` intentionally targets standard accessor decorators. Plain fields should use `defineModule()` metadata until a future compatibility layer is added. `@Computed` getters are cached through Coaction's signal-backed computed runtime and invalidate when the state they read changes. `@Effect` methods run after app initialization and rerun when the state they read changes. Async `@Action` methods may return promises; synchronous writes before the first `await` are part of the action transaction, while post-await writes need another action boundary or non-strict writes. Use `runInAction(this, ...)` after an `await` when strict action mode should remain enabled:
+`@State` intentionally targets standard accessor decorators. Plain fields should use `defineModule()` metadata until a future compatibility layer is added. `@Computed` getters are cached through Coaction's signal-backed computed runtime. `@Effect` methods run after app initialization and rerun after each committed state change. Coaction publishes one signal for the whole state tree, so both are invalidated per commit rather than per property — see [Invalidation granularity](./docs/state-and-reactivity.md#invalidation-granularity). Async `@Action` methods may return promises; synchronous writes before the first `await` are part of the action transaction, while post-await writes need another action boundary or non-strict writes. Use `runInAction(this, ...)` after an `await` when strict action mode should remain enabled:
 
 ```ts
 class Counter {

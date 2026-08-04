@@ -41,7 +41,7 @@ A Coexist app is a graph of **modules**. A module is a plain class that:
 - holds **state** (reactive fields),
 - exposes **actions** (methods that mutate state inside a transaction),
 - derives **computed** values (cached getters), and
-- can run **effects** (methods that re-run when their tracked state changes).
+- can run **effects** (methods that re-run after each committed state change).
 
 Modules are wired together with a small **DI container**. Their state is merged into a single Coaction-backed store keyed by the module `name`, so the whole app has one observable state tree:
 
@@ -137,7 +137,7 @@ class Counter {
 }
 ```
 
-`@Computed` getters are cached through Coaction's signal-backed computed runtime and invalidate when the state they read changes. `@Effect` methods run after app initialization and re-run when the state they read changes.
+`@Computed` getters are cached through Coaction's signal-backed computed runtime. `@Effect` methods run after app initialization and re-run after each committed state change. Both are invalidated per commit rather than per property — see [State, actions, computed, and effects](#state-actions-computed-and-effects).
 
 ## Creating an app
 
@@ -217,10 +217,12 @@ When sync resolution discovers async work, the container still tracks that pendi
 
 ## State, actions, computed, and effects
 
-- **State** fields become the module's slice in the store. Reads are tracked.
+- **State** fields become the module's slice in the store. Reads go through the reactive store.
 - **Actions** wrap writes in a transaction. In `strictActions` mode, writes outside an action throw, including deep object/array mutations and direct `store.setState()` / `store.apply()` calls; plain snapshots from `store.getPureState()` are detached and recursively frozen.
-- **Computed** getters are memoized and recomputed only when tracked state changes.
-- **Effects** run once after init and re-run when their tracked state changes. Effects are torn down on `dispose()`.
+- **Computed** getters are memoized between committed state changes.
+- **Effects** run once after init and re-run after each committed state change. Effects are torn down on `dispose()`.
+
+Coaction publishes one signal for the whole state tree, so computed caches and effects are invalidated **per commit, not per property**: any committed change in the app re-runs every effect and invalidates every computed cache. Actions batch — an action writing ten fields commits once — and assigning an unchanged value does not commit at all. Use `app.watch(read, listener, { equals })` or a UI adapter selector when a reaction must fire only for a specific value.
 
 Mutations dispatched synchronously from a `watch` listener or plugin state hook are queued until the current store notification finishes. They drain before the triggering mutation returns; a self-triggering cascade aborts after 1000 queued mutations.
 

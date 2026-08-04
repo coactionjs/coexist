@@ -62,6 +62,37 @@ Each committed store mutation is one notification source. A selector that return
 
 `watch` is the primitive every UI adapter builds on — React's `useSelector`, Vue's `useSelector`, Svelte's `selectorStore`, Solid's `useComputed`, and Angular's `injectSignal` all wrap it with the framework's native reactivity.
 
+## Invalidation granularity
+
+Coaction publishes one signal for the whole app state tree, so **computed getters and effects are invalidated per commit, not per property**:
+
+- A **computed** getter is memoized between commits. Repeated reads with no committed change in between evaluate it once. Any committed change anywhere in the app invalidates the cache, so the next read re-evaluates even if the state the getter read is unchanged.
+- An **effect** re-runs once after every committed change, regardless of which module or field changed.
+
+Two things keep this cheap in practice:
+
+- **Actions batch.** An action's synchronous writes commit once, so an action writing ten fields re-runs each effect once, not ten times.
+- **Unchanged writes do not commit.** Assigning the value a field already holds produces no commit and therefore no invalidation.
+
+When you need value-level granularity, put the equality check where it is observable — `watch(read, listener, { equals })` and every UI adapter selector only notify when the selected value actually changes:
+
+```ts
+// Re-runs on every commit.
+class Report {
+  expensive(): void {
+    buildReport(this.rows);
+  }
+}
+
+// Only fires when `rows` itself changes.
+app.watch(
+  () => app.getModule(Report).rows,
+  (rows) => buildReport(rows),
+);
+```
+
+Prefer keeping effects cheap, or guard them against unchanged input, rather than assuming they are dependency-precise.
+
 ## Actions and transactions
 
 A method declared as an action wraps its synchronous state writes in a single transaction: multiple writes produce one patch and one notification.

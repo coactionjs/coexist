@@ -7,8 +7,8 @@ Coexist has a small vocabulary. Learn these seven terms and the rest of the fram
 | **Module**   | A plain class with state, actions, computed getters, and effects.           |
 | **State**    | Reactive fields merged into the app store under the module's `name`.        |
 | **Action**   | A method whose state writes run inside a single transaction.                |
-| **Computed** | A cached getter recomputed only when its tracked state changes.             |
-| **Effect**   | A method that runs after init and re-runs when its tracked state changes.   |
+| **Computed** | A getter memoized between committed state changes.                          |
+| **Effect**   | A method that runs after init and re-runs after each committed change.      |
 | **Provider** | A DI registration (`useClass` / `useValue` / `useFactory` / `useExisting`). |
 | **App**      | The runtime created by `createApp()` that owns the container and the store. |
 
@@ -56,7 +56,7 @@ A single store means unified patches, persistence, devtools, and selectors all s
 
 ## State
 
-State is a declared set of fields. Reads are tracked by the reactive runtime, so computed values and effects know when to recompute, and UI selectors know when to re-render.
+State is a declared set of fields. Reads go through the reactive runtime, so computed values and effects know when to recompute, and UI selectors know when to re-render.
 
 ```ts
 class Counter {
@@ -92,14 +92,14 @@ If you enable **strict actions**, writes outside an action throw — a guardrail
 
 ## Computed values
 
-A computed getter is memoized through Coaction's signal-backed computed runtime. It recomputes only when the state it read changes, and caches otherwise:
+A computed getter is memoized through Coaction's signal-backed computed runtime. Repeated reads are cached until the app state changes:
 
 ```ts
 class Cart {
   items: Item[] = [];
 
   get count(): number {
-    return this.items.length; // recomputed only when items changes
+    return this.items.length; // evaluated once per committed change
   }
 }
 ```
@@ -108,14 +108,14 @@ Declare it in `defineModule({ computed: ["count"] })` or with `@Computed`.
 
 ## Effects
 
-An effect is a method that runs once after the app initializes, then re-runs whenever the state it reads changes. Effects are torn down on `app.dispose()`.
+An effect is a method that runs once after the app initializes, then re-runs after every committed state change. Effects are torn down on `app.dispose()`.
 
 ```ts
 class Counter {
   count = 0;
 
   logCount(): void {
-    console.log("count is", this.count); // re-runs when count changes
+    console.log("count is", this.count); // re-runs after each commit
   }
 }
 
@@ -127,6 +127,8 @@ defineModule(Counter, {
 ```
 
 Use effects for reactions to state — logging, syncing to external systems, triggering follow-up work — not for deriving values (that is what computed is for).
+
+Invalidation is per commit, not per property: any committed change in the app re-runs every effect and invalidates every computed cache. Keep effects cheap, and reach for `app.watch(read, listener, { equals })` when you need a reaction that only fires on a specific value. See [Invalidation granularity](./state-and-reactivity.md#invalidation-granularity).
 
 ## Providers and dependency injection
 

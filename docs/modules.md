@@ -103,10 +103,12 @@ Duplicate names in one app are a development-time error — two modules cannot b
 
 When `createApp()` instantiates a `@Module` provider, it binds the instance to the store:
 
-- **State** fields become a slice keyed by `name`. Reading a state field tracks it; writing it goes through the store so subscribers are notified.
+- **State** fields become a slice keyed by `name`. Reading a state field goes through the reactive store; writing it goes through the store so subscribers are notified.
 - **Actions** are wrapped so their synchronous writes run inside one transaction and emit a single coherent update (and an `ActionEvent` to plugins).
-- **Computed** getters are backed by Coaction's cached computed runtime: they recompute only when the state they read changes.
-- **Effects** are started after init and re-run when their tracked state changes; they are disposed with the app.
+- **Computed** getters are backed by Coaction's cached computed runtime: reads are memoized between committed state changes.
+- **Effects** are started after init and re-run after each committed state change; they are disposed with the app.
+
+Computed caches and effects are invalidated per commit rather than per property — see [Invalidation granularity](./state-and-reactivity.md#invalidation-granularity).
 
 You still interact with the module as a normal object:
 
