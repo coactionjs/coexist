@@ -10,6 +10,8 @@ The recommended `createLocalSpaceStoragePlugin()` uses localspace drivers and pl
 pnpm add @coexist/storage @coexist/core
 ```
 
+Ships as ESM only: your project needs `"type": "module"` (or `.mjs`/`.mts`) and Node.js `>=22.12.0` or a modern bundler.
+
 ## Quick start
 
 ```ts

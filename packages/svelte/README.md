@@ -10,6 +10,8 @@ The package root exports the store-based API, which works in Svelte 4 and 5. A s
 pnpm add @coexist/svelte @coexist/core
 ```
 
+Ships as ESM only: your project needs `"type": "module"` (or `.mjs`/`.mts`) and Node.js `>=22.12.0` or a modern bundler.
+
 Peer dependency: `svelte` `>=4 || >=5`.
 
 ## Stores (Svelte 4 and 5)

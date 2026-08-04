@@ -10,6 +10,8 @@ This is a headless data source — it records events and lets you subscribe to o
 pnpm add -D @coexist/devtools
 ```
 
+Ships as ESM only: your project needs `"type": "module"` (or `.mjs`/`.mts`) and Node.js `>=22.12.0` or a modern bundler.
+
 ## Quick start
 
 ```ts

@@ -10,6 +10,8 @@ This package is intentionally minimal. It does not match routes, render views, o
 pnpm add @coexist/router @coexist/core
 ```
 
+Ships as ESM only: your project needs `"type": "module"` (or `.mjs`/`.mts`) and Node.js `>=22.12.0` or a modern bundler.
+
 ## Quick start
 
 ```ts

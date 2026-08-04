@@ -831,6 +831,13 @@ This repository is set up as a modern TypeScript monorepo:
 
 ## Requirements
 
+To **use** Coexist:
+
+- Node.js `>=22.12.0` or a modern bundler
+- An ESM project — every package ships ESM only, with no CommonJS entry, so use `"type": "module"` (or `.mjs`/`.mts` files)
+
+To **work on this repository**:
+
 - Node.js `>=22.12.0`
 - pnpm `11.8.0` via Corepack or a compatible global install
 

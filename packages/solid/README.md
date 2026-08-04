@@ -8,6 +8,8 @@
 pnpm add @coexist/solid @coexist/core
 ```
 
+Ships as ESM only: your project needs `"type": "module"` (or `.mjs`/`.mts`) and Node.js `>=22.12.0` or a modern bundler.
+
 Peer dependency: `solid-js` `>=1.9 <2`.
 
 ## Quick start

@@ -10,6 +10,8 @@ Importing `testApp` from `@coexist/testing` keeps test setup separate from produ
 pnpm add -D @coexist/testing
 ```
 
+Ships as ESM only: your project needs `"type": "module"` (or `.mjs`/`.mts`) and Node.js `>=22.12.0` or a modern bundler.
+
 ## Usage
 
 ```ts

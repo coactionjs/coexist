@@ -10,6 +10,8 @@ This adapter does not own rendering or define a view base class. It exposes a `C
 pnpm add @coexist/react @coexist/core
 ```
 
+Ships as ESM only: your project needs `"type": "module"` (or `.mjs`/`.mts`) and Node.js `>=22.12.0` or a modern bundler.
+
 Peer dependency: `react` `>=18.3` (React 19 supported).
 
 ## Quick start
