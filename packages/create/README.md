@@ -19,7 +19,7 @@ pnpm install
 pnpm start
 ```
 
-The target directory defaults to `cosystem-app` when no name is given. The
+The target directory defaults to `coexist-app` when no name is given. The
 generated project contains:
 
 ```text

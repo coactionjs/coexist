@@ -16,7 +16,7 @@ const workspacePath = join(rootDir, "pnpm-workspace.yaml");
 const lockfilePath = join(rootDir, "pnpm-lock.yaml");
 const rootPackagePath = join(rootDir, "package.json");
 const sourceExampleDir = join(rootDir, "examples", "worker-counter");
-const tempDir = await mkdtemp(join(tmpdir(), "cosystem-installed-worker-runtime-"));
+const tempDir = await mkdtemp(join(tmpdir(), "coexist-installed-worker-runtime-"));
 const exampleDir = join(tempDir, "examples", "worker-counter");
 const tarballsDir = join(tempDir, "tarballs");
 const chromeExecutable = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ?? findSystemChrome();
@@ -97,7 +97,7 @@ async function writeInstalledWorkerExample(coreTarball, catalog, rootPackageJson
     join(tempDir, "package.json"),
     `${JSON.stringify(
       {
-        name: "cosystem-installed-worker-runtime-smoke",
+        name: "coexist-installed-worker-runtime-smoke",
         packageManager: rootPackageJson.packageManager,
         private: true,
         type: "module",

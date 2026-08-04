@@ -139,7 +139,7 @@ function mergeShellState(persisted: ShellState, current: unknown): ShellState {
 function createMemoryLocalSpaceOptions(suffix: string) {
   return {
     driver: "memoryStorageWrapper",
-    name: `cosystem-integration-${suffix}`,
+    name: `coexist-integration-${suffix}`,
     storeName: "state",
   };
 }

@@ -15,7 +15,7 @@ const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const packagesDir = join(rootDir, "packages");
 const workspacePath = join(rootDir, "pnpm-workspace.yaml");
 const lockfilePath = join(rootDir, "pnpm-lock.yaml");
-const tempDir = await mkdtemp(join(tmpdir(), "cosystem-solid-browser-"));
+const tempDir = await mkdtemp(join(tmpdir(), "coexist-solid-browser-"));
 const tarballsDir = join(tempDir, "tarballs");
 const consumerDir = join(tempDir, "consumer");
 const chromeExecutable = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ?? findSystemChrome();
@@ -67,7 +67,7 @@ async function writeConsumerProject(coreTarball, solidTarball, catalog) {
     join(consumerDir, "package.json"),
     `${JSON.stringify(
       {
-        name: "cosystem-solid-browser-smoke",
+        name: "coexist-solid-browser-smoke",
         private: true,
         type: "module",
         scripts: {
@@ -170,7 +170,7 @@ type SmokeSnapshot = {
 
 declare global {
   interface Window {
-    __cosystemSolidSmoke?: {
+    __coexistSolidSmoke?: {
       readonly app: App;
       dispose(): Promise<void>;
       setByRunInAction(value: number): void;
@@ -229,7 +229,7 @@ const disposeSolid = render(
   rootElement,
 );
 
-window.__cosystemSolidSmoke = {
+window.__coexistSolidSmoke = {
   app,
   async dispose() {
     disposeSolid();
@@ -415,12 +415,12 @@ async function runSolidBrowserSmoke(currentBrowser, url) {
     await expectText(page, "#phase", "done");
     await expectText(page, "#parity", "0");
 
-    await page.evaluate(() => window.__cosystemSolidSmoke?.setByRunInAction(10));
+    await page.evaluate(() => window.__coexistSolidSmoke?.setByRunInAction(10));
     await expectText(page, "#count", "10");
     await expectText(page, "#double", "20");
     await expectText(page, "#phase", "manual");
 
-    const snapshot = await page.evaluate(() => window.__cosystemSolidSmoke?.snapshot());
+    const snapshot = await page.evaluate(() => window.__coexistSolidSmoke?.snapshot());
 
     expectJsonEqual(
       snapshot,
@@ -442,7 +442,7 @@ async function runSolidBrowserSmoke(currentBrowser, url) {
       "final browser snapshot",
     );
 
-    await page.evaluate(() => window.__cosystemSolidSmoke?.dispose());
+    await page.evaluate(() => window.__coexistSolidSmoke?.dispose());
 
     if (consoleErrors.length > 0 || pageErrors.length > 0) {
       throw new Error(

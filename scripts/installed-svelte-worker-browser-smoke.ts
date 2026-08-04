@@ -15,7 +15,7 @@ const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const packagesDir = join(rootDir, "packages");
 const workspacePath = join(rootDir, "pnpm-workspace.yaml");
 const lockfilePath = join(rootDir, "pnpm-lock.yaml");
-const tempDir = await mkdtemp(join(tmpdir(), "cosystem-svelte-worker-browser-"));
+const tempDir = await mkdtemp(join(tmpdir(), "coexist-svelte-worker-browser-"));
 const tarballsDir = join(tempDir, "tarballs");
 const consumerDir = join(tempDir, "consumer");
 const chromeExecutable = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ?? findSystemChrome();
@@ -67,7 +67,7 @@ async function writeConsumerProject({ catalog, coreTarball, svelteTarball }) {
     join(consumerDir, "package.json"),
     `${JSON.stringify(
       {
-        name: "cosystem-svelte-worker-browser-smoke",
+        name: "coexist-svelte-worker-browser-smoke",
         private: true,
         type: "module",
         scripts: {
@@ -325,7 +325,7 @@ type SmokeSnapshot = {
 
 declare global {
   interface Window {
-    __cosystemSvelteWorkerSmoke?: {
+    __coexistSvelteWorkerSmoke?: {
       readonly client: WorkerClient;
       readonly ready: Promise<void>;
       dispose(): void;
@@ -350,7 +350,7 @@ const client = createWorkerClient({
 let component: ReturnType<typeof mount> | undefined;
 const ready = start();
 
-window.__cosystemSvelteWorkerSmoke = {
+window.__coexistSvelteWorkerSmoke = {
   client,
   dispose() {
     if (component !== undefined) {
@@ -470,8 +470,8 @@ async function runSvelteWorkerBrowserSmoke(currentBrowser, url) {
 
   try {
     await page.goto(url);
-    await page.waitForFunction(() => window.__cosystemSvelteWorkerSmoke !== undefined);
-    await page.evaluate(() => window.__cosystemSvelteWorkerSmoke?.ready);
+    await page.waitForFunction(() => window.__coexistSvelteWorkerSmoke !== undefined);
+    await page.evaluate(() => window.__coexistSvelteWorkerSmoke?.ready);
 
     await expectText(page, "#status", "ready");
     await expectText(page, "#count", "0");
@@ -511,7 +511,7 @@ async function runSvelteWorkerBrowserSmoke(currentBrowser, url) {
     await expectText(page, "#phase", "reset");
     await expectText(page, "#last-result", "0");
 
-    const snapshot = await page.evaluate(() => window.__cosystemSvelteWorkerSmoke?.snapshot());
+    const snapshot = await page.evaluate(() => window.__coexistSvelteWorkerSmoke?.snapshot());
 
     expectJsonEqual(
       snapshot,
@@ -534,7 +534,7 @@ async function runSvelteWorkerBrowserSmoke(currentBrowser, url) {
     );
     assertAtLeast(snapshot?.stateVersion ?? 0, 5, "worker state version");
 
-    await page.evaluate(() => window.__cosystemSvelteWorkerSmoke?.dispose());
+    await page.evaluate(() => window.__coexistSvelteWorkerSmoke?.dispose());
 
     if (consoleErrors.length > 0 || pageErrors.length > 0) {
       throw new Error(

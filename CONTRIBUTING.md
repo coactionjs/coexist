@@ -17,7 +17,7 @@ setup, the day-to-day workflow, and the conventions the repository enforces.
 
 ```sh
 git clone https://github.com/coactionjs/coexist.git
-cd cosystem
+cd coexist
 pnpm install
 pnpm run build   # build all packages once so cross-package types resolve
 ```

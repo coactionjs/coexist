@@ -10,7 +10,7 @@ import { chromium } from "playwright";
 
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const examplesDir = join(rootDir, "examples");
-const tempDir = await mkdtemp(join(tmpdir(), "cosystem-example-runtime-"));
+const tempDir = await mkdtemp(join(tmpdir(), "coexist-example-runtime-"));
 const chromeExecutable = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ?? findSystemChrome();
 
 const exampleSmokes = [

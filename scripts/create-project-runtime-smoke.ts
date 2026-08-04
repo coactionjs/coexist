@@ -10,7 +10,7 @@ const execFileAsync = promisify(execFile);
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const cliPath = join(rootDir, "packages/create/dist/cli.mjs");
 const corePackageDir = join(rootDir, "packages/core");
-const tempDir = await mkdtemp(join(tmpdir(), "cosystem-create-runtime-"));
+const tempDir = await mkdtemp(join(tmpdir(), "coexist-create-runtime-"));
 const appName = "runtime-demo";
 const appDir = join(tempDir, appName);
 

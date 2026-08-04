@@ -7,7 +7,7 @@ import { defineConfig, type Plugin } from "vitest/config";
 // output real consumers run.
 const standardDecoratorFixtures: Plugin = {
   enforce: "pre",
-  name: "cosystem:standard-decorator-fixtures",
+  name: "coexist:standard-decorator-fixtures",
   transform(code: string, id: string) {
     if (!id.endsWith(".fixture.ts")) {
       return null;

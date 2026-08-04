@@ -15,7 +15,7 @@ const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const packagesDir = join(rootDir, "packages");
 const workspacePath = join(rootDir, "pnpm-workspace.yaml");
 const lockfilePath = join(rootDir, "pnpm-lock.yaml");
-const tempDir = await mkdtemp(join(tmpdir(), "cosystem-vue-browser-"));
+const tempDir = await mkdtemp(join(tmpdir(), "coexist-vue-browser-"));
 const tarballsDir = join(tempDir, "tarballs");
 const consumerDir = join(tempDir, "consumer");
 const chromeExecutable = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ?? findSystemChrome();
@@ -67,7 +67,7 @@ async function writeConsumerProject(coreTarball, vueTarball, catalog) {
     join(consumerDir, "package.json"),
     `${JSON.stringify(
       {
-        name: "cosystem-vue-browser-smoke",
+        name: "coexist-vue-browser-smoke",
         private: true,
         type: "module",
         scripts: {
@@ -169,7 +169,7 @@ type SmokeSnapshot = {
 
 declare global {
   interface Window {
-    __cosystemVueSmoke?: {
+    __coexistVueSmoke?: {
       readonly app: App;
       dispose(): Promise<void>;
       setByRunInAction(value: number): void;
@@ -309,7 +309,7 @@ const vueApp = createVueApp(
 vueApp.use(coexistPlugin(app));
 vueApp.mount(rootElement);
 
-window.__cosystemVueSmoke = {
+window.__coexistVueSmoke = {
   app,
   async dispose() {
     vueApp.unmount();
@@ -403,12 +403,12 @@ async function runVueBrowserSmoke(currentBrowser, url) {
     await expectText(page, "#phase", "done");
     await expectText(page, "#parity", "0");
 
-    await page.evaluate(() => window.__cosystemVueSmoke?.setByRunInAction(10));
+    await page.evaluate(() => window.__coexistVueSmoke?.setByRunInAction(10));
     await expectText(page, "#count", "10");
     await expectText(page, "#double", "20");
     await expectText(page, "#phase", "manual");
 
-    const snapshot = await page.evaluate(() => window.__cosystemVueSmoke?.snapshot());
+    const snapshot = await page.evaluate(() => window.__coexistVueSmoke?.snapshot());
 
     expectJsonEqual(
       snapshot,
@@ -430,7 +430,7 @@ async function runVueBrowserSmoke(currentBrowser, url) {
       "final browser snapshot",
     );
 
-    await page.evaluate(() => window.__cosystemVueSmoke?.dispose());
+    await page.evaluate(() => window.__coexistVueSmoke?.dispose());
 
     if (consoleErrors.length > 0 || pageErrors.length > 0) {
       throw new Error(

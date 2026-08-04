@@ -20,7 +20,7 @@ import { fileURLToPath } from "node:url";
 const execFileAsync = promisify(execFile);
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const packagesDir = join(rootDir, "packages");
-const tempDir = await mkdtemp(join(tmpdir(), "cosystem-package-exports-"));
+const tempDir = await mkdtemp(join(tmpdir(), "coexist-package-exports-"));
 const tscBin = join(rootDir, "node_modules/.bin/tsc");
 
 try {

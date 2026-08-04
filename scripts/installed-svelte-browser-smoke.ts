@@ -15,7 +15,7 @@ const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const packagesDir = join(rootDir, "packages");
 const workspacePath = join(rootDir, "pnpm-workspace.yaml");
 const lockfilePath = join(rootDir, "pnpm-lock.yaml");
-const tempDir = await mkdtemp(join(tmpdir(), "cosystem-svelte-browser-"));
+const tempDir = await mkdtemp(join(tmpdir(), "coexist-svelte-browser-"));
 const tarballsDir = join(tempDir, "tarballs");
 const consumerDir = join(tempDir, "consumer");
 const chromeExecutable = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ?? findSystemChrome();
@@ -67,7 +67,7 @@ async function writeConsumerProject({ catalog, coreTarball, svelteTarball }) {
     join(consumerDir, "package.json"),
     `${JSON.stringify(
       {
-        name: "cosystem-svelte-browser-smoke",
+        name: "coexist-svelte-browser-smoke",
         private: true,
         type: "module",
         scripts: {
@@ -303,7 +303,7 @@ type SmokeSnapshot = {
 
 declare global {
   interface Window {
-    __cosystemSvelteSmoke?: {
+    __coexistSvelteSmoke?: {
       readonly app: CoexistApp;
       dispose(): Promise<void>;
       setByRunInAction(value: number): void;
@@ -324,7 +324,7 @@ const component = mount(App, {
   target: rootElement,
 });
 
-window.__cosystemSvelteSmoke = {
+window.__coexistSvelteSmoke = {
   app,
   async dispose() {
     unmount(component);
@@ -380,7 +380,7 @@ async function runSvelteBrowserSmoke(currentBrowser, url) {
 
   try {
     await page.goto(url);
-    await page.waitForFunction(() => window.__cosystemSvelteSmoke !== undefined);
+    await page.waitForFunction(() => window.__coexistSvelteSmoke !== undefined);
 
     await expectText(page, "#status", "ready");
     await expectText(page, "#provided", "true");
@@ -407,12 +407,12 @@ async function runSvelteBrowserSmoke(currentBrowser, url) {
     await expectText(page, "#phase", "done");
     await expectText(page, "#parity", "0");
 
-    await page.evaluate(() => window.__cosystemSvelteSmoke?.setByRunInAction(10));
+    await page.evaluate(() => window.__coexistSvelteSmoke?.setByRunInAction(10));
     await expectText(page, "#count", "10");
     await expectText(page, "#double", "20");
     await expectText(page, "#phase", "manual");
 
-    const snapshot = await page.evaluate(() => window.__cosystemSvelteSmoke?.snapshot());
+    const snapshot = await page.evaluate(() => window.__coexistSvelteSmoke?.snapshot());
 
     expectJsonEqual(
       snapshot,
@@ -433,7 +433,7 @@ async function runSvelteBrowserSmoke(currentBrowser, url) {
       "final browser snapshot",
     );
 
-    await page.evaluate(() => window.__cosystemSvelteSmoke?.dispose());
+    await page.evaluate(() => window.__coexistSvelteSmoke?.dispose());
 
     if (consoleErrors.length > 0 || pageErrors.length > 0) {
       throw new Error(

@@ -15,7 +15,7 @@ const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const packagesDir = join(rootDir, "packages");
 const workspacePath = join(rootDir, "pnpm-workspace.yaml");
 const lockfilePath = join(rootDir, "pnpm-lock.yaml");
-const tempDir = await mkdtemp(join(tmpdir(), "cosystem-worker-async-browser-"));
+const tempDir = await mkdtemp(join(tmpdir(), "coexist-worker-async-browser-"));
 const tarballsDir = join(tempDir, "tarballs");
 const consumerDir = join(tempDir, "consumer");
 const chromeExecutable = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ?? findSystemChrome();
@@ -66,7 +66,7 @@ async function writeConsumerProject(coreTarball, catalog) {
     join(consumerDir, "package.json"),
     `${JSON.stringify(
       {
-        name: "cosystem-worker-async-browser-smoke",
+        name: "coexist-worker-async-browser-smoke",
         private: true,
         type: "module",
         scripts: {
@@ -190,7 +190,7 @@ interface WorkerAsyncSnapshot {
 
 declare global {
   interface Window {
-    __cosystemWorkerAsyncSmoke?: {
+    __coexistWorkerAsyncSmoke?: {
       readonly ready: Promise<void>;
       failAfterIncrease(step?: number): Promise<WorkerAsyncSnapshot>;
       increaseLater(step?: number): Promise<WorkerAsyncSnapshot>;
@@ -230,7 +230,7 @@ client.subscribe((message: WorkerStateMessage) => {
 
 const readyPromise = start();
 
-window.__cosystemWorkerAsyncSmoke = {
+window.__coexistWorkerAsyncSmoke = {
   ready: readyPromise,
   failAfterIncrease,
   increaseLater,
@@ -424,7 +424,7 @@ async function runWorkerAsyncSmoke(browserInstance, url) {
 
   try {
     await page.goto(url, { waitUntil: "networkidle" });
-    await page.evaluate(() => window.__cosystemWorkerAsyncSmoke?.ready);
+    await page.evaluate(() => window.__coexistWorkerAsyncSmoke?.ready);
     await expectText(page, "h1", "Worker async browser smoke");
     await expectStat(page, "Status", "ready");
     await expectStat(page, "Count", "0");
@@ -476,7 +476,7 @@ async function runWorkerAsyncSmoke(browserInstance, url) {
 async function callSmoke(page, method, ...args) {
   return await page.evaluate(
     ({ callArgs, methodName }) => {
-      const smoke = window.__cosystemWorkerAsyncSmoke;
+      const smoke = window.__coexistWorkerAsyncSmoke;
 
       if (smoke === undefined) {
         throw new Error("Worker async smoke API was not registered.");

@@ -11,7 +11,7 @@ const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const packagesDir = join(rootDir, "packages");
 const workspacePath = join(rootDir, "pnpm-workspace.yaml");
 const lockfilePath = join(rootDir, "pnpm-lock.yaml");
-const tempDir = await mkdtemp(join(tmpdir(), "cosystem-storage-like-plugin-"));
+const tempDir = await mkdtemp(join(tmpdir(), "coexist-storage-like-plugin-"));
 const tarballsDir = join(tempDir, "tarballs");
 const consumerDir = join(tempDir, "consumer");
 const tscBin = join(rootDir, "node_modules/.bin/tsc");
@@ -57,7 +57,7 @@ async function writeConsumerProject({ catalog, coreTarball, storageTarball }) {
     join(consumerDir, "package.json"),
     `${JSON.stringify(
       {
-        name: "cosystem-storage-like-plugin-smoke",
+        name: "coexist-storage-like-plugin-smoke",
         private: true,
         type: "module",
         dependencies: {

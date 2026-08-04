@@ -11,7 +11,7 @@ const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const packagesDir = join(rootDir, "packages");
 const workspacePath = join(rootDir, "pnpm-workspace.yaml");
 const lockfilePath = join(rootDir, "pnpm-lock.yaml");
-const tempDir = await mkdtemp(join(tmpdir(), "cosystem-scaffold-install-"));
+const tempDir = await mkdtemp(join(tmpdir(), "coexist-scaffold-install-"));
 const tarballsDir = join(tempDir, "tarballs");
 const cliConsumerDir = join(tempDir, "cli-consumer");
 const appName = "installed-scaffold";
@@ -77,7 +77,7 @@ async function writeCliConsumer(createTarball, catalog) {
     join(cliConsumerDir, "package.json"),
     `${JSON.stringify(
       {
-        name: "cosystem-scaffold-cli-consumer",
+        name: "coexist-scaffold-cli-consumer",
         private: true,
         type: "module",
         dependencies: {

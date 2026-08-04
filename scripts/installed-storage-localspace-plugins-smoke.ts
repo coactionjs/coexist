@@ -11,7 +11,7 @@ const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const packagesDir = join(rootDir, "packages");
 const workspacePath = join(rootDir, "pnpm-workspace.yaml");
 const lockfilePath = join(rootDir, "pnpm-lock.yaml");
-const tempDir = await mkdtemp(join(tmpdir(), "cosystem-storage-localspace-plugins-"));
+const tempDir = await mkdtemp(join(tmpdir(), "coexist-storage-localspace-plugins-"));
 const tarballsDir = join(tempDir, "tarballs");
 const consumerDir = join(tempDir, "consumer");
 const tscBin = join(rootDir, "node_modules/.bin/tsc");
@@ -57,7 +57,7 @@ async function writeConsumerProject({ catalog, coreTarball, storageTarball }) {
     join(consumerDir, "package.json"),
     `${JSON.stringify(
       {
-        name: "cosystem-storage-localspace-plugins-smoke",
+        name: "coexist-storage-localspace-plugins-smoke",
         private: true,
         type: "module",
         dependencies: {
@@ -130,7 +130,7 @@ function createTypeConsumerSource() {
 } from "@coexist/storage";
 
 const syncOptions: NonNullable<Parameters<typeof syncPlugin>[0]> = {
-  channelName: "cosystem-storage-localspace-plugins-type",
+  channelName: "coexist-storage-localspace-plugins-type",
   syncKeys: ["session"],
 };
 const pluginStack: LocalSpacePlugin[] = [
@@ -143,7 +143,7 @@ const pluginStack: LocalSpacePlugin[] = [
 
 const options: LocalSpaceOptions = {
   driver: memoryDriver._driver,
-  name: "cosystem-storage-localspace-plugins-type",
+  name: "coexist-storage-localspace-plugins-type",
   plugins: pluginStack,
   storeName: "state",
 };
@@ -179,7 +179,7 @@ console.warn = (...args) => {
 };
 
 try {
-  const storageName = "cosystem-storage-localspace-plugins-smoke-" + Date.now();
+  const storageName = "coexist-storage-localspace-plugins-smoke-" + Date.now();
   const secretPayload = {
     nested: { ready: true },
     text: "x".repeat(2048),

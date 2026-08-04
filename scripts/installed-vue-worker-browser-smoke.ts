@@ -15,7 +15,7 @@ const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const packagesDir = join(rootDir, "packages");
 const workspacePath = join(rootDir, "pnpm-workspace.yaml");
 const lockfilePath = join(rootDir, "pnpm-lock.yaml");
-const tempDir = await mkdtemp(join(tmpdir(), "cosystem-vue-worker-browser-"));
+const tempDir = await mkdtemp(join(tmpdir(), "coexist-vue-worker-browser-"));
 const tarballsDir = join(tempDir, "tarballs");
 const consumerDir = join(tempDir, "consumer");
 const chromeExecutable = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ?? findSystemChrome();
@@ -67,7 +67,7 @@ async function writeConsumerProject({ catalog, coreTarball, vueTarball }) {
     join(consumerDir, "package.json"),
     `${JSON.stringify(
       {
-        name: "cosystem-vue-worker-browser-smoke",
+        name: "coexist-vue-worker-browser-smoke",
         private: true,
         type: "module",
         scripts: {
@@ -190,7 +190,7 @@ type SmokeSnapshot = {
 
 declare global {
   interface Window {
-    __cosystemVueWorkerSmoke?: {
+    __coexistVueWorkerSmoke?: {
       readonly client: WorkerClient;
       readonly ready: Promise<void>;
       dispose(): void;
@@ -215,7 +215,7 @@ const client = createWorkerClient({
 let vueApp: ReturnType<typeof createVueApp> | undefined;
 const ready = start();
 
-window.__cosystemVueWorkerSmoke = {
+window.__coexistVueWorkerSmoke = {
   client,
   dispose() {
     vueApp?.unmount();
@@ -441,7 +441,7 @@ async function runVueWorkerBrowserSmoke(currentBrowser, url) {
 
   try {
     await page.goto(url);
-    await page.evaluate(() => window.__cosystemVueWorkerSmoke?.ready);
+    await page.evaluate(() => window.__coexistVueWorkerSmoke?.ready);
 
     await expectText(page, "#status", "ready");
     await expectText(page, "#count", "0");
@@ -491,7 +491,7 @@ async function runVueWorkerBrowserSmoke(currentBrowser, url) {
     await expectText(page, "#phase", "reset");
     await expectText(page, "#last-result", "0");
 
-    const snapshot = await page.evaluate(() => window.__cosystemVueWorkerSmoke?.snapshot());
+    const snapshot = await page.evaluate(() => window.__coexistVueWorkerSmoke?.snapshot());
 
     expectJsonEqual(
       snapshot,
@@ -515,7 +515,7 @@ async function runVueWorkerBrowserSmoke(currentBrowser, url) {
     );
     assertAtLeast(snapshot?.stateVersion ?? 0, 5, "worker state version");
 
-    await page.evaluate(() => window.__cosystemVueWorkerSmoke?.dispose());
+    await page.evaluate(() => window.__coexistVueWorkerSmoke?.dispose());
 
     if (consoleErrors.length > 0 || pageErrors.length > 0) {
       throw new Error(

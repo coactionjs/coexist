@@ -15,7 +15,7 @@ const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const packagesDir = join(rootDir, "packages");
 const workspacePath = join(rootDir, "pnpm-workspace.yaml");
 const lockfilePath = join(rootDir, "pnpm-lock.yaml");
-const tempDir = await mkdtemp(join(tmpdir(), "cosystem-broadcast-worker-browser-"));
+const tempDir = await mkdtemp(join(tmpdir(), "coexist-broadcast-worker-browser-"));
 const tarballsDir = join(tempDir, "tarballs");
 const consumerDir = join(tempDir, "consumer");
 const chromeExecutable = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ?? findSystemChrome();
@@ -66,7 +66,7 @@ async function writeConsumerProject(coreTarball, catalog) {
     join(consumerDir, "package.json"),
     `${JSON.stringify(
       {
-        name: "cosystem-broadcast-worker-browser-smoke",
+        name: "coexist-broadcast-worker-browser-smoke",
         private: true,
         type: "module",
         scripts: {
@@ -189,7 +189,7 @@ type BroadcastSnapshot = {
 
 declare global {
   interface Window {
-    __cosystemBroadcastWorkerSmoke?: {
+    __coexistBroadcastWorkerSmoke?: {
       readonly ready: Promise<void>;
       increaseFromClientOne(step?: number): Promise<BroadcastSnapshot>;
       increaseFromClientTwo(step?: number): Promise<BroadcastSnapshot>;
@@ -219,7 +219,7 @@ defineModule(BroadcastCounter, {
   state: ["count"],
 });
 
-const channelName = \`cosystem-broadcast-worker-browser-smoke-\${crypto.randomUUID()}\`;
+const channelName = \`coexist-broadcast-worker-browser-smoke-\${crypto.randomUUID()}\`;
 const hostChannel = new BroadcastChannel(channelName);
 const clientOneChannel = new BroadcastChannel(channelName);
 const clientTwoChannel = new BroadcastChannel(channelName);
@@ -244,7 +244,7 @@ let unsubscribeClientTwo = (): void => {};
 
 const ready = start();
 
-window.__cosystemBroadcastWorkerSmoke = {
+window.__coexistBroadcastWorkerSmoke = {
   ready,
   increaseFromClientOne,
   increaseFromClientTwo,
@@ -395,7 +395,7 @@ async function runBroadcastWorkerSmoke(browserInstance, url) {
 
   try {
     await page.goto(url, { waitUntil: "networkidle" });
-    await page.evaluate(() => window.__cosystemBroadcastWorkerSmoke?.ready);
+    await page.evaluate(() => window.__coexistBroadcastWorkerSmoke?.ready);
     await expectText(page, "h1", "Broadcast worker browser smoke");
     await expectStat(page, "Status", "ready");
 
@@ -456,7 +456,7 @@ async function runBroadcastWorkerSmoke(browserInstance, url) {
 
 async function readSmokeSnapshot(page) {
   return await page.evaluate(() => {
-    const smoke = window.__cosystemBroadcastWorkerSmoke;
+    const smoke = window.__coexistBroadcastWorkerSmoke;
 
     if (smoke === undefined) {
       throw new Error("Broadcast worker smoke API was not registered.");
@@ -469,7 +469,7 @@ async function readSmokeSnapshot(page) {
 async function callSmoke(page, method, ...args) {
   return await page.evaluate(
     async ({ callArgs, methodName }) => {
-      const smoke = window.__cosystemBroadcastWorkerSmoke;
+      const smoke = window.__coexistBroadcastWorkerSmoke;
 
       if (smoke === undefined) {
         throw new Error("Broadcast worker smoke API was not registered.");

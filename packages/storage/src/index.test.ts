@@ -616,7 +616,7 @@ class AsyncMemoryStorage extends MemoryStorage {
 function createMemoryLocalSpaceOptions(suffix: string) {
   return {
     driver: "memoryStorageWrapper",
-    name: `cosystem-storage-${suffix}`,
+    name: `coexist-storage-${suffix}`,
     storeName: "state",
   };
 }

@@ -19,7 +19,7 @@ describe("create package", () => {
   });
 
   it("scaffolds a minimal Coexist project", async () => {
-    const root = await mkdtemp(join(tmpdir(), "cosystem-create-"));
+    const root = await mkdtemp(join(tmpdir(), "coexist-create-"));
     roots.push(root);
 
     const result = await createCoexistProject({
@@ -41,7 +41,7 @@ describe("create package", () => {
   });
 
   it("generates a project entrypoint that typechecks against the current core package", async () => {
-    const root = await mkdtemp(join(tmpdir(), "cosystem-create-e2e-"));
+    const root = await mkdtemp(join(tmpdir(), "coexist-create-e2e-"));
     roots.push(root);
     await createCoexistProject({
       name: "demo",
@@ -78,7 +78,7 @@ describe("create package", () => {
   });
 
   it("scaffolds a project through the CLI entrypoint", async () => {
-    const workspace = await mkdtemp(join(tmpdir(), "cosystem-create-cli-"));
+    const workspace = await mkdtemp(join(tmpdir(), "coexist-create-cli-"));
     roots.push(workspace);
     const target = "cli-demo";
     const root = join(workspace, target);

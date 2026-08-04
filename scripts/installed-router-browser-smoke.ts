@@ -15,7 +15,7 @@ const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const packagesDir = join(rootDir, "packages");
 const workspacePath = join(rootDir, "pnpm-workspace.yaml");
 const lockfilePath = join(rootDir, "pnpm-lock.yaml");
-const tempDir = await mkdtemp(join(tmpdir(), "cosystem-router-browser-"));
+const tempDir = await mkdtemp(join(tmpdir(), "coexist-router-browser-"));
 const tarballsDir = join(tempDir, "tarballs");
 const consumerDir = join(tempDir, "consumer");
 const chromeExecutable = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ?? findSystemChrome();
@@ -67,7 +67,7 @@ async function writeConsumerProject(coreTarball, routerTarball, catalog) {
     join(consumerDir, "package.json"),
     `${JSON.stringify(
       {
-        name: "cosystem-router-browser-smoke",
+        name: "coexist-router-browser-smoke",
         private: true,
         type: "module",
         scripts: {
@@ -179,7 +179,7 @@ type SmokeSnapshot = {
 
 declare global {
   interface Window {
-    __cosystemRouterSmoke?: {
+    __coexistRouterSmoke?: {
       readonly ready: Promise<void>;
       dispose(): Promise<void>;
       navigate(to: string | RouteLocation): Promise<void>;
@@ -205,7 +205,7 @@ const providedRouter = app.get(RouterToken);
 
 const ready = start();
 
-window.__cosystemRouterSmoke = {
+window.__coexistRouterSmoke = {
   ready,
   dispose,
   navigate,
@@ -328,7 +328,7 @@ async function runRouterSmoke(browserInstance, url) {
       status: "ready",
     });
 
-    await page.evaluate(() => window.__cosystemRouterSmoke?.dispose());
+    await page.evaluate(() => window.__coexistRouterSmoke?.dispose());
     await expectRouterState(page, {
       current: "/settings?mode=dark#panel",
       events: [
@@ -341,7 +341,7 @@ async function runRouterSmoke(browserInstance, url) {
       status: "disposed",
     });
 
-    await page.evaluate(() => window.__cosystemRouterSmoke?.navigate("/after-dispose"));
+    await page.evaluate(() => window.__coexistRouterSmoke?.navigate("/after-dispose"));
     await expectRouterState(page, {
       current: "/after-dispose",
       events: [
@@ -379,12 +379,12 @@ async function expectRouterState(page, expected) {
 }
 
 async function waitForRouterSmoke(page) {
-  await page.waitForFunction(() => window.__cosystemRouterSmoke !== undefined);
-  await page.evaluate(() => window.__cosystemRouterSmoke?.ready);
+  await page.waitForFunction(() => window.__coexistRouterSmoke !== undefined);
+  await page.evaluate(() => window.__coexistRouterSmoke?.ready);
 }
 
 async function readRouterSmoke(page) {
-  const snapshot = await page.evaluate(() => window.__cosystemRouterSmoke?.read());
+  const snapshot = await page.evaluate(() => window.__coexistRouterSmoke?.read());
 
   if (snapshot === undefined) {
     throw new Error("Router smoke API was not exposed.");

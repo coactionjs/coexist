@@ -14,7 +14,7 @@ const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const packagesDir = join(rootDir, "packages");
 const workspacePath = join(rootDir, "pnpm-workspace.yaml");
 const lockfilePath = join(rootDir, "pnpm-lock.yaml");
-const tempDir = await mkdtemp(join(tmpdir(), "cosystem-storage-browser-"));
+const tempDir = await mkdtemp(join(tmpdir(), "coexist-storage-browser-"));
 const tarballsDir = join(tempDir, "tarballs");
 const consumerDir = join(tempDir, "consumer");
 const chromeExecutable = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ?? findSystemChrome();
@@ -66,7 +66,7 @@ async function writeConsumerProject(coreTarball, storageTarball, catalog) {
     join(consumerDir, "package.json"),
     `${JSON.stringify(
       {
-        name: "cosystem-storage-browser-smoke",
+        name: "coexist-storage-browser-smoke",
         private: true,
         type: "module",
         scripts: {
@@ -181,7 +181,7 @@ type SmokeSnapshot = {
 
 declare global {
   interface Window {
-    __cosystemStorageSmoke?: {
+    __coexistStorageSmoke?: {
       readonly ready: Promise<void>;
       clear(): Promise<void>;
       increase(): Promise<void>;
@@ -190,7 +190,7 @@ declare global {
   }
 }
 
-const storageName = "cosystem-storage-browser-smoke";
+const storageName = "coexist-storage-browser-smoke";
 const storageStoreName = "state";
 const storageKey = "app";
 const rawStorageKey = \`\${storageName}/\${storageStoreName}/\${storageKey}\`;
@@ -226,7 +226,7 @@ let counter: StorageBrowserCounter;
 
 const ready = start();
 
-window.__cosystemStorageSmoke = {
+window.__coexistStorageSmoke = {
   ready,
   clear,
   increase,
@@ -383,7 +383,7 @@ async function expectStorageState(page, expected) {
   await expectStat(page, "Stored count", expected.storedCount);
   await expectStat(page, "Raw localStorage", expected.rawState);
 
-  const snapshot = await page.evaluate(() => window["__cosystemStorageSmoke"]?.read());
+  const snapshot = await page.evaluate(() => window["__coexistStorageSmoke"]?.read());
 
   if (snapshot === undefined) {
     throw new Error("Storage smoke API was not exposed.");
@@ -401,8 +401,8 @@ async function expectStorageState(page, expected) {
 }
 
 async function waitForStorageSmoke(page) {
-  await page.waitForFunction(() => window["__cosystemStorageSmoke"] !== undefined);
-  await page.evaluate(() => window["__cosystemStorageSmoke"]?.ready);
+  await page.waitForFunction(() => window["__coexistStorageSmoke"] !== undefined);
+  await page.evaluate(() => window["__coexistStorageSmoke"]?.ready);
 }
 
 async function expectStat(page, label, expected) {

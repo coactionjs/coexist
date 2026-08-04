@@ -14,11 +14,11 @@ const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const packagesDir = join(rootDir, "packages");
 const workspacePath = join(rootDir, "pnpm-workspace.yaml");
 const lockfilePath = join(rootDir, "pnpm-lock.yaml");
-const tempDir = await mkdtemp(join(tmpdir(), "cosystem-storage-indexeddb-browser-"));
+const tempDir = await mkdtemp(join(tmpdir(), "coexist-storage-indexeddb-browser-"));
 const tarballsDir = join(tempDir, "tarballs");
 const consumerDir = join(tempDir, "consumer");
 const chromeExecutable = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ?? findSystemChrome();
-const storageName = `cosystem-storage-indexeddb-smoke-${Date.now()}`;
+const storageName = `coexist-storage-indexeddb-smoke-${Date.now()}`;
 
 let browser;
 let server;
@@ -67,7 +67,7 @@ async function writeConsumerProject(coreTarball, storageTarball, catalog) {
     join(consumerDir, "package.json"),
     `${JSON.stringify(
       {
-        name: "cosystem-storage-indexeddb-browser-smoke",
+        name: "coexist-storage-indexeddb-browser-smoke",
         private: true,
         type: "module",
         scripts: {
@@ -191,7 +191,7 @@ type SmokeSnapshot = {
 
 declare global {
   interface Window {
-    __cosystemIndexedDBStorageSmoke?: {
+    __coexistIndexedDBStorageSmoke?: {
       readonly ready: Promise<void>;
       clear(): Promise<void>;
       drop(): Promise<void>;
@@ -239,7 +239,7 @@ let counter: IndexedDBCounter;
 
 const ready = start();
 
-window.__cosystemIndexedDBStorageSmoke = {
+window.__coexistIndexedDBStorageSmoke = {
   ready,
   clear,
   drop,
@@ -411,7 +411,7 @@ async function runIndexedDBSmoke(browserInstance, url) {
     }
   } finally {
     await page
-      .evaluate(() => window["__cosystemIndexedDBStorageSmoke"]?.drop())
+      .evaluate(() => window["__coexistIndexedDBStorageSmoke"]?.drop())
       .catch(() => undefined);
     await context.close();
   }
@@ -430,7 +430,7 @@ async function expectStorageState(page, expected) {
   );
   await expectStat(page, "Batch", expected.batch);
 
-  const snapshot = await page.evaluate(() => window["__cosystemIndexedDBStorageSmoke"]?.read());
+  const snapshot = await page.evaluate(() => window["__coexistIndexedDBStorageSmoke"]?.read());
 
   if (snapshot === undefined) {
     throw new Error("IndexedDB storage smoke API was not exposed.");
@@ -448,8 +448,8 @@ async function expectStorageState(page, expected) {
 }
 
 async function waitForStorageSmoke(page) {
-  await page.waitForFunction(() => window["__cosystemIndexedDBStorageSmoke"] !== undefined);
-  await page.evaluate(() => window["__cosystemIndexedDBStorageSmoke"]?.ready);
+  await page.waitForFunction(() => window["__coexistIndexedDBStorageSmoke"] !== undefined);
+  await page.evaluate(() => window["__coexistIndexedDBStorageSmoke"]?.ready);
 }
 
 async function expectStat(page, label, expected) {

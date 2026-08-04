@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 
 import { createCoexistProject } from "./index.js";
 
-const target = process.argv[2] ?? "cosystem-app";
+const target = process.argv[2] ?? "coexist-app";
 const root = resolve(process.cwd(), target);
 
 await createCoexistProject({

@@ -13,7 +13,7 @@ const workspacePath = join(rootDir, "pnpm-workspace.yaml");
 const lockfilePath = join(rootDir, "pnpm-lock.yaml");
 const rootPackagePath = join(rootDir, "package.json");
 const sourceExampleDir = join(rootDir, "examples", "testing");
-const tempDir = await mkdtemp(join(tmpdir(), "cosystem-installed-testing-example-"));
+const tempDir = await mkdtemp(join(tmpdir(), "coexist-installed-testing-example-"));
 const exampleDir = join(tempDir, "examples", "testing");
 const tarballsDir = join(tempDir, "tarballs");
 
@@ -85,7 +85,7 @@ async function writeInstalledTestingExample(coreTarball, testingTarball, catalog
     join(tempDir, "package.json"),
     `${JSON.stringify(
       {
-        name: "cosystem-installed-testing-example-smoke",
+        name: "coexist-installed-testing-example-smoke",
         packageManager: rootPackageJson.packageManager,
         private: true,
         type: "module",

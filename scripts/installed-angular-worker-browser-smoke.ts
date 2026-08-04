@@ -15,7 +15,7 @@ const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const packagesDir = join(rootDir, "packages");
 const workspacePath = join(rootDir, "pnpm-workspace.yaml");
 const lockfilePath = join(rootDir, "pnpm-lock.yaml");
-const tempDir = await mkdtemp(join(tmpdir(), "cosystem-angular-worker-browser-"));
+const tempDir = await mkdtemp(join(tmpdir(), "coexist-angular-worker-browser-"));
 const tarballsDir = join(tempDir, "tarballs");
 const consumerDir = join(tempDir, "consumer");
 const chromeExecutable = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ?? findSystemChrome();
@@ -67,7 +67,7 @@ async function writeConsumerProject({ angularTarball, catalog, coreTarball }) {
     join(consumerDir, "package.json"),
     `${JSON.stringify(
       {
-        name: "cosystem-angular-worker-browser-smoke",
+        name: "coexist-angular-worker-browser-smoke",
         private: true,
         type: "module",
         scripts: {
@@ -191,7 +191,7 @@ async function writeConsumerProject({ angularTarball, catalog, coreTarball }) {
       "  <body>",
       '    <main aria-label="Angular worker browser smoke">',
       "      <h1>Angular worker browser smoke</h1>",
-      "      <cosystem-smoke></cosystem-smoke>",
+      "      <coexist-smoke></coexist-smoke>",
       "    </main>",
       '    <script type="module" src="/src/main.ts"></script>',
       "  </body>",
@@ -244,8 +244,8 @@ type SmokeSnapshot = {
 
 declare global {
   interface Window {
-    __cosystemAngularWorkerStage?: string;
-    __cosystemAngularWorkerSmoke?: {
+    __coexistAngularWorkerStage?: string;
+    __coexistAngularWorkerSmoke?: {
       readonly client: WorkerClient;
       readonly ready: Promise<void>;
       dispose(): void;
@@ -263,8 +263,8 @@ const client = createWorkerClient({
 let applicationRef: ApplicationRef | undefined;
 const ready = start();
 
-window.__cosystemAngularWorkerStage = "client-created";
-window.__cosystemAngularWorkerSmoke = {
+window.__coexistAngularWorkerStage = "client-created";
+window.__coexistAngularWorkerSmoke = {
   client,
   dispose() {
     applicationRef?.destroy();
@@ -287,7 +287,7 @@ window.__cosystemAngularWorkerSmoke = {
 };
 
 @Component({
-  selector: "cosystem-smoke",
+  selector: "coexist-smoke",
   standalone: true,
   template: \`
     <section aria-label="Angular worker adapter smoke">
@@ -377,11 +377,11 @@ class SmokeRoot {
 async function start(): Promise<void> {
   await client.ready;
 
-  window.__cosystemAngularWorkerStage = "before-bootstrap";
+  window.__coexistAngularWorkerStage = "before-bootstrap";
   applicationRef = await bootstrapApplication(SmokeRoot, {
     providers: [provideWorkerClient(client)],
   });
-  window.__cosystemAngularWorkerStage = "bootstrapped";
+  window.__coexistAngularWorkerStage = "bootstrapped";
 }
 
 function selectCount(state: unknown): number {
@@ -517,7 +517,7 @@ async function runAngularWorkerBrowserSmoke(currentBrowser, url) {
     await expectText(page, "#phase", "reset");
     await expectText(page, "#last-result", "0");
 
-    const snapshot = await page.evaluate(() => window.__cosystemAngularWorkerSmoke?.snapshot());
+    const snapshot = await page.evaluate(() => window.__coexistAngularWorkerSmoke?.snapshot());
 
     expectJsonEqual(
       snapshot,
@@ -540,7 +540,7 @@ async function runAngularWorkerBrowserSmoke(currentBrowser, url) {
     );
     assertAtLeast(snapshot?.stateVersion ?? 0, 5, "worker state version");
 
-    await page.evaluate(() => window.__cosystemAngularWorkerSmoke?.dispose());
+    await page.evaluate(() => window.__coexistAngularWorkerSmoke?.dispose());
 
     if (consoleErrors.length > 0 || pageErrors.length > 0) {
       throw new Error(
@@ -570,15 +570,15 @@ async function clickButton(page, label) {
 
 async function waitForAngularSmokeReady(page, consoleErrors, pageErrors, response) {
   try {
-    await page.waitForFunction(() => window.__cosystemAngularWorkerStage === "bootstrapped");
-    await page.evaluate(() => window.__cosystemAngularWorkerSmoke?.ready);
+    await page.waitForFunction(() => window.__coexistAngularWorkerStage === "bootstrapped");
+    await page.evaluate(() => window.__coexistAngularWorkerSmoke?.ready);
   } catch (error) {
     const diagnostics = await page.evaluate(() => ({
       body: document.body.textContent?.trim() ?? "",
       readyState: document.readyState,
       scripts: Array.from(document.scripts, (script) => script.src),
-      stage: window.__cosystemAngularWorkerStage,
-      smokeType: typeof window.__cosystemAngularWorkerSmoke,
+      stage: window.__coexistAngularWorkerStage,
+      smokeType: typeof window.__coexistAngularWorkerSmoke,
       title: document.title,
       url: window.location.href,
     }));

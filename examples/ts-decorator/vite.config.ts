@@ -9,7 +9,7 @@ export default defineConfig({
 function standardDecoratorTransform(): Plugin {
   return {
     enforce: "pre",
-    name: "cosystem-example-standard-decorator-transform",
+    name: "coexist-example-standard-decorator-transform",
     transform(code, id) {
       if (!id.includes("/src/") || !id.endsWith(".ts")) {
         return undefined;

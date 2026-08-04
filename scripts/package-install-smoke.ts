@@ -12,7 +12,7 @@ const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const packagesDir = join(rootDir, "packages");
 const workspacePath = join(rootDir, "pnpm-workspace.yaml");
 const lockfilePath = join(rootDir, "pnpm-lock.yaml");
-const tempDir = await mkdtemp(join(tmpdir(), "cosystem-package-install-"));
+const tempDir = await mkdtemp(join(tmpdir(), "coexist-package-install-"));
 const tarballsDir = join(tempDir, "tarballs");
 const consumerDir = join(tempDir, "consumer");
 const tscBin = join(rootDir, "node_modules/.bin/tsc");
@@ -149,7 +149,7 @@ async function writeConsumerProject(packages, tarballByName, catalog) {
     join(consumerDir, "package.json"),
     `${JSON.stringify(
       {
-        name: "cosystem-package-install-smoke",
+        name: "coexist-package-install-smoke",
         private: true,
         type: "module",
         dependencies: sortObject(dependencies),
@@ -350,7 +350,7 @@ const router = modules["@coexist/router"].createMemoryRouter();
 const storage = modules["@coexist/storage"].createLocalSpaceStorage({
   options: {
     driver: "memoryStorageWrapper",
-    name: "cosystem-package-install-smoke",
+    name: "coexist-package-install-smoke",
     storeName: "state",
   },
 });
@@ -401,7 +401,7 @@ await test.dispose();
 await app.dispose();
 await storage.destroy();
 
-const projectDir = await mkdtemp(join(tmpdir(), "cosystem-installed-create-"));
+const projectDir = await mkdtemp(join(tmpdir(), "coexist-installed-create-"));
 
 try {
   const created = await modules["@coexist/create"].createCoexistProject({

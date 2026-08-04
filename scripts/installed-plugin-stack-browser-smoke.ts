@@ -15,7 +15,7 @@ const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const packagesDir = join(rootDir, "packages");
 const workspacePath = join(rootDir, "pnpm-workspace.yaml");
 const lockfilePath = join(rootDir, "pnpm-lock.yaml");
-const tempDir = await mkdtemp(join(tmpdir(), "cosystem-plugin-stack-browser-"));
+const tempDir = await mkdtemp(join(tmpdir(), "coexist-plugin-stack-browser-"));
 const tarballsDir = join(tempDir, "tarballs");
 const consumerDir = join(tempDir, "consumer");
 const chromeExecutable = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ?? findSystemChrome();
@@ -81,7 +81,7 @@ async function writeConsumerProject({
     join(consumerDir, "package.json"),
     `${JSON.stringify(
       {
-        name: "cosystem-plugin-stack-browser-smoke",
+        name: "coexist-plugin-stack-browser-smoke",
         private: true,
         type: "module",
         scripts: {
@@ -235,7 +235,7 @@ declare global {
   }
 }
 
-const storageName = "cosystem-plugin-stack-browser-smoke";
+const storageName = "coexist-plugin-stack-browser-smoke";
 const storageStoreName = "state";
 const storageKey = "app";
 const rawStorageKey = \`\${storageName}/\${storageStoreName}/\${storageKey}\`;

@@ -15,7 +15,7 @@ const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const packagesDir = join(rootDir, "packages");
 const workspacePath = join(rootDir, "pnpm-workspace.yaml");
 const lockfilePath = join(rootDir, "pnpm-lock.yaml");
-const tempDir = await mkdtemp(join(tmpdir(), "cosystem-angular-browser-"));
+const tempDir = await mkdtemp(join(tmpdir(), "coexist-angular-browser-"));
 const tarballsDir = join(tempDir, "tarballs");
 const consumerDir = join(tempDir, "consumer");
 const chromeExecutable = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ?? findSystemChrome();
@@ -67,7 +67,7 @@ async function writeConsumerProject({ angularTarball, catalog, coreTarball }) {
     join(consumerDir, "package.json"),
     `${JSON.stringify(
       {
-        name: "cosystem-angular-browser-smoke",
+        name: "coexist-angular-browser-smoke",
         private: true,
         type: "module",
         scripts: {
@@ -191,7 +191,7 @@ async function writeConsumerProject({ angularTarball, catalog, coreTarball }) {
       "  <body>",
       '    <main aria-label="Angular browser smoke">',
       "      <h1>Angular browser smoke</h1>",
-      "      <cosystem-smoke></cosystem-smoke>",
+      "      <coexist-smoke></coexist-smoke>",
       "    </main>",
       '    <script type="module" src="/src/main.ts"></script>',
       "  </body>",
@@ -223,8 +223,8 @@ type SmokeSnapshot = {
 
 declare global {
   interface Window {
-    __cosystemAngularStage?: string;
-    __cosystemAngularSmoke?: {
+    __coexistAngularStage?: string;
+    __coexistAngularSmoke?: {
       readonly app: App;
       dispose(): Promise<void>;
       setByRunInAction(value: number): void;
@@ -266,10 +266,10 @@ defineModule(BrowserCounter, {
 const app = createApp({
   providers: [BrowserCounter],
 });
-window.__cosystemAngularStage = "module-start";
+window.__coexistAngularStage = "module-start";
 
 @Component({
-  selector: "cosystem-smoke",
+  selector: "coexist-smoke",
   standalone: true,
   template: \`
     <section aria-label="Angular adapter smoke">
@@ -315,14 +315,14 @@ class SmokeRoot {
   }
 }
 
-window.__cosystemAngularStage = "before-bootstrap";
+window.__coexistAngularStage = "before-bootstrap";
 
 void bootstrapApplication(SmokeRoot, {
   providers: [provideCoexist(app)],
 })
   .then((application) => {
-    window.__cosystemAngularStage = "bootstrapped";
-    window.__cosystemAngularSmoke = {
+    window.__coexistAngularStage = "bootstrapped";
+    window.__coexistAngularSmoke = {
       app,
       async dispose() {
         application.destroy();
@@ -357,7 +357,7 @@ void bootstrapApplication(SmokeRoot, {
     };
   })
   .catch((error: unknown) => {
-    window.__cosystemAngularStage = "bootstrap-error";
+    window.__coexistAngularStage = "bootstrap-error";
     console.error(error);
   });
 
@@ -410,12 +410,12 @@ async function runAngularBrowserSmoke(currentBrowser, url) {
     await expectText(page, "#phase", "done");
     await expectText(page, "#parity", "0");
 
-    await page.evaluate(() => window.__cosystemAngularSmoke?.setByRunInAction(10));
+    await page.evaluate(() => window.__coexistAngularSmoke?.setByRunInAction(10));
     await expectText(page, "#count", "10");
     await expectText(page, "#double", "20");
     await expectText(page, "#phase", "manual");
 
-    const snapshot = await page.evaluate(() => window.__cosystemAngularSmoke?.snapshot());
+    const snapshot = await page.evaluate(() => window.__coexistAngularSmoke?.snapshot());
 
     expectJsonEqual(
       snapshot,
@@ -436,7 +436,7 @@ async function runAngularBrowserSmoke(currentBrowser, url) {
       "final browser snapshot",
     );
 
-    await page.evaluate(() => window.__cosystemAngularSmoke?.dispose());
+    await page.evaluate(() => window.__coexistAngularSmoke?.dispose());
 
     if (consoleErrors.length > 0 || pageErrors.length > 0) {
       throw new Error(
@@ -466,14 +466,14 @@ async function clickButton(page, label) {
 
 async function waitForAngularSmokeReady(page, consoleErrors, pageErrors, response) {
   try {
-    await page.waitForFunction(() => window.__cosystemAngularSmoke !== undefined);
+    await page.waitForFunction(() => window.__coexistAngularSmoke !== undefined);
   } catch (error) {
     const diagnostics = await page.evaluate(() => ({
       body: document.body.textContent?.trim() ?? "",
       readyState: document.readyState,
       scripts: Array.from(document.scripts, (script) => script.src),
-      stage: window.__cosystemAngularStage,
-      smokeType: typeof window.__cosystemAngularSmoke,
+      stage: window.__coexistAngularStage,
+      smokeType: typeof window.__coexistAngularSmoke,
       title: document.title,
       url: window.location.href,
     }));

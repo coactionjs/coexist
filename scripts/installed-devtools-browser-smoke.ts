@@ -15,7 +15,7 @@ const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const packagesDir = join(rootDir, "packages");
 const workspacePath = join(rootDir, "pnpm-workspace.yaml");
 const lockfilePath = join(rootDir, "pnpm-lock.yaml");
-const tempDir = await mkdtemp(join(tmpdir(), "cosystem-devtools-browser-"));
+const tempDir = await mkdtemp(join(tmpdir(), "coexist-devtools-browser-"));
 const tarballsDir = join(tempDir, "tarballs");
 const consumerDir = join(tempDir, "consumer");
 const chromeExecutable = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ?? findSystemChrome();
@@ -67,7 +67,7 @@ async function writeConsumerProject(coreTarball, devtoolsTarball, catalog) {
     join(consumerDir, "package.json"),
     `${JSON.stringify(
       {
-        name: "cosystem-devtools-browser-smoke",
+        name: "coexist-devtools-browser-smoke",
         private: true,
         type: "module",
         scripts: {
@@ -191,7 +191,7 @@ type SmokeSnapshot = {
 
 declare global {
   interface Window {
-    __cosystemDevtoolsSmoke?: {
+    __coexistDevtoolsSmoke?: {
       readonly ready: Promise<void>;
       clear(): Promise<void>;
       fail(): Promise<void>;
@@ -266,7 +266,7 @@ let subscribed = true;
 
 const ready = start();
 
-window.__cosystemDevtoolsSmoke = {
+window.__coexistDevtoolsSmoke = {
   ready,
   clear,
   fail,
@@ -429,7 +429,7 @@ async function runDevtoolsSmoke(browserInstance, url) {
 
   try {
     await page.goto(url, { waitUntil: "networkidle" });
-    await page.evaluate(() => window.__cosystemDevtoolsSmoke?.ready);
+    await page.evaluate(() => window.__coexistDevtoolsSmoke?.ready);
     await expectText(page, "h1", "Devtools browser smoke");
     await expectStat(page, "Status", "ready");
 
@@ -506,7 +506,7 @@ async function runDevtoolsSmoke(browserInstance, url) {
 
 async function readSmokeSnapshot(page) {
   return await page.evaluate(() => {
-    const smoke = window.__cosystemDevtoolsSmoke;
+    const smoke = window.__coexistDevtoolsSmoke;
 
     if (smoke === undefined) {
       throw new Error("Devtools smoke API was not registered.");

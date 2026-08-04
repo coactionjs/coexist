@@ -15,7 +15,7 @@ const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const packagesDir = join(rootDir, "packages");
 const workspacePath = join(rootDir, "pnpm-workspace.yaml");
 const lockfilePath = join(rootDir, "pnpm-lock.yaml");
-const tempDir = await mkdtemp(join(tmpdir(), "cosystem-react-browser-"));
+const tempDir = await mkdtemp(join(tmpdir(), "coexist-react-browser-"));
 const tarballsDir = join(tempDir, "tarballs");
 const consumerDir = join(tempDir, "consumer");
 const chromeExecutable = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ?? findSystemChrome();
@@ -67,7 +67,7 @@ async function writeConsumerProject(coreTarball, reactTarball, catalog) {
     join(consumerDir, "package.json"),
     `${JSON.stringify(
       {
-        name: "cosystem-react-browser-smoke",
+        name: "coexist-react-browser-smoke",
         private: true,
         type: "module",
         scripts: {
@@ -176,7 +176,7 @@ type SmokeSnapshot = {
 
 declare global {
   interface Window {
-    __cosystemReactSmoke?: {
+    __coexistReactSmoke?: {
       readonly app: App;
       dispose(): Promise<void>;
       setByRunInAction(value: number): void;
@@ -228,7 +228,7 @@ const root = createRoot(rootElement);
 
 root.render(createElement(CoexistProvider, { app }, createElement(SmokeApp)));
 
-window.__cosystemReactSmoke = {
+window.__coexistReactSmoke = {
   app,
   async dispose() {
     root.unmount();
@@ -403,12 +403,12 @@ async function runReactBrowserSmoke(currentBrowser, url) {
     await expectText(page, "#phase", "done");
     await expectText(page, "#parity", "0");
 
-    await page.evaluate(() => window.__cosystemReactSmoke?.setByRunInAction(10));
+    await page.evaluate(() => window.__coexistReactSmoke?.setByRunInAction(10));
     await expectText(page, "#count", "10");
     await expectText(page, "#double", "20");
     await expectText(page, "#phase", "manual");
 
-    const snapshot = await page.evaluate(() => window.__cosystemReactSmoke?.snapshot());
+    const snapshot = await page.evaluate(() => window.__coexistReactSmoke?.snapshot());
 
     expectJsonEqual(
       snapshot,
@@ -430,7 +430,7 @@ async function runReactBrowserSmoke(currentBrowser, url) {
       "final browser snapshot",
     );
 
-    await page.evaluate(() => window.__cosystemReactSmoke?.dispose());
+    await page.evaluate(() => window.__coexistReactSmoke?.dispose());
 
     if (consoleErrors.length > 0 || pageErrors.length > 0) {
       throw new Error(

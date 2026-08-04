@@ -27,7 +27,7 @@ const packagesDir = join(rootDir, "packages");
 const workspacePath = join(rootDir, "pnpm-workspace.yaml");
 const lockfilePath = join(rootDir, "pnpm-lock.yaml");
 const rootPackagePath = join(rootDir, "package.json");
-const tempDir = await mkdtemp(join(tmpdir(), "cosystem-installed-examples-"));
+const tempDir = await mkdtemp(join(tmpdir(), "coexist-installed-examples-"));
 const tempExamplesDir = join(tempDir, "examples");
 const tarballsDir = join(tempDir, "tarballs");
 const chromeExecutable = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ?? findSystemChrome();
@@ -305,7 +305,7 @@ async function writeInstalledExamplesWorkspace(
     join(tempDir, "package.json"),
     `${JSON.stringify(
       {
-        name: "cosystem-installed-example-build-smoke",
+        name: "coexist-installed-example-build-smoke",
         packageManager: rootPackageJson.packageManager,
         private: true,
         type: "module",

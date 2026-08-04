@@ -35,7 +35,7 @@ const app = createApp({
 });
 
 @Component({
-  selector: "cosystem-root",
+  selector: "coexist-root",
   standalone: true,
   styles: [
     `

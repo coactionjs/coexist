@@ -12,7 +12,7 @@ const execFileAsync = promisify(execFile);
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const packagesDir = join(rootDir, "packages");
 const publishDir = join(rootDir, ".publish");
-const tempDir = await mkdtemp(join(tmpdir(), "cosystem-publish-dry-run-"));
+const tempDir = await mkdtemp(join(tmpdir(), "coexist-publish-dry-run-"));
 let cleanupPublishDir = false;
 
 try {
