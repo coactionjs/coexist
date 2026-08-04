@@ -1,5 +1,14 @@
 # @coexist/example-react-counter
 
+## 0.1.1
+
+### Patch Changes
+
+- fix
+- Updated dependencies
+  - @coexist/core@0.2.1
+  - @coexist/react@0.2.1
+
 ## 0.1.0
 
 ### Patch Changes

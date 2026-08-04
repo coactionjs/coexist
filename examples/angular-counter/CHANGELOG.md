@@ -1,5 +1,14 @@
 # @coexist/example-angular-counter
 
+## 0.1.1
+
+### Patch Changes
+
+- fix
+- Updated dependencies
+  - @coexist/angular@0.2.1
+  - @coexist/core@0.2.1
+
 ## 0.1.0
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @coexist/svelte
 
+## 0.2.1
+
+### Patch Changes
+
+- fix
+- Updated dependencies
+  - @coexist/core@0.2.1
+
 ## 0.2.0
 
 ### Patch Changes
