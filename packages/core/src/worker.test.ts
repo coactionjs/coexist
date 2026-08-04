@@ -1385,6 +1385,55 @@ describe("worker prototype", () => {
     untrustedChannel.close?.();
   });
 
+  it("bounds broadcast routes for calls that are never answered", () => {
+    const channel = "worker-broadcast-route-bound";
+    const hostChannel = createMemoryBroadcastChannel(channel);
+    const callerChannel = createMemoryBroadcastChannel(channel);
+    const routedIds: number[] = [];
+    const delivered: WorkerMessage[] = [];
+    const host = createBroadcastWorkerTransport(hostChannel, { peerId: "host" });
+    const caller = createBroadcastWorkerTransport(callerChannel, {
+      peerId: "caller",
+      targetPeerId: "host",
+    });
+    const unsubscribeHost = host.subscribe((message) => {
+      if (message.type === "call") {
+        routedIds.push(message.id);
+      }
+    });
+    const unsubscribeCaller = caller.subscribe((message) => {
+      delivered.push(message);
+    });
+
+    // One more unanswered call than the transport retains routes for.
+    for (let originalId = 1; originalId <= 1025; originalId += 1) {
+      caller.post({
+        args: [],
+        id: originalId,
+        method: "increase",
+        module: "workerCounter",
+        type: "call",
+      });
+    }
+
+    expect(routedIds).toHaveLength(1025);
+
+    const oldestRoutedId = routedIds[0]!;
+    const newestRoutedId = routedIds.at(-1)!;
+
+    host.post({ id: newestRoutedId, type: "result", value: "newest" });
+    host.post({ id: oldestRoutedId, type: "result", value: "oldest" });
+
+    // The newest route still maps back to its original call id; the oldest was
+    // evicted, so its reply is no longer addressed to the caller.
+    expect(delivered).toEqual([{ id: 1025, type: "result", value: "newest" }]);
+
+    unsubscribeHost();
+    unsubscribeCaller();
+    hostChannel.close?.();
+    callerChannel.close?.();
+  });
+
   it("isolates memory broadcast listeners from sender delivery", () => {
     const channel = "worker-broadcast-listener-isolation";
     const sender = createMemoryBroadcastChannel(channel);

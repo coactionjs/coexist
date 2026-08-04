@@ -79,6 +79,8 @@ Schema validation and the action allowlist limit capabilities, but a bare `Worke
 - `createPostMessageWorkerTransport`: set `targetOrigin`, `allowedOrigins`, and `expectedSource` for iframe/window messaging. Omitting them is appropriate only for dedicated `Worker`/`MessagePort` endpoints already held as trusted capabilities.
 - `createBroadcastWorkerTransport`: set the same unpredictable `authToken` on host and clients. Messages with a different token are ignored. A `BroadcastChannel` peer can observe traffic, so this is a routing capability, not cryptographic authentication; use it only among trusted same-origin code or put the protocol over an authenticated custom transport.
 
+  A broadcast transport rewrites inbound call/sync IDs so replies can be addressed back to the originating peer, and it retains at most 1024 unanswered routes. A reply whose route is missing — because the request never arrived on this transport, or because the backlog evicted it — is not posted, and the failure is reported through `onError`; broadcasting it would risk settling an unrelated pending call on another peer.
+
 ## Transports
 
 A transport is just `{ post(message), subscribe(listener) }`. The package ships adapters for the common channels — all interchangeable:

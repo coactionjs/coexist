@@ -919,6 +919,14 @@ export function createBroadcastWorkerTransport(
     post(message) {
       try {
         const routed = routeBroadcastWorkerMessage(message, messageRoutes);
+
+        if (routed.unroutable === true) {
+          throw new CoexistError(
+            `Cannot route a broadcast result for call ${String(message.type === "result" ? message.id : "")}; ` +
+              "its request was never received on this transport or its route was dropped.",
+          );
+        }
+
         const target = routed.target ?? getBroadcastWorkerTarget(message, options);
         const envelope: BroadcastWorkerMessageEnvelope = {
           channel,
@@ -961,6 +969,11 @@ export function createBroadcastWorkerTransport(
         if (envelope.message.type === "call" || envelope.message.type === "sync") {
           const routedCallId = nextRoutedCallId;
           nextRoutedCallId += 1;
+          // A route is released when its reply is posted. A peer that never
+          // replies — a disposed host, or a sync request that failed to start —
+          // would otherwise retain its entry forever, so drop the oldest
+          // pending routes once the backlog exceeds the tracking limit.
+          evictOldestBroadcastRoutes(messageRoutes);
           messageRoutes.set(routedCallId, {
             id: envelope.message.id,
             source: envelope.source,
@@ -1100,6 +1113,17 @@ export function createDataTransportWorkerTransport(
   };
 }
 
+function evictOldestBroadcastRoutes(messageRoutes: Map<number, BroadcastMessageRoute>): void {
+  // Map iterates in insertion order, so the first keys are the oldest routes.
+  for (const routedCallId of messageRoutes.keys()) {
+    if (messageRoutes.size < maxBroadcastMessageRoutes) {
+      return;
+    }
+
+    messageRoutes.delete(routedCallId);
+  }
+}
+
 function getBroadcastWorkerTarget(
   message: WorkerMessage,
   options: BroadcastWorkerTransportOptions,
@@ -1110,12 +1134,15 @@ function getBroadcastWorkerTarget(
 function routeBroadcastWorkerMessage(
   message: WorkerMessage,
   messageRoutes: Map<number, BroadcastMessageRoute>,
-): { readonly message: WorkerMessage; readonly target?: string } {
+): { readonly message: WorkerMessage; readonly target?: string; readonly unroutable?: true } {
   if (message.type === "result") {
     const route = messageRoutes.get(message.id);
 
     if (route === undefined) {
-      return { message };
+      // The reply carries a routed id that is meaningless to every peer, and
+      // that id can collide with a caller's own pending call id. Report it
+      // rather than broadcasting a reply that could settle the wrong call.
+      return { message, unroutable: true };
     }
 
     messageRoutes.delete(message.id);
@@ -1535,6 +1562,8 @@ function createMemoryWorkerTransport(
 const workerMessageTypes = ["call", "result", "state", "sync", "ready"] as const;
 const defaultWorkerRequestTimeout = 30_000;
 const defaultBroadcastWorkerChannel = "coexist:worker";
+/** Upper bound on unanswered broadcast call/sync routes retained per transport. */
+const maxBroadcastMessageRoutes = 1024;
 const memoryBroadcastChannels = new Map<string, Set<MemoryBroadcastChannel>>();
 let nextWorkerPeerId = 1;
 
