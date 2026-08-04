@@ -1,3 +1,6 @@
+// Resolution-precedence tests for the exports in ./index.ts. They live in their
+// own file because vi.mock("svelte") replaces the context API for the whole
+// module, which the store and rune tests must observe unmocked.
 import { describe, expect, it, vi } from "vitest";
 
 import { createApp, createMemoryWorkerTransportPair, createWorkerClient } from "@coexist/core";
@@ -24,7 +27,7 @@ vi.mock("svelte", () => ({
   },
 }));
 
-describe("Svelte app resolution precedence", () => {
+describe("Svelte context resolution precedence", () => {
   it("prefers component context over the global default app", () => {
     const globalApp = createApp();
     const contextApp = createApp();
