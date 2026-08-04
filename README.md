@@ -86,18 +86,18 @@ Coexist does **not** own rendering — there is no `ViewModule`, root component 
 
 Most state libraries are framework-specific and view-first. Coexist is a framework-agnostic application layer, so the comparison is about scope, not just ergonomics — and it is honest about where simpler tools win.
 
-|                                 | Coexist                        | Zustand        | Pinia       | MobX / MST    | Redux Toolkit   |
-| ------------------------------- | ------------------------------ | -------------- | ----------- | ------------- | --------------- |
-| Target frameworks               | React/Vue/Svelte/Solid/Angular | React          | Vue         | React-first   | React-first     |
-| Same logic across frameworks    | ✅ first-class                 | ❌             | ❌          | ⚠️ manual     | ❌              |
-| Run logic in a Worker / tabs    | ✅ built-in                    | ❌ DIY         | ❌ DIY      | ❌            | ❌              |
-| Dependency injection            | ✅ explicit, zero-reflection   | ❌             | ❌          | ❌            | ❌              |
-| Mental model                    | modules (classes)              | hooks/closures | setup store | observables   | slices/reducers |
-| Base class / inheritance needed | ❌ none                        | ❌             | ❌          | ⚠️ MST models | ❌              |
-| `reflect-metadata`              | ❌ none                        | —              | —           | —             | —               |
-| First-class test harness        | ✅ `testApp`                   | ⚠️             | ⚠️          | ⚠️            | ✅              |
-| Ecosystem & maturity            | 🟡 new (v0.x)                  | 🟢 huge        | 🟢 huge     | 🟢 mature     | 🟢 huge         |
-| Best for small / single-fw apps | ⚠️ overkill                    | 🟢             | 🟢          | 🟢            | ⚠️              |
+|                                  | Coexist                        | Zustand        | Pinia       | MobX / MST    | Redux Toolkit   |
+| -------------------------------- | ------------------------------ | -------------- | ----------- | ------------- | --------------- |
+| Target frameworks                | React/Vue/Svelte/Solid/Angular | React          | Vue         | React-first   | React-first     |
+| Same logic across frameworks     | ✅ first-class                 | ❌             | ❌          | ⚠️ manual     | ❌              |
+| Run logic in a Worker / tabs     | ✅ built-in                    | ❌ DIY         | ❌ DIY      | ❌            | ❌              |
+| Dependency injection             | ✅ explicit, zero-reflection   | ❌             | ❌          | ❌            | ❌              |
+| Mental model                     | modules (classes)              | hooks/closures | setup store | observables   | slices/reducers |
+| Works without a base class       | ✅ plain classes               | ✅             | ✅          | ⚠️ MST models | ✅              |
+| Works without `reflect-metadata` | ✅ zero reflection             | —              | —           | —             | —               |
+| First-class test harness         | ✅ `testApp`                   | ⚠️             | ⚠️          | ⚠️            | ✅              |
+| Ecosystem & maturity             | 🟡 new (v0.x)                  | 🟢 huge        | 🟢 huge     | 🟢 mature     | 🟢 huge         |
+| Best for small / single-fw apps  | ⚠️ overkill                    | 🟢             | 🟢          | 🟢            | ⚠️              |
 
 ### When _not_ to reach for Coexist
 
