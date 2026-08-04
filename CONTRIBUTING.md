@@ -60,7 +60,7 @@ pnpm --filter @coexist/core test
 pnpm --filter @coexist/example-react-counter dev
 ```
 
-Before opening a pull request, make sure `pnpm run check` passes — it mirrors the CI `verify` job.
+Before opening a pull request, make sure `pnpm run check` passes — it mirrors the CI `verify` job. The two lists are hand-maintained, so `check` starts by asserting they still match; if you add a step, add it to both the root `check` script and `.github/workflows/ci.yml`.
 
 ## Tests
 

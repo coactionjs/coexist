@@ -50,6 +50,9 @@ jobs:
           pnpm exec playwright install --with-deps chromium
           echo "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=$(node -e 'const { chromium } = require(\"playwright\"); console.log(chromium.executablePath())')" >> "$GITHUB_ENV"
 
+      - name: Verify check and CI step lists
+        run: pnpm run test:check-steps
+
       - name: Format
         run: pnpm run format:check
 
