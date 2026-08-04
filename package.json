@@ -1,12 +1,12 @@
 {
-  "name": "cosystem",
+  "name": "coexist",
   "version": "0.0.0",
   "private": true,
   "description": "CoSystem - The meta-framework for coexisting UI frameworks.",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/coactionjs/cosystem.git"
+    "url": "git+https://github.com/coactionjs/coexist.git"
   },
   "type": "module",
   "scripts": {

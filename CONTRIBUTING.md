@@ -16,7 +16,7 @@ setup, the day-to-day workflow, and the conventions the repository enforces.
 ## Getting started
 
 ```sh
-git clone https://github.com/coactionjs/cosystem.git
+git clone https://github.com/coactionjs/coexist.git
 cd cosystem
 pnpm install
 pnpm run build   # build all packages once so cross-package types resolve

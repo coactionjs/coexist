@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   version:
-    if: github.repository == 'coactionjs/cosystem'
+    if: github.repository == 'coactionjs/coexist'
     runs-on: ubuntu-latest
 
     steps:

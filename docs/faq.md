@@ -102,4 +102,4 @@ toolchain supporting TC39 decorators and the `accessor` keyword; otherwise use
 ## Where do I report issues or contribute?
 
 See [`CONTRIBUTING.md`](../CONTRIBUTING.md) and the
-[repository](https://github.com/coactionjs/cosystem).
+[repository](https://github.com/coactionjs/coexist).

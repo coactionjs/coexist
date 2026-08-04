@@ -20,7 +20,7 @@ env:
 
 jobs:
   publish:
-    if: github.repository == 'coactionjs/cosystem'
+    if: github.repository == 'coactionjs/coexist'
     runs-on: ubuntu-latest
 
     steps:
