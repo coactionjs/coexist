@@ -34,7 +34,7 @@ type CounterAppState = {
 };
 
 const storage = createLocalSpaceStoragePlugin<CounterAppState>({
-  key: "cosystem:app",
+  key: "coexist:app",
   options: {
     name: "my-app",
     storeName: "state",
@@ -62,7 +62,7 @@ await kv.set("draft", { title: "Hello" });
 
 | Option             | Type                                   | Default            | Description                                                          |
 | ------------------ | -------------------------------------- | ------------------ | -------------------------------------------------------------------- |
-| `key`              | `string`                               | `cosystem:state`   | localspace key used for Coexist app state.                           |
+| `key`              | `string`                               | `coexist:state`    | localspace key used for Coexist app state.                           |
 | `options`          | `LocalSpaceOptions`                    | localspace default | localspace instance config (`name`, `storeName`, `driver`, plugins). |
 | `instance`         | `LocalSpaceInstance`                   | —                  | Existing localspace instance to wrap.                                |
 | `service`          | `StorageService`                       | —                  | Existing Coexist storage service to provide.                         |

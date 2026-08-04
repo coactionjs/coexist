@@ -824,7 +824,7 @@ type CounterAppState = {
 };
 
 const storage = createLocalSpaceStoragePlugin<CounterAppState>({
-  key: "cosystem:app",
+  key: "coexist:app",
   options: {
     name: "my-app",
     storeName: "state",

@@ -81,7 +81,7 @@ export function createDevtoolsPlugin(options: DevtoolsOptions = {}): DevtoolsPlu
   };
 
   return {
-    name: "cosystem:devtools",
+    name: "coexist:devtools",
     clearTimeline() {
       timeline.length = 0;
     },

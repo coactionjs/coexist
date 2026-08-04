@@ -83,7 +83,7 @@ export interface BroadcastWorkerTransportOptions {
 }
 
 export interface BroadcastWorkerMessageEnvelope {
-  readonly type: "cosystem:worker";
+  readonly type: "coexist:worker";
   readonly channel: string;
   readonly source: string;
   readonly target?: string;
@@ -277,7 +277,7 @@ export function createWorkerApp(options: CreateWorkerAppOptions): WorkerAppHost 
   let stateSyncVersion = 0;
   let publishPatches = false;
   const patchPlugin: Plugin = {
-    name: "cosystem:worker-patches",
+    name: "coexist:worker-patches",
     onPatch(event) {
       if (publishPatches) {
         const version = stateSections === undefined ? app.state.version : stateSyncVersion + 1;
@@ -924,7 +924,7 @@ export function createBroadcastWorkerTransport(
           channel,
           message: routed.message,
           source: peerId,
-          type: "cosystem:worker",
+          type: "coexist:worker",
           ...(options.authToken === undefined ? {} : { auth: options.authToken }),
           ...(target === undefined ? {} : { target }),
         };
@@ -941,7 +941,7 @@ export function createBroadcastWorkerTransport(
 
         if (
           !isRecord(envelope) ||
-          envelope.type !== "cosystem:worker" ||
+          envelope.type !== "coexist:worker" ||
           envelope.channel !== channel ||
           envelope.source === peerId ||
           (envelope.target !== undefined && envelope.target !== peerId)
@@ -1534,7 +1534,7 @@ function createMemoryWorkerTransport(
 
 const workerMessageTypes = ["call", "result", "state", "sync", "ready"] as const;
 const defaultWorkerRequestTimeout = 30_000;
-const defaultBroadcastWorkerChannel = "cosystem:worker";
+const defaultBroadcastWorkerChannel = "coexist:worker";
 const memoryBroadcastChannels = new Map<string, Set<MemoryBroadcastChannel>>();
 let nextWorkerPeerId = 1;
 
@@ -1682,7 +1682,7 @@ function isBroadcastWorkerMessageEnvelope(
   }
 
   return (
-    message.type === "cosystem:worker" &&
+    message.type === "coexist:worker" &&
     typeof message.channel === "string" &&
     typeof message.source === "string" &&
     (message.target === undefined || typeof message.target === "string") &&

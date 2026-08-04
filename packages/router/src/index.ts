@@ -137,7 +137,7 @@ export function createBrowserRouter(options: BrowserRouterOptions = {}): Router 
 
 export function createRouterPlugin(router: Router, options: RouterPluginOptions = {}): Plugin {
   return {
-    name: "cosystem:router",
+    name: "coexist:router",
     providers: [provideRouter(router)],
     setup(app, context) {
       const notify = (location: RouteLocation): void => {

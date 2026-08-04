@@ -13,7 +13,7 @@ export function createLoggerPlugin(options: LoggerPluginOptions = {}): Plugin {
   const logger = options.logger ?? console;
 
   return {
-    name: "cosystem:logger",
+    name: "coexist:logger",
     onActionEnd(event) {
       if (event.error !== undefined) {
         logger.error(`Action failed: ${event.module}.${event.method}`, event);

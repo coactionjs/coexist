@@ -2869,7 +2869,7 @@ function createStoreOptions(
   enablePatches: boolean,
 ): CoactionStoreOptions {
   return {
-    name: "cosystem",
+    name: "coexist",
     sliceMode: "single",
     enablePatches,
     ...(engine?.transport === undefined ? {} : { transport: engine.transport }),

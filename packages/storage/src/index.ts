@@ -215,7 +215,7 @@ export function createLocalSpaceStorage(
 export function createLocalSpaceStoragePlugin<TState = unknown>(
   options: LocalSpaceStoragePluginOptions<TState> = {},
 ): LocalSpaceStoragePlugin {
-  const key = options.key ?? "cosystem:state";
+  const key = options.key ?? "coexist:state";
   const storage =
     options.service ??
     createLocalSpaceStorage({
@@ -250,7 +250,7 @@ export function createLocalSpaceStoragePlugin<TState = unknown>(
   });
 
   return {
-    name: "cosystem:storage",
+    name: "coexist:storage",
     providers: [provide(StorageToken, { useValue: storage })],
     storage,
     async clear() {
@@ -378,7 +378,7 @@ export function createStoragePlugin<TState = unknown>(
   });
 
   return {
-    name: "cosystem:storage",
+    name: "coexist:storage",
     async clear() {
       await readyPromise;
       pendingWrites.discard();
