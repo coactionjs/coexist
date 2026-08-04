@@ -1,11 +1,8 @@
 # @coexist/devtools
 
-> Timeline inspection plugin for [Coexist](../../README.md): records a
-> chronological log of app setup, module creation, actions, patches, state
-> changes, and errors for development tooling.
+> Timeline inspection plugin for [Coexist](../../README.md): records a chronological log of app setup, module creation, actions, patches, state changes, and errors for development tooling.
 
-This is a headless data source — it records events and lets you subscribe to or
-read the timeline. Build your own UI on top, or pipe it into logging.
+This is a headless data source — it records events and lets you subscribe to or read the timeline. Build your own UI on top, or pipe it into logging.
 
 ## Installation
 
@@ -64,8 +61,7 @@ devtools.clearTimeline(); // reset the buffer
 
 ## Exports
 
-`createDevtoolsPlugin`, and the `DevtoolsPlugin`, `DevtoolsOptions`,
-`DevtoolsTimelineEvent`, `DevtoolsTimelineListener` types.
+`createDevtoolsPlugin`, and the `DevtoolsPlugin`, `DevtoolsOptions`, `DevtoolsTimelineEvent`, `DevtoolsTimelineListener` types.
 
 ## License
 

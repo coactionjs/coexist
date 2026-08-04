@@ -1,21 +1,14 @@
 # Coexist Documentation
 
-> Coexist — the meta-framework for coexisting UI frameworks. Write business
-> modules once; run them with React, Vue, Svelte, Solid, Angular, vanilla JS,
-> workers, shared tabs, and tests.
+> Coexist — the meta-framework for coexisting UI frameworks. Write business modules once; run them with React, Vue, Svelte, Solid, Angular, vanilla JS, workers, shared tabs, and tests.
 
-This directory contains the conceptual guides. For per-package API references,
-see each package's README (linked from the root [Packages](../README.md#packages)
-table). For runnable demos, see [`examples/`](../examples).
+This directory contains the conceptual guides. For per-package API references, see each package's README (linked from the root [Packages](../README.md#packages) table). For runnable demos, see [`examples/`](../examples).
 
 ## Start here
 
-1. [Introduction](./introduction.md) — what Coexist is, how it is positioned,
-   and the mental model.
-2. [Getting Started](./getting-started.md) — install, scaffold, and build your
-   first app with a UI framework.
-3. [Core Concepts](./core-concepts.md) — modules, state, actions, computed,
-   effects, and the single app store.
+1. [Introduction](./introduction.md) — what Coexist is, how it is positioned, and the mental model.
+2. [Getting Started](./getting-started.md) — install, scaffold, and build your first app with a UI framework.
+3. [Core Concepts](./core-concepts.md) — modules, state, actions, computed, effects, and the single app store.
 
 ## Guides
 
@@ -41,7 +34,5 @@ table). For runnable demos, see [`examples/`](../examples).
 ## Conventions in these docs
 
 - Code samples use `@coexist/core` imports unless a UI adapter is shown.
-- The recurring `Counter` example is the same one used across [`examples/`](../examples),
-  so you can map a guide to a runnable project.
-- "The store" always means the single Coaction-backed app store — Coexist does
-  not create one store per module.
+- The recurring `Counter` example is the same one used across [`examples/`](../examples), so you can map a guide to a runnable project.
+- "The store" always means the single Coaction-backed app store — Coexist does not create one store per module.

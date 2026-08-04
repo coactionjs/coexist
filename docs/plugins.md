@@ -1,9 +1,6 @@
 # Plugins
 
-Plugins extend the runtime without coupling it to any framework. They are for
-app-level cross-cutting concerns: lifecycle integration, observability, persistence,
-routing bridges, telemetry, and tooling. Business state and actions should stay in
-modules; ordinary dependencies should stay providers.
+Plugins extend the runtime without coupling it to any framework. They are for app-level cross-cutting concerns: lifecycle integration, observability, persistence, routing bridges, telemetry, and tooling. Business state and actions should stay in modules; ordinary dependencies should stay providers.
 
 ## The `Plugin` interface
 
@@ -61,12 +58,9 @@ const app = createApp({
 | `onError(error, context)` | When a runtime phase or plugin observer hook throws (`context.phase`).                            |
 | `dispose(context)`        | During `app.dispose()`; may be async. Context disposers run after this hook.                      |
 
-See [Application Lifecycle](./application-lifecycle.md#phase-ordering) for the
-exact ordering of `setup`, `onInit`, and effects.
+See [Application Lifecycle](./application-lifecycle.md#phase-ordering) for the exact ordering of `setup`, `onInit`, and effects.
 
-Async setup may call `inject()` before or after an `await`. It must not await
-`app.ready` or call `app.start()`, `app.stop()`, or `app.dispose()`; lifecycle
-reentry is rejected to avoid initialization and teardown cycles.
+Async setup may call `inject()` before or after an `await`. It must not await `app.ready` or call `app.start()`, `app.stop()`, or `app.dispose()`; lifecycle reentry is rejected to avoid initialization and teardown cycles.
 
 ## Event payloads
 
@@ -115,26 +109,15 @@ const plugin: Plugin = {
 };
 ```
 
-`context.watch()` is `app.watch()` plus automatic cleanup. `context.onDispose()`
-registers any other teardown callback. `context.signal` is aborted before context
-disposers run, so long-running async work can stop early. During `setup`,
-`context.inject(token)` resolves from that plugin's app even after an `await`;
-unlike a process-global fallback, it remains safe when browser apps initialize
-concurrently.
+`context.watch()` is `app.watch()` plus automatic cleanup. `context.onDispose()` registers any other teardown callback. `context.signal` is aborted before context disposers run, so long-running async work can stop early. During `setup`, `context.inject(token)` resolves from that plugin's app even after an `await`; unlike a process-global fallback, it remains safe when browser apps initialize concurrently.
 
-Observer hook errors do not interrupt app actions or state updates. They are
-reported to `onError` with a phase like `plugin:metrics.onActionEnd`. Errors from
-`app.watch()` / `context.watch()` listeners use the `watch` phase and are
-isolated the same way, including asynchronous listener rejections. Errors from
-`setup()` still fail app init, and errors during `dispose()` are aggregated and
-re-thrown after teardown has been attempted.
+Observer hook errors do not interrupt app actions or state updates. They are reported to `onError` with a phase like `plugin:metrics.onActionEnd`. Errors from `app.watch()` / `context.watch()` listeners use the `watch` phase and are isolated the same way, including asynchronous listener rejections. Errors from `setup()` still fail app init, and errors during `dispose()` are aggregated and re-thrown after teardown has been attempted.
 
 ## Built-in plugins
 
 ### Logger — [`createLoggerPlugin`](../packages/core/README.md#logger-plugin)
 
-Logs module creation, action completion/failure, and runtime errors. Ships in
-`@coexist/core`.
+Logs module creation, action completion/failure, and runtime errors. Ships in `@coexist/core`.
 
 ```ts
 import { createLoggerPlugin } from "@coexist/core";
@@ -145,8 +128,7 @@ createApp({ plugins: [createLoggerPlugin()], providers: [Counter] });
 
 ### Storage — [`@coexist/storage`](../packages/storage/README.md)
 
-Hydrates state on startup, persists changes through localspace drivers, and
-exposes a cross-framework storage service through `StorageToken`.
+Hydrates state on startup, persists changes through localspace drivers, and exposes a cross-framework storage service through `StorageToken`.
 
 ```ts
 import { StorageToken, createLocalSpaceStoragePlugin } from "@coexist/storage";
@@ -201,8 +183,7 @@ devtools.subscribe((event) => console.log(event.type));
 
 ## Writing your own plugin
 
-A plugin is just an object. Keep state in a closure and return the hooks you
-need:
+A plugin is just an object. Keep state in a closure and return the hooks you need:
 
 ```ts
 import type { Plugin } from "@coexist/core";
@@ -229,19 +210,11 @@ export function createTimingPlugin(): Plugin {
 Tips:
 
 - Give every plugin a `name` (used in error context and tooling).
-- Use `setup(app, context)` for work that needs the live `App` (subscribing,
-  resolving services); return a promise if it is async so `start()` waits.
-- Prefer `context.watch()` and `context.onDispose()` for resources that must be
-  cleaned up with the app.
-- Use `providers` only for service/token dependencies. Plugin providers cannot
-  register Coexist modules. App-level non-`multi` providers replace plugin
-  providers for the same token; app-level `multi` providers append to plugin
-  `multi` providers.
-- A plugin with `onPatch` enables patches automatically unless
-  `engine: { patches: false }` is set.
-- For imperative controls beyond the `Plugin` interface (like storage's
-  `flush()`), return an object that **extends** `Plugin` with extra methods, as
-  the storage and devtools plugins do.
+- Use `setup(app, context)` for work that needs the live `App` (subscribing, resolving services); return a promise if it is async so `start()` waits.
+- Prefer `context.watch()` and `context.onDispose()` for resources that must be cleaned up with the app.
+- Use `providers` only for service/token dependencies. Plugin providers cannot register Coexist modules. App-level non-`multi` providers replace plugin providers for the same token; app-level `multi` providers append to plugin `multi` providers.
+- A plugin with `onPatch` enables patches automatically unless `engine: { patches: false }` is set.
+- For imperative controls beyond the `Plugin` interface (like storage's `flush()`), return an object that **extends** `Plugin` with extra methods, as the storage and devtools plugins do.
 
 ## Next
 

@@ -2,8 +2,7 @@
 
 > Shared TypeScript configuration for the [Coexist](../../README.md) monorepo.
 
-A private, internal package (`workspace:*`) that centralizes the `tsconfig`
-presets used across Coexist packages. It is not published to npm.
+A private, internal package (`workspace:*`) that centralizes the `tsconfig` presets used across Coexist packages. It is not published to npm.
 
 ## Configurations
 
@@ -38,8 +37,7 @@ Add the package as a dev dependency in a workspace package and extend a preset:
 
 ## Exports
 
-The package exposes `./base.json`, `./node.json`, and `./library.json` via its
-`exports` map.
+The package exposes `./base.json`, `./node.json`, and `./library.json` via its `exports` map.
 
 ## License
 

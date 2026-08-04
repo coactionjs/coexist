@@ -1,11 +1,8 @@
 # @coexist/testing
 
-> Testing helper facade for [Coexist](../../README.md). Re-exports `testApp`
-> and its types from [`@coexist/core`](../core) under a dedicated, intention-
-> revealing import for test files.
+> Testing helper facade for [Coexist](../../README.md). Re-exports `testApp` and its types from [`@coexist/core`](../core) under a dedicated, intention- revealing import for test files.
 
-Importing `testApp` from `@coexist/testing` keeps test setup separate from
-production imports. The behavior is identical to `@coexist/core`'s `testApp`.
+Importing `testApp` from `@coexist/testing` keeps test setup separate from production imports. The behavior is identical to `@coexist/core`'s `testApp`.
 
 ## Installation
 
@@ -87,13 +84,11 @@ Options extend `createApp` options with:
 | `autoStart`     | `boolean`         | Start the app and return a promise.                                              |
 | `strictActions` | `boolean`         | Enforce action boundaries on all state writes.                                   |
 
-The `app.test` inspector exposes `getActions()`, `getState()`, `getPatches()`,
-`clearActions()`, `clearPatches()`, and `flushEffects()`.
+The `app.test` inspector exposes `getActions()`, `getState()`, `getPatches()`, `clearActions()`, `clearPatches()`, and `flushEffects()`.
 
 ## Exports
 
-`testApp`, and the `TestApp`, `TestAppOptions`, `AutoStartedTestAppOptions`,
-`ManualTestAppOptions` types.
+`testApp`, and the `TestApp`, `TestAppOptions`, `AutoStartedTestAppOptions`, `ManualTestAppOptions` types.
 
 ## License
 

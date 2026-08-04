@@ -1,14 +1,8 @@
 # @coexist/core
 
-> The Coexist core runtime: a typed application core with lightweight dependency
-> injection, object-oriented state, actions, computed getters, effects, and a
-> framework-agnostic store powered by [Coaction](https://www.npmjs.com/package/coaction).
+> The Coexist core runtime: a typed application core with lightweight dependency injection, object-oriented state, actions, computed getters, effects, and a framework-agnostic store powered by [Coaction](https://www.npmjs.com/package/coaction).
 
-`@coexist/core` is the only package every Coexist app depends on. It owns the
-DI container, module metadata, the app runtime and lifecycle, the reactive
-store, and a worker-hosting prototype. UI adapters (`@coexist/react`,
-`@coexist/vue`, …) and plugins (`@coexist/storage`, `@coexist/router`, …) are
-thin layers on top of the primitives exported here.
+`@coexist/core` is the only package every Coexist app depends on. It owns the DI container, module metadata, the app runtime and lifecycle, the reactive store, and a worker-hosting prototype. UI adapters (`@coexist/react`, `@coexist/vue`, …) and plugins (`@coexist/storage`, `@coexist/router`, …) are thin layers on top of the primitives exported here.
 
 ## Installation
 
@@ -49,26 +43,20 @@ A Coexist app is a graph of **modules**. A module is a plain class that:
 - derives **computed** values (cached getters), and
 - can run **effects** (methods that re-run when their tracked state changes).
 
-Modules are wired together with a small **DI container**. Their state is merged
-into a single Coaction-backed store keyed by the module `name`, so the whole app
-has one observable state tree:
+Modules are wired together with a small **DI container**. Their state is merged into a single Coaction-backed store keyed by the module `name`, so the whole app has one observable state tree:
 
 ```ts
 // app.store.getPureState()
 { counter: { count: 2 }, todos: { items: [] } }
 ```
 
-Coexist does **not** own rendering. There is no view base class or `render()`
-abstraction. Framework adapters read the store and subscribe to changes using
-each framework's native reactivity.
+Coexist does **not** own rendering. There is no view base class or `render()` abstraction. Framework adapters read the store and subscribe to changes using each framework's native reactivity.
 
 ## Defining a module
 
 ### Without decorators
 
-`defineModule()` declares module metadata for a class. This form needs no special
-build setup, supports **plain fields** as state, and is the simplest way to
-start.
+`defineModule()` declares module metadata for a class. This form needs no special build setup, supports **plain fields** as state, and is the simplest way to start.
 
 ```ts
 import { createApp, defineModule, provide } from "@coexist/core";
@@ -112,16 +100,11 @@ const app = createApp({
 app.getModule(Counter).increase();
 ```
 
-Every module must declare an explicit `name`. It is the stable key used by app
-state, persistence, devtools, and worker RPC; deriving it from a class name
-would break when application code is minified.
+Every module must declare an explicit `name`. It is the stable key used by app state, persistence, devtools, and worker RPC; deriving it from a class name would break when application code is minified.
 
 ### With decorators
 
-The same module reads more declaratively with decorators. `@State` targets
-standard accessor decorators, `@Action`/`@Effect` target methods, and `@Computed`
-targets getters. Decorators require a TypeScript or build setup that supports the
-TC39 decorators + `accessor` keyword (the repo's `tsdown`/`tsc` config does).
+The same module reads more declaratively with decorators. `@State` targets standard accessor decorators, `@Action`/`@Effect` target methods, and `@Computed` targets getters. Decorators require a TypeScript or build setup that supports the TC39 decorators + `accessor` keyword (the repo's `tsdown`/`tsc` config does).
 
 ```ts
 import { Action, Computed, Effect, Module, State } from "@coexist/core";
@@ -154,9 +137,7 @@ class Counter {
 }
 ```
 
-`@Computed` getters are cached through Coaction's signal-backed computed runtime
-and invalidate when the state they read changes. `@Effect` methods run after app
-initialization and re-run when the state they read changes.
+`@Computed` getters are cached through Coaction's signal-backed computed runtime and invalidate when the state they read changes. `@Effect` methods run after app initialization and re-run when the state they read changes.
 
 ## Creating an app
 
@@ -178,19 +159,11 @@ const app = createApp({
 | `devOptions` | `{ strictActions?: boolean }`     | Enforce action boundaries for all state writes when `true`.            |
 | `engine`     | `{ patches?: boolean }`           | Enable patch generation on the underlying store.                       |
 
-`@Module` providers are instantiated during `createApp()` so their state can be
-bound to the store. Plugin `setup`, module `onInit` hooks, and effects are kicked
-off on the next microtask and tracked by the stable `app.ready` promise.
-`app.start()` awaits that same initialization, then runs `onStart` hooks and
-marks the app started; many apps can skip `start()` entirely if they have no
-startup work. Initialization failures reject `app.ready` even though the runtime
-observes them internally to prevent an unhandled rejection when an app is never
-started.
+`@Module` providers are instantiated during `createApp()` so their state can be bound to the store. Plugin `setup`, module `onInit` hooks, and effects are kicked off on the next microtask and tracked by the stable `app.ready` promise. `app.start()` awaits that same initialization, then runs `onStart` hooks and marks the app started; many apps can skip `start()` entirely if they have no startup work. Initialization failures reject `app.ready` even though the runtime observes them internally to prevent an unhandled rejection when an app is never started.
 
 ## Dependency injection
 
-Coexist includes a small but complete DI container. You register **providers**
-keyed by **injection tokens** (a class, a `Token`, a string, or a symbol).
+Coexist includes a small but complete DI container. You register **providers** keyed by **injection tokens** (a class, a `Token`, a string, or a symbol).
 
 ```ts
 import { createApp, provide, token } from "@coexist/core";
@@ -213,13 +186,11 @@ createApp({
 Provider shapes (`provide(token, options)`):
 
 - `useClass` — construct a class, resolving `deps` as constructor arguments.
-- `useValue` — use an existing value (always eager, singleton, and externally
-  owned unless `autoDispose: true`).
+- `useValue` — use an existing value (always eager, singleton, and externally owned unless `autoDispose: true`).
 - `useFactory` — call a factory with resolved `deps`; may be async.
 - `useExisting` — alias one token to another.
 
-Inside a factory or provider construction you may also call `inject(token)` to
-resolve dependencies imperatively:
+Inside a factory or provider construction you may also call `inject(token)` to resolve dependencies imperatively:
 
 ```ts
 import { inject, provide } from "@coexist/core";
@@ -229,52 +200,33 @@ provide(Service, {
 });
 ```
 
-`inject()` throws `InjectContextError` outside of an active resolution. In async
-plugin setup, use `PluginContext.inject()` after an `await`; module hooks receive
-a `ModuleLifecycleContext` with the same explicit resolver. This keeps
-concurrently initializing browser apps isolated without relying on a global
-async context.
+`inject()` throws `InjectContextError` outside of an active resolution. In async plugin setup, use `PluginContext.inject()` after an `await`; module hooks receive a `ModuleLifecycleContext` with the same explicit resolver. This keeps concurrently initializing browser apps isolated without relying on a global async context.
 
 ### Container access
 
-`app.createScope().container` exposes the [`Container`](#container) directly for
-advanced use. `build()` / `buildAsync()` construct an unregistered class without
-caching it:
+`app.createScope().container` exposes the [`Container`](#container) directly for advanced use. `build()` / `buildAsync()` construct an unregistered class without caching it:
 
 ```ts
 const instance = app.createScope().container.build(Service);
 const asyncInstance = await app.createScope().container.buildAsync(ServiceWithAsyncDeps);
 ```
 
-Use `buildAsync()` when any dependency is backed by an async factory; the sync
-path throws `AsyncProviderInSyncResolutionError`.
+Use `buildAsync()` when any dependency is backed by an async factory; the sync path throws `AsyncProviderInSyncResolutionError`.
 
-When sync resolution discovers async work, the container still tracks that
-pending provider. A later `getAsync()` shares cacheable work, and disposal waits
-for fulfilled resources instead of leaking them.
+When sync resolution discovers async work, the container still tracks that pending provider. A later `getAsync()` shares cacheable work, and disposal waits for fulfilled resources instead of leaking them.
 
 ## State, actions, computed, and effects
 
 - **State** fields become the module's slice in the store. Reads are tracked.
-- **Actions** wrap writes in a transaction. In `strictActions` mode, writes
-  outside an action throw, including deep object/array mutations and direct
-  `store.setState()` / `store.apply()` calls; plain snapshots from
-  `store.getPureState()` are detached and recursively frozen.
-- **Computed** getters are memoized and recomputed only when tracked state
-  changes.
-- **Effects** run once after init and re-run when their tracked state changes.
-  Effects are torn down on `dispose()`.
+- **Actions** wrap writes in a transaction. In `strictActions` mode, writes outside an action throw, including deep object/array mutations and direct `store.setState()` / `store.apply()` calls; plain snapshots from `store.getPureState()` are detached and recursively frozen.
+- **Computed** getters are memoized and recomputed only when tracked state changes.
+- **Effects** run once after init and re-run when their tracked state changes. Effects are torn down on `dispose()`.
 
-Mutations dispatched synchronously from a `watch` listener or plugin state hook
-are queued until the current store notification finishes. They drain before the
-triggering mutation returns; a self-triggering cascade aborts after 1000 queued
-mutations.
+Mutations dispatched synchronously from a `watch` listener or plugin state hook are queued until the current store notification finishes. They drain before the triggering mutation returns; a self-triggering cascade aborts after 1000 queued mutations.
 
 ## Async actions and `runInAction`
 
-Async `@Action` methods may return promises. Synchronous writes before the first
-`await` are part of the action transaction; writes after an `await` need a fresh
-action boundary when strict mode is enabled. Use `runInAction(this, …)`:
+Async `@Action` methods may return promises. Synchronous writes before the first `await` are part of the action transaction; writes after an `await` need a fresh action boundary when strict mode is enabled. Use `runInAction(this, …)`:
 
 ```ts
 import { runInAction } from "@coexist/core";
@@ -294,9 +246,7 @@ class Counter {
 }
 ```
 
-You can also call `app.runInAction(moduleOrToken, callback, { name, args })` from
-outside the module. For whole-store hydration or replacement, use the app-level
-overload: `app.runInAction(() => app.store.setState(next), { name: "hydrate" })`.
+You can also call `app.runInAction(moduleOrToken, callback, { name, args })` from outside the module. For whole-store hydration or replacement, use the app-level overload: `app.runInAction(() => app.store.setState(next), { name: "hydrate" })`.
 
 ## Provider lifetime and scopes
 
@@ -309,14 +259,9 @@ Providers default to the `"singleton"` scope. Available scopes:
 | `"resolution"` | One instance per resolution graph (shared within a single get). |
 | `"transient"`  | A fresh instance on every resolution.                           |
 
-These four scopes apply to plain DI services. Coexist modules are
-singleton-only: each module owns one app store slice and must have the same
-identity through `getModule()` and dependency injection. Configuring a module as
-`scoped`, `resolution`, or `transient` throws during provider normalization.
+These four scopes apply to plain DI services. Coexist modules are singleton-only: each module owns one app store slice and must have the same identity through `getModule()` and dependency injection. Configuring a module as `scoped`, `resolution`, or `transient` throws during provider normalization.
 
-`@Module` providers and `useValue` providers are eager. Plain class/factory
-providers stay lazy unless a module or another eager provider depends on them.
-Mark startup services eager explicitly:
+`@Module` providers and `useValue` providers are eager. Plain class/factory providers stay lazy unless a module or another eager provider depends on them. Mark startup services eager explicitly:
 
 ```ts
 createApp({
@@ -324,14 +269,7 @@ createApp({
 });
 ```
 
-A longer-lived provider that depends on a shorter-lived one throws
-`LifetimeLeakError` unless the dependency is marked `leakSafe: true`. Use `multi:
-true` to register several providers under one token and read them with
-`getAll()`. Provide a `dispose(value)` callback to clean up on `app.dispose()`.
-Class/factory values use convention-based disposal by default; disable it with
-`autoDispose: false`. External `useValue` providers default to no automatic
-disposal, while `autoDispose: true` explicitly transfers ownership. A custom
-`dispose(value)` replaces convention disposal, and aliases never own targets.
+A longer-lived provider that depends on a shorter-lived one throws `LifetimeLeakError` unless the dependency is marked `leakSafe: true`. Use `multi: true` to register several providers under one token and read them with `getAll()`. Provide a `dispose(value)` callback to clean up on `app.dispose()`. Class/factory values use convention-based disposal by default; disable it with `autoDispose: false`. External `useValue` providers default to no automatic disposal, while `autoDispose: true` explicitly transfers ownership. A custom `dispose(value)` replaces convention disposal, and aliases never own targets.
 
 ## Module lifecycle hooks
 
@@ -346,26 +284,15 @@ class Service {
 }
 ```
 
-Lifecycle hooks may use `context.inject()` before or after an `await`.
-App-managed setup, effects, and lifecycle hooks cannot call `app.start()`,
-`app.stop()`, or `app.dispose()`; setup and `onInit` work also cannot await
-`app.ready`. Drive lifecycle phases from application bootstrap so a hook cannot
-await the phase that is already waiting for it. After an `await`, use the app
-supplied to `setup` or `ModuleLifecycleContext.app` for portable enforcement;
-browser fallback keeps unrelated external lifecycle controls available.
+Lifecycle hooks may use `context.inject()` before or after an `await`. App-managed setup, effects, and lifecycle hooks cannot call `app.start()`, `app.stop()`, or `app.dispose()`; setup and `onInit` work also cannot await `app.ready`. Drive lifecycle phases from application bootstrap so a hook cannot await the phase that is already waiting for it. After an `await`, use the app supplied to `setup` or `ModuleLifecycleContext.app` for portable enforcement; browser fallback keeps unrelated external lifecycle controls available.
 
-`onStop`/`onDispose` run in reverse order. Teardown is best-effort across every
-module and cleanup phase; failures are reported together as an `AggregateError`
-after disposal reaches its terminal state.
+`onStop`/`onDispose` run in reverse order. Teardown is best-effort across every module and cleanup phase; failures are reported together as an `AggregateError` after disposal reaches its terminal state.
 
-Module lookup and writes are terminal too: once disposal begins, new
-`getModule()` / `getModuleByName()` calls fail, and a facade retained earlier
-cannot run actions or mutate top-level or nested state after teardown completes.
+Module lookup and writes are terminal too: once disposal begins, new `getModule()` / `getModuleByName()` calls fail, and a facade retained earlier cannot run actions or mutate top-level or nested state after teardown completes.
 
 ## Lazy modules
 
-Lazy modules are explicit and isolated — they do not mutate the root provider
-graph:
+Lazy modules are explicit and isolated — they do not mutate the root provider graph:
 
 ```ts
 import { createApp, defineModule, lazyModule } from "@coexist/core";
@@ -390,16 +317,7 @@ await app.load(lazyModule(() => ({ providers: [AdminCounter] })));
 app.getModule(AdminCounter).increase();
 ```
 
-Passing `lazyModule(...)` to `createApp({ providers })` records the entry without
-loading it. Call `await app.load()` to load all pending lazy modules, or
-`await app.load(module)` to load one. Loaders may return a provider, a provider
-array, or a module-namespace object (`{ default }` / `{ providers }`), which
-makes dynamic `import()` ergonomic. Concurrent calls for the same entry share
-one in-flight load. Lifecycle work runs in a temporary scope; state, facades,
-effects, and module lookups are committed only after initialization, startup,
-and the effects' initial synchronous run succeed. A failed effect startup emits
-no transient state, watch, patch, or version update. Failed loads dispose and
-roll back the scope so a later call can retry.
+Passing `lazyModule(...)` to `createApp({ providers })` records the entry without loading it. Call `await app.load()` to load all pending lazy modules, or `await app.load(module)` to load one. Loaders may return a provider, a provider array, or a module-namespace object (`{ default }` / `{ providers }`), which makes dynamic `import()` ergonomic. Concurrent calls for the same entry share one in-flight load. Lifecycle work runs in a temporary scope; state, facades, effects, and module lookups are committed only after initialization, startup, and the effects' initial synchronous run succeed. A failed effect startup emits no transient state, watch, patch, or version update. Failed loads dispose and roll back the scope so a later call can retry.
 
 ## Plugins
 
@@ -422,16 +340,9 @@ const plugin: Plugin = {
 };
 ```
 
-`PluginContext` gives plugins managed cleanup. `context.watch()` is `app.watch()`
-with automatic teardown, and `context.onDispose()` registers any other disposer.
-Plugin `providers` can contribute service/token dependencies before app providers
-are registered, but they cannot register Coexist modules. App-level non-`multi`
-providers replace plugin providers for the same token; app-level `multi`
-providers append to plugin `multi` providers.
+`PluginContext` gives plugins managed cleanup. `context.watch()` is `app.watch()` with automatic teardown, and `context.onDispose()` registers any other disposer. Plugin `providers` can contribute service/token dependencies before app providers are registered, but they cannot register Coexist modules. App-level non-`multi` providers replace plugin providers for the same token; app-level `multi` providers append to plugin `multi` providers.
 
-Built-in: [`createLoggerPlugin()`](#logger-plugin). The
-[`@coexist/storage`](../storage), [`@coexist/router`](../router), and
-[`@coexist/devtools`](../devtools) packages are plugins too.
+Built-in: [`createLoggerPlugin()`](#logger-plugin). The [`@coexist/storage`](../storage), [`@coexist/router`](../router), and [`@coexist/devtools`](../devtools) packages are plugins too.
 
 ### Logger plugin
 
@@ -464,14 +375,11 @@ const stop = app.watch(
 stop();
 ```
 
-Watch selectors run once per committed store mutation. Listener exceptions and
-async rejections are isolated from actions and reported to plugin `onError`
-hooks with phase `"watch"`.
+Watch selectors run once per committed store mutation. Listener exceptions and async rejections are isolated from actions and reported to plugin `onError` hooks with phase `"watch"`.
 
 ## Testing
 
-`testApp()` wraps `createApp()` with an inspector and override support. See
-[`@coexist/testing`](../testing) for the dedicated facade.
+`testApp()` wraps `createApp()` with an inspector and override support. See [`@coexist/testing`](../testing) for the dedicated facade.
 
 ```ts
 import { provide, testApp } from "@coexist/core";
@@ -490,16 +398,11 @@ const started = await testApp({ autoStart: true, providers: [Counter] });
 expect(started.started).toBe(true);
 ```
 
-`testApp({ overrides })` replaces providers discovered from `providers`, but it
-cannot introduce a brand new `@Module` after module discovery. The inspector
-(`app.test`) exposes `getActions`, `getState`, `getPatches`, `clearActions`,
-`clearPatches`, and `flushEffects`.
+`testApp({ overrides })` replaces providers discovered from `providers`, but it cannot introduce a brand new `@Module` after module discovery. The inspector (`app.test`) exposes `getActions`, `getState`, `getPatches`, `clearActions`, `clearPatches`, and `flushEffects`.
 
 ## Worker / shared runtime
 
-`@coexist/core` includes a worker-hosting prototype: run the app (and its
-modules) in a Worker, iframe, `MessagePort`, `BroadcastChannel`, or custom RPC
-channel, and consume its state from another context.
+`@coexist/core` includes a worker-hosting prototype: run the app (and its modules) in a Worker, iframe, `MessagePort`, `BroadcastChannel`, or custom RPC channel, and consume its state from another context.
 
 ```ts
 import {
@@ -529,44 +432,22 @@ client.dispose();
 await host.dispose();
 ```
 
-Delegated method promises settle after the client mirror reaches the worker
-state version associated with the method result. If a result arrives before its
-state update, the client requests a snapshot sync and waits before resolving or
-rejecting the call.
+Delegated method promises settle after the client mirror reaches the worker state version associated with the method result. If a result arrives before its state update, the client requests a snapshot sync and waits before resolving or rejecting the call.
 
-Worker host disposal aborts in-flight app initialization before awaiting
-readiness. Worker client disposal rejects both pending and newly attempted RPC
-calls, so no request can remain orphaned after subscriptions are removed.
+Worker host disposal aborts in-flight app initialization before awaiting readiness. Worker client disposal rejects both pending and newly attempted RPC calls, so no request can remain orphaned after subscriptions are removed.
 
-Declared module actions are remotely callable by default. Opt additional plain
-methods in per module with `createWorkerApp({ expose: { counter: ["refresh"] }, ... })`.
-Protocol messages are schema-validated (including safe patch paths), and client
-requests default to a 30-second timeout with per-call timeout/`AbortSignal`
-support through `callWithOptions()`. Bare/custom transports are trusted-endpoint
-APIs; postMessage adds `targetOrigin` plus origin/source filters, while broadcast
-transports support a shared `authToken` routing capability. Broadcast peers can
-observe that token, so BroadcastChannel remains a trusted same-origin transport,
-not an adversarial security boundary.
+Declared module actions are remotely callable by default. Opt additional plain methods in per module with `createWorkerApp({ expose: { counter: ["refresh"] }, ... })`. Protocol messages are schema-validated (including safe patch paths), and client requests default to a 30-second timeout with per-call timeout/`AbortSignal` support through `callWithOptions()`. Bare/custom transports are trusted-endpoint APIs; postMessage adds `targetOrigin` plus origin/source filters, while broadcast transports support a shared `authToken` routing capability. Broadcast peers can observe that token, so BroadcastChannel remains a trusted same-origin transport, not an adversarial security boundary.
 
 Transports (all interchangeable):
 
 - `createMemoryWorkerTransportPair()` — in-process host/client pair (tests).
 - `createPostMessageWorkerTransport(endpoint)` — `Worker`, iframe, `MessagePort`.
-- `createBroadcastWorkerTransport(channel, { peerId, targetPeerId })` — shared
-  tabs via `BroadcastChannel`; `createMemoryBroadcastChannel()` mirrors it in
-  tests.
+- `createBroadcastWorkerTransport(channel, { peerId, targetPeerId })` — shared tabs via `BroadcastChannel`; `createMemoryBroadcastChannel()` mirrors it in tests.
 - `createDataTransportWorkerTransport(dataTransport)` — process/socket/custom RPC.
 
-Hosts can isolate published state to selected top-level sections with
-`stateSections: ["counter"]` (method delegation still covers all modules). Sync
-defaults to `"snapshot"`; `sync: "patch"` sends patch-only updates after startup.
-Clients can observe conflicts via `onConflict` (`stale-message`,
-`missing-snapshot`, `version-gap`, `patch-apply-failed`).
+Hosts can isolate published state to selected top-level sections with `stateSections: ["counter"]` (method delegation still covers all modules). Sync defaults to `"snapshot"`; `sync: "patch"` sends patch-only updates after startup. Clients can observe conflicts via `onConflict` (`stale-message`, `missing-snapshot`, `version-gap`, `patch-apply-failed`).
 
-The prototype intentionally does not implement full shared-runtime conflict
-resolution or framework-specific worker bootstrapping. Adapters
-(`@coexist/react`, `@coexist/vue`, `@coexist/svelte`, `@coexist/solid`,
-`@coexist/angular`) ship `WorkerClient`-based hooks for consuming worker state.
+The prototype intentionally does not implement full shared-runtime conflict resolution or framework-specific worker bootstrapping. Adapters (`@coexist/react`, `@coexist/vue`, `@coexist/svelte`, `@coexist/solid`, `@coexist/angular`) ship `WorkerClient`-based hooks for consuming worker state.
 
 ## Errors
 
@@ -586,13 +467,7 @@ All errors extend `CoexistError`:
 
 ## API reference
 
-`createApp`, `createContainer`, `defineModule`, `getModuleMetadata`, the
-`Module`/`State`/`Action`/`Computed`/`Effect` decorators, `provide`, `token`,
-`tokenName`, `inject`, `lazyModule`, `runInAction`, `testApp`,
-`createLoggerPlugin`, and the worker factories are all exported from the package
-root, alongside their TypeScript types (`App`, `CreateAppOptions`, `Plugin`,
-`PluginContext`, `Container`, `Provider`, `Scope`, `WorkerClient`,
-`WorkerAppHost`, the event types, and more).
+`createApp`, `createContainer`, `defineModule`, `getModuleMetadata`, the `Module`/`State`/`Action`/`Computed`/`Effect` decorators, `provide`, `token`, `tokenName`, `inject`, `lazyModule`, `runInAction`, `testApp`, `createLoggerPlugin`, and the worker factories are all exported from the package root, alongside their TypeScript types (`App`, `CreateAppOptions`, `Plugin`, `PluginContext`, `Container`, `Provider`, `Scope`, `WorkerClient`, `WorkerAppHost`, the event types, and more).
 
 ### App
 
@@ -642,8 +517,7 @@ interface Container {
 }
 ```
 
-`override()` replaces existing records for the same token. Use `multi: true`
-providers with `provide()` when you want to append extension entries.
+`override()` replaces existing records for the same token. Use `multi: true` providers with `provide()` when you want to append extension entries.
 
 ## License
 

@@ -1,7 +1,6 @@
 # @coexist/solid
 
-> Solid bindings for [Coexist](../../README.md): a context provider and signals
-> for consuming a Coexist app (or a worker-hosted app).
+> Solid bindings for [Coexist](../../README.md): a context provider and signals for consuming a Coexist app (or a worker-hosted app).
 
 ## Installation
 
@@ -28,8 +27,7 @@ function CounterView() {
 </CoexistProvider>;
 ```
 
-`useComputed` returns a Solid `Accessor<T>` — call it (`count()`) to read inside
-JSX or an effect.
+`useComputed` returns a Solid `Accessor<T>` — call it (`count()`) to read inside JSX or an effect.
 
 ## API
 
@@ -40,8 +38,7 @@ JSX or an effect.
 | `useComputed(fn, opts?)`        | `Accessor<T>`      | Signal for `fn(app)`.           |
 | `useComputed(token, fn, opts?)` | `Accessor<TValue>` | Signal for `fn(module, app)`.   |
 
-Both `useComputed` overloads accept `{ equals }` (defaults to `Object.is`) and
-clean up with `onCleanup`.
+Both `useComputed` overloads accept `{ equals }` (defaults to `Object.is`) and clean up with `onCleanup`.
 
 ```tsx
 const count = useComputed(Counter, (m) => m.count);
@@ -73,12 +70,7 @@ function WorkerCounterView() {
 
 ## Exports
 
-`CoexistProvider`, `WorkerClientProvider`, the `CoexistContext` /
-`WorkerClientContext` contexts, `useApp`, `useModule`, `useComputed`,
-`useWorkerClient`, `useWorkerModule`, `useWorkerComputed`, `useWorkerSelector`,
-and the `CoexistProviderProps`, `WorkerClientProviderProps`,
-`UseComputedOptions`, `AppSelector`, `ModuleSelector` types. Hooks throw a
-`CoexistError` when the matching provider is missing.
+`CoexistProvider`, `WorkerClientProvider`, the `CoexistContext` / `WorkerClientContext` contexts, `useApp`, `useModule`, `useComputed`, `useWorkerClient`, `useWorkerModule`, `useWorkerComputed`, `useWorkerSelector`, and the `CoexistProviderProps`, `WorkerClientProviderProps`, `UseComputedOptions`, `AppSelector`, `ModuleSelector` types. Hooks throw a `CoexistError` when the matching provider is missing.
 
 ## License
 

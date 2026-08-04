@@ -1,21 +1,15 @@
 # Testing
 
-Coexist is designed to be tested without a UI. Modules are plain classes with
-injected dependencies, and `testApp()` gives you provider overrides plus an
-inspector for actions, state, and patches.
+Coexist is designed to be tested without a UI. Modules are plain classes with injected dependencies, and `testApp()` gives you provider overrides plus an inspector for actions, state, and patches.
 
-`testApp` is exported from both [`@coexist/core`](../packages/core/README.md) and
-the dedicated [`@coexist/testing`](../packages/testing/README.md) facade —
-importing from `@coexist/testing` keeps test wiring separate from production
-imports. The behavior is identical.
+`testApp` is exported from both [`@coexist/core`](../packages/core/README.md) and the dedicated [`@coexist/testing`](../packages/testing/README.md) facade — importing from `@coexist/testing` keeps test wiring separate from production imports. The behavior is identical.
 
 ## `testApp(options)`
 
 `testApp` extends `createApp` options and is overloaded:
 
 - `testApp(options?)` → `TestApp` (synchronous).
-- `testApp({ autoStart: true, ... })` → `Promise<TestApp>` (resolves after
-  `start()`).
+- `testApp({ autoStart: true, ... })` → `Promise<TestApp>` (resolves after `start()`).
 
 | Option          | Type              | Description                                    |
 | --------------- | ----------------- | ---------------------------------------------- |
@@ -29,9 +23,7 @@ A `TestApp` is a normal `App` plus a non-enumerable `test` inspector.
 
 ## Overriding dependencies
 
-`overrides` swaps a provider's implementation — perfect for injecting a fake or
-spy. It can replace a provider discovered from `providers`, but it **cannot add a
-brand-new `@Module`** after module discovery.
+`overrides` swaps a provider's implementation — perfect for injecting a fake or spy. It can replace a provider discovered from `providers`, but it **cannot add a brand-new `@Module`** after module discovery.
 
 ```ts
 import { defineModule, provide } from "@coexist/core";
@@ -90,14 +82,11 @@ expect(app.test.getActions()).toMatchObject([{ method: "increase", module: "coun
 expect(app.test.getState()).toEqual({ counter: { count: 2 } });
 ```
 
-`testApp()` enables patch capture for `getPatches()` automatically. `flushEffects()`
-resolves once pending effects settle — call it before asserting on effect-driven
-state.
+`testApp()` enables patch capture for `getPatches()` automatically. `flushEffects()` resolves once pending effects settle — call it before asserting on effect-driven state.
 
 ## Auto-starting
 
-When a test needs `onStart` hooks or async startup (e.g. storage hydration), use
-`autoStart` and await the returned promise:
+When a test needs `onStart` hooks or async startup (e.g. storage hydration), use `autoStart` and await the returned promise:
 
 ```ts
 const app = await testApp({ autoStart: true, providers: [Counter] });
@@ -106,8 +95,7 @@ expect(app.started).toBe(true);
 
 ## Clean up between tests
 
-Dispose the app after each test so effects, plugins, and provider `dispose`
-callbacks run and nothing leaks across tests:
+Dispose the app after each test so effects, plugins, and provider `dispose` callbacks run and nothing leaks across tests:
 
 ```ts
 import { afterEach } from "vitest";
@@ -122,10 +110,7 @@ afterEach(async () => {
 
 ## Testing async actions
 
-For actions that write state after an `await`, flush effects (and any pending
-microtasks) before asserting, and remember that post-`await` writes need a
-`runInAction` boundary in strict mode (see
-[State & Reactivity](./state-and-reactivity.md#strict-actions-and-runinaction)).
+For actions that write state after an `await`, flush effects (and any pending microtasks) before asserting, and remember that post-`await` writes need a `runInAction` boundary in strict mode (see [State & Reactivity](./state-and-reactivity.md#strict-actions-and-runinaction)).
 
 ```ts
 await app.getModule(Counter).refresh();
@@ -135,10 +120,7 @@ expect(app.test.getState()).toEqual({ counter: { count: 42 } });
 
 ## Testing adapters
 
-You can test framework integration with each framework's testing tools (e.g.
-`@testing-library/react`), passing an app from `testApp()` to the adapter's
-provider. The module logic itself, though, is best tested directly through
-`testApp()` — it is faster and framework-free.
+You can test framework integration with each framework's testing tools (e.g. `@testing-library/react`), passing an app from `testApp()` to the adapter's provider. The module logic itself, though, is best tested directly through `testApp()` — it is faster and framework-free.
 
 ## Runnable example
 

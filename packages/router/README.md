@@ -1,13 +1,8 @@
 # @coexist/router
 
-> Embeddable router primitives for [Coexist](../../README.md): a tiny `Router`
-> interface, browser/memory implementations, a `RouterToken`, and a plugin that
-> bridges route changes into the app lifecycle.
+> Embeddable router primitives for [Coexist](../../README.md): a tiny `Router` interface, browser/memory implementations, a `RouterToken`, and a plugin that bridges route changes into the app lifecycle.
 
-This package is intentionally minimal. It does not match routes, render views,
-or own navigation UI — it provides a location source you can inject and observe,
-plus helpers to wire it into a Coexist app. Pair it with any UI adapter to react
-to the current location.
+This package is intentionally minimal. It does not match routes, render views, or own navigation UI — it provides a location source you can inject and observe, plus helpers to wire it into a Coexist app. Pair it with any UI adapter to react to the current location.
 
 ## Installation
 
@@ -47,8 +42,7 @@ app.get(RouterToken).navigate("/settings");
 ### Routers
 
 - `createMemoryRouter({ initialPath? })` — in-memory router for SSR and tests.
-- `createBrowserRouter({ window? })` — backed by `history.pushState` + `popstate`;
-  reads `window` from the global by default, or accepts a `BrowserWindowLike`.
+- `createBrowserRouter({ window? })` — backed by `history.pushState` + `popstate`; reads `window` from the global by default, or accepts a `BrowserWindowLike`.
 
 Both implement the `Router` interface:
 
@@ -62,9 +56,7 @@ interface Router {
 
 ### Plugin
 
-`createRouterPlugin(router, options)` returns a Coexist `Plugin` that subscribes
-to the router for the app's lifetime, unsubscribes on dispose, and provides
-`RouterToken` for DI.
+`createRouterPlugin(router, options)` returns a Coexist `Plugin` that subscribes to the router for the app's lifetime, unsubscribes on dispose, and provides `RouterToken` for DI.
 
 | Option      | Type                                       | Description                                          |
 | ----------- | ------------------------------------------ | ---------------------------------------------------- |
@@ -75,10 +67,7 @@ to the router for the app's lifetime, unsubscribes on dispose, and provides
 ### DI
 
 - `RouterToken: Token<Router>` — inject the router anywhere (`app.get(RouterToken)`).
-- `provideRouter(router?)` — a `ProviderInput` that binds `RouterToken` to the
-  router (defaults to a fresh memory router). This is still useful when you want
-  to provide a router without installing the plugin, or override the plugin's
-  default router provider at the app level.
+- `provideRouter(router?)` — a `ProviderInput` that binds `RouterToken` to the router (defaults to a fresh memory router). This is still useful when you want to provide a router without installing the plugin, or override the plugin's default router provider at the app level.
 
 ### Location helpers
 
@@ -87,11 +76,7 @@ to the router for the app's lifetime, unsubscribes on dispose, and provides
 
 ## Exports
 
-`createMemoryRouter`, `createBrowserRouter`, `createRouterPlugin`,
-`provideRouter`, `RouterToken`, `parseLocation`, `formatLocation`, and the
-`Router`, `RouteLocation`, `RouterOptions`, `BrowserRouterOptions`,
-`RouterPluginOptions`, `BrowserWindowLike`, `BrowserLocationLike`,
-`BrowserHistoryLike` types.
+`createMemoryRouter`, `createBrowserRouter`, `createRouterPlugin`, `provideRouter`, `RouterToken`, `parseLocation`, `formatLocation`, and the `Router`, `RouteLocation`, `RouterOptions`, `BrowserRouterOptions`, `RouterPluginOptions`, `BrowserWindowLike`, `BrowserLocationLike`, `BrowserHistoryLike` types.
 
 ## License
 

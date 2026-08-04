@@ -1,28 +1,18 @@
 # UI Adapters
 
-Coexist does not own rendering. There is no `ViewModule`, root component base
-class, or `render()` abstraction. Each UI adapter is a thin layer that:
+Coexist does not own rendering. There is no `ViewModule`, root component base class, or `render()` abstraction. Each UI adapter is a thin layer that:
 
 1. provides the `App` (or a `WorkerClient`) to a component tree, and
-2. exposes the bound module facade plus a reactive selector, using the
-   framework's **native** reactivity.
+2. exposes the bound module facade plus a reactive selector, using the framework's **native** reactivity.
 
-This keeps every framework idiomatic: React users get hooks, Vue users get
-composables, Svelte users get stores/runes, Solid users get signals, Angular
-users get signals.
+This keeps every framework idiomatic: React users get hooks, Vue users get composables, Svelte users get stores/runes, Solid users get signals, Angular users get signals.
 
 ## The adapter contract
 
-`@coexist/core` exposes a framework-neutral reactive runtime — `getModule()` and
-`watch()` — rather than a selector-first external-store API. Why selectors still
-appear in adapters:
+`@coexist/core` exposes a framework-neutral reactive runtime — `getModule()` and `watch()` — rather than a selector-first external-store API. Why selectors still appear in adapters:
 
-- Coaction is **signal-backed**. Frameworks with native signal tracking (Vue,
-  Solid, Svelte, Angular) can read module state directly inside their reactive
-  scopes and stay subscribed automatically.
-- **React** does not track external signal reads during render, so its adapter is
-  selector-first and built on `useSyncExternalStore` for tear-free, concurrent-
-  safe reads.
+- Coaction is **signal-backed**. Frameworks with native signal tracking (Vue, Solid, Svelte, Angular) can read module state directly inside their reactive scopes and stay subscribed automatically.
+- **React** does not track external signal reads during render, so its adapter is selector-first and built on `useSyncExternalStore` for tear-free, concurrent- safe reads.
 
 Every adapter ultimately wraps two core calls:
 
@@ -38,8 +28,7 @@ app.watch(read, listener, opts); // subscribe to a derived value
 | **Module access**  | The bound module facade — call its actions, read computed/state.        |
 | **Selected state** | A reactive value (`fn(module \| app)`) that updates the view on change. |
 
-Selectors accept an `{ equals }` option (default `Object.is`) to control when the
-view updates.
+Selectors accept an `{ equals }` option (default `Object.is`) to control when the view updates.
 
 ## React — [`@coexist/react`](../packages/react/README.md)
 
@@ -57,8 +46,7 @@ function CounterView() {
 </CoexistProvider>;
 ```
 
-`useApp()` / `useCoexist()`, `useModule(token)`, `useSelector(selector)` or
-`useSelector(token, fn)`.
+`useApp()` / `useCoexist()`, `useModule(token)`, `useSelector(selector)` or `useSelector(token, fn)`.
 
 ## Vue — [`@coexist/vue`](../packages/vue/README.md)
 
@@ -71,8 +59,7 @@ const count = useComputed((app) => app.getModule(Counter).count); // Readonly<Re
 createVueApp(Root).use(coexistPlugin(app)).mount("#app");
 ```
 
-`provideCoexist(app)` / `coexistPlugin(app)`, `useModule(token)`,
-`useSelector`/`useComputed` (return `Readonly<Ref<T>>`).
+`provideCoexist(app)` / `coexistPlugin(app)`, `useModule(token)`, `useSelector`/`useComputed` (return `Readonly<Ref<T>>`).
 
 ## Svelte — [`@coexist/svelte`](../packages/svelte/README.md)
 
@@ -88,9 +75,7 @@ const count = selectedModuleStore(Counter, (m) => m.count);
 <button on:click={() => $counter.increase()}>{$count}</button>
 ```
 
-Stores work in Svelte 4 and 5. Svelte 5 rune helpers live at
-`@coexist/svelte/runes` (`moduleRune`, `selectedModuleRune`) and expose
-`.current` / `.value` / `.get()`.
+Stores work in Svelte 4 and 5. Svelte 5 rune helpers live at `@coexist/svelte/runes` (`moduleRune`, `selectedModuleRune`) and expose `.current` / `.value` / `.get()`.
 
 ## Solid — [`@coexist/solid`](../packages/solid/README.md)
 
@@ -135,8 +120,7 @@ bootstrapApplication(CounterView, { providers: [provideCoexist(app)] });
 
 ## Consuming worker-hosted state
 
-Every adapter has a parallel set of helpers for state hosted in a Worker (or
-other transport), driven by a `WorkerClient` instead of an `App`:
+Every adapter has a parallel set of helpers for state hosted in a Worker (or other transport), driven by a `WorkerClient` instead of an `App`:
 
 | Framework | Provide the client                           | Module proxy                             | Selected state                               |
 | --------- | -------------------------------------------- | ---------------------------------------- | -------------------------------------------- |
@@ -146,20 +130,14 @@ other transport), driven by a `WorkerClient` instead of an `App`:
 | Solid     | `<WorkerClientProvider client>`              | `useWorkerModule`                        | `useWorkerSelector` / `useWorkerComputed`    |
 | Angular   | `provideWorkerClient`                        | `injectWorkerModule`                     | `injectWorkerSignal`                         |
 
-The module proxy returned by `useWorkerModule`/`injectWorkerModule`/etc. is an
-`AsyncMethodProxy<T>` — every method returns a `Promise` because the call crosses
-a thread/transport boundary. See [Worker & Shared Runtime](./worker-runtime.md).
+The module proxy returned by `useWorkerModule`/`injectWorkerModule`/etc. is an `AsyncMethodProxy<T>` — every method returns a `Promise` because the call crosses a thread/transport boundary. See [Worker & Shared Runtime](./worker-runtime.md).
 
 ## Using two frameworks at once
 
-Because the core never imports a UI framework, the _same_ `app` can be rendered
-by more than one adapter in the same page — useful for incremental migrations and
-micro-frontends. Mount each framework normally and pass it the shared `app`.
+Because the core never imports a UI framework, the _same_ `app` can be rendered by more than one adapter in the same page — useful for incremental migrations and micro-frontends. Mount each framework normally and pass it the shared `app`.
 
 ## Next
 
 - [Worker & Shared Runtime](./worker-runtime.md) — the `WorkerClient` model.
 - [State & Reactivity](./state-and-reactivity.md) — what selectors subscribe to.
-- Per-framework API: [React](../packages/react/README.md) ·
-  [Vue](../packages/vue/README.md) · [Svelte](../packages/svelte/README.md) ·
-  [Solid](../packages/solid/README.md) · [Angular](../packages/angular/README.md).
+- Per-framework API: [React](../packages/react/README.md) · [Vue](../packages/vue/README.md) · [Svelte](../packages/svelte/README.md) · [Solid](../packages/solid/README.md) · [Angular](../packages/angular/README.md).

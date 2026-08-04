@@ -1,14 +1,10 @@
 # State & Reactivity
 
-Coexist's reactivity is provided by [Coaction](https://www.npmjs.com/package/coaction).
-You rarely call Coaction directly — modules and adapters sit on top — but
-understanding the store helps when you reach for `watch`, strict actions, or
-patches.
+Coexist's reactivity is provided by [Coaction](https://www.npmjs.com/package/coaction). You rarely call Coaction directly — modules and adapters sit on top — but understanding the store helps when you reach for `watch`, strict actions, or patches.
 
 ## One store, many slices
 
-Every stateful module contributes a **slice** to a single app-level Coaction
-store, keyed by the module's `name`:
+Every stateful module contributes a **slice** to a single app-level Coaction store, keyed by the module's `name`:
 
 ```ts
 const app = createApp({ providers: [Counter, Todos] });
@@ -17,10 +13,7 @@ app.store.getPureState();
 // { counter: { count: 0 }, todos: { items: [] } }
 ```
 
-One store (not one per module) is a deliberate choice: app-level patches,
-persistence, devtools, and selectors all operate over the whole application at
-once. User modules stay plain classes; Coexist generates the Coaction-compatible
-state/action layer internally.
+One store (not one per module) is a deliberate choice: app-level patches, persistence, devtools, and selectors all operate over the whole application at once. User modules stay plain classes; Coexist generates the Coaction-compatible state/action layer internally.
 
 ## Accessing state
 
@@ -32,8 +25,7 @@ Three layers, from most to least common:
    app.getModule(Counter).count;
    ```
 
-2. **Through a UI adapter selector** — reactive in components (see
-   [UI Adapters](./ui-adapters.md)):
+2. **Through a UI adapter selector** — reactive in components (see [UI Adapters](./ui-adapters.md)):
 
    ```ts
    const count = useSelector(Counter, (m) => m.count); // React
@@ -47,14 +39,11 @@ Three layers, from most to least common:
    app.store.subscribe(() => {}); // low-level change subscription
    ```
 
-Adapters use the stable reactive runtime contract, not private store internals.
-Prefer `app.getModule()` and selectors in application code; reserve `app.store`
-for plugins and tooling.
+Adapters use the stable reactive runtime contract, not private store internals. Prefer `app.getModule()` and selectors in application code; reserve `app.store` for plugins and tooling.
 
 ## Watching state
 
-`app.watch(read, listener, options?)` subscribes to a derived value. The
-`listener` fires when the value changes (by `equals`, default `Object.is`):
+`app.watch(read, listener, options?)` subscribes to a derived value. The `listener` fires when the value changes (by `equals`, default `Object.is`):
 
 ```ts
 const stop = app.watch(
@@ -69,20 +58,13 @@ const stop = app.watch(
 stop(); // unsubscribe
 ```
 
-Each committed store mutation is one notification source. A selector that
-returns a fresh object is therefore evaluated and delivered at most once for
-that mutation (subject to `equals`). Listener exceptions and rejected listener
-promises are observer failures: they are reported to plugin `onError` hooks with
-phase `"watch"` and never turn an already-committed action into a failure.
+Each committed store mutation is one notification source. A selector that returns a fresh object is therefore evaluated and delivered at most once for that mutation (subject to `equals`). Listener exceptions and rejected listener promises are observer failures: they are reported to plugin `onError` hooks with phase `"watch"` and never turn an already-committed action into a failure.
 
-`watch` is the primitive every UI adapter builds on — React's `useSelector`,
-Vue's `useSelector`, Svelte's `selectorStore`, Solid's `useComputed`, and
-Angular's `injectSignal` all wrap it with the framework's native reactivity.
+`watch` is the primitive every UI adapter builds on — React's `useSelector`, Vue's `useSelector`, Svelte's `selectorStore`, Solid's `useComputed`, and Angular's `injectSignal` all wrap it with the framework's native reactivity.
 
 ## Actions and transactions
 
-A method declared as an action wraps its synchronous state writes in a single
-transaction: multiple writes produce one patch and one notification.
+A method declared as an action wraps its synchronous state writes in a single transaction: multiple writes produce one patch and one notification.
 
 ```ts
 class Cart {
@@ -96,14 +78,11 @@ class Cart {
 }
 ```
 
-Each action also emits an `ActionEvent` (`{ module, method, args, startedAt,
-endedAt?, error? }`) to plugins — that's how the logger and devtools see them.
+Each action also emits an `ActionEvent` (`{ module, method, args, startedAt, endedAt?, error? }`) to plugins — that's how the logger and devtools see them.
 
 ## Strict actions and `runInAction`
 
-By default, writing state outside an action is allowed. Enable **strict actions**
-to require that every state write happens inside an action boundary — a guardrail
-that keeps all mutations auditable:
+By default, writing state outside an action is allowed. Enable **strict actions** to require that every state write happens inside an action boundary — a guardrail that keeps all mutations auditable:
 
 ```ts
 const app = createApp({
@@ -112,16 +91,9 @@ const app = createApp({
 });
 ```
 
-With strict actions on, top-level assignments, nested object/array mutations,
-and direct `app.store.setState()` / `app.store.apply()` calls outside an action
-throw before state changes. State views returned through modules and
-`store.getState()` carry the same deep guard. `store.getPureState()` returns a
-detached, serializable snapshot whose plain object and array tree is recursively
-frozen, so mutating the raw snapshot cannot bypass the action boundary.
+With strict actions on, top-level assignments, nested object/array mutations, and direct `app.store.setState()` / `app.store.apply()` calls outside an action throw before state changes. State views returned through modules and `store.getState()` carry the same deep guard. `store.getPureState()` returns a detached, serializable snapshot whose plain object and array tree is recursively frozen, so mutating the raw snapshot cannot bypass the action boundary.
 
-Async actions need care. Synchronous writes **before the first `await`** are part
-of the action's transaction. Writes **after an `await`** are no longer inside the
-original boundary, so in strict mode they need a fresh one. Use `runInAction`:
+Async actions need care. Synchronous writes **before the first `await`** are part of the action's transaction. Writes **after an `await`** are no longer inside the original boundary, so in strict mode they need a fresh one. Use `runInAction`:
 
 ```ts
 import { runInAction } from "@coexist/core";
@@ -140,8 +112,7 @@ class Counter {
 }
 ```
 
-`runInAction` accepts the module instance (or a token/instance) plus a callback,
-and an optional `{ name, args }` for nicer action events:
+`runInAction` accepts the module instance (or a token/instance) plus a callback, and an optional `{ name, args }` for nicer action events:
 
 ```ts
 app.runInAction(
@@ -153,45 +124,34 @@ app.runInAction(
 );
 ```
 
-For a controlled whole-store update, omit the module target and mutate through a
-store API inside the boundary. These action events use `"$app"` as their module:
+For a controlled whole-store update, omit the module target and mutate through a store API inside the boundary. These action events use `"$app"` as their module:
 
 ```ts
 app.runInAction(() => app.store.setState(nextState), { name: "hydrate" });
 ```
 
-The writable draft authority exists only while the synchronous store updater is
-running. Retaining a nested reference or continuing after an `await` does not
-extend the boundary.
+The writable draft authority exists only while the synchronous store updater is running. Retaining a nested reference or continuing after an `await` does not extend the boundary.
 
 Async actions may return promises; their settlement is reported to plugins.
 
 ## Patches
 
-Enable patch generation to receive structured diffs of each change. A plugin with
-`onPatch` enables patches automatically unless `engine.patches` is explicitly
-set:
+Enable patch generation to receive structured diffs of each change. A plugin with `onPatch` enables patches automatically unless `engine.patches` is explicitly set:
 
 ```ts
 const app = createApp({ providers: [Counter], engine: { patches: true } });
 ```
 
-With patches on, plugins receive `PatchEvent` (`{ patches, inversePatches }`) via
-`onPatch`. Patches power:
+With patches on, plugins receive `PatchEvent` (`{ patches, inversePatches }`) via `onPatch`. Patches power:
 
-- **The worker runtime's `sync: "patch"` mode** — sending diffs instead of full
-  snapshots after startup (see [Worker & Shared Runtime](./worker-runtime.md)).
+- **The worker runtime's `sync: "patch"` mode** — sending diffs instead of full snapshots after startup (see [Worker & Shared Runtime](./worker-runtime.md)).
 - **Devtools** time-travel-style inspection (see [Plugins](./plugins.md)).
 
-The store also tracks a monotonic `app.state.version` that increments on every
-change — handy as a coarse "something changed" signal.
+The store also tracks a monotonic `app.state.version` that increments on every change — handy as a coarse "something changed" signal.
 
 ## State change events
 
-Independently of patches, every store change emits a `StateChangeEvent`
-(`{ state }`) to plugins via `onStateChange`. The
-[storage plugin](../packages/storage/README.md) uses this to persist state; the
-[devtools plugin](../packages/devtools/README.md) records it on the timeline.
+Independently of patches, every store change emits a `StateChangeEvent` (`{ state }`) to plugins via `onStateChange`. The [storage plugin](../packages/storage/README.md) uses this to persist state; the [devtools plugin](../packages/devtools/README.md) records it on the timeline.
 
 ## Next
 

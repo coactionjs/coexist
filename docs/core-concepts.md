@@ -1,7 +1,6 @@
 # Core Concepts
 
-Coexist has a small vocabulary. Learn these seven terms and the rest of the
-framework follows.
+Coexist has a small vocabulary. Learn these seven terms and the rest of the framework follows.
 
 | Term         | One-line definition                                                         |
 | ------------ | --------------------------------------------------------------------------- |
@@ -15,8 +14,7 @@ framework follows.
 
 ## Modules
 
-A module is just a class. Nothing extends a base class; nothing is decorated by
-the framework at runtime beyond metadata you opt into.
+A module is just a class. Nothing extends a base class; nothing is decorated by the framework at runtime beyond metadata you opt into.
 
 ```ts
 import { defineModule } from "@coexist/core";
@@ -41,14 +39,11 @@ defineModule(Counter, {
 });
 ```
 
-The `name` is important: it is the **stable key** under which this module's state
-appears in the store. See [Modules](./modules.md) for the decorator form and the
-binding details.
+The `name` is important: it is the **stable key** under which this module's state appears in the store. See [Modules](./modules.md) for the decorator form and the binding details.
 
 ## The single app store
 
-Coexist creates **one** Coaction-backed store for the whole app, not one per
-module. Each module contributes a slice keyed by its `name`:
+Coexist creates **one** Coaction-backed store for the whole app, not one per module. Each module contributes a slice keyed by its `name`:
 
 ```ts
 const app = createApp({ providers: [Counter, Todos] });
@@ -57,16 +52,11 @@ app.store.getPureState();
 // { counter: { count: 0 }, todos: { items: [] } }
 ```
 
-A single store means unified patches, persistence, devtools, and selectors all
-see the entire application at once. You rarely touch `app.store` directly —
-prefer `app.getModule(Counter)` and adapter selectors — but it is there for
-advanced cases. See [State & Reactivity](./state-and-reactivity.md).
+A single store means unified patches, persistence, devtools, and selectors all see the entire application at once. You rarely touch `app.store` directly — prefer `app.getModule(Counter)` and adapter selectors — but it is there for advanced cases. See [State & Reactivity](./state-and-reactivity.md).
 
 ## State
 
-State is a declared set of fields. Reads are tracked by the reactive runtime, so
-computed values and effects know when to recompute, and UI selectors know when
-to re-render.
+State is a declared set of fields. Reads are tracked by the reactive runtime, so computed values and effects know when to recompute, and UI selectors know when to re-render.
 
 ```ts
 class Counter {
@@ -84,8 +74,7 @@ class Counter {
 
 ## Actions
 
-An action wraps its synchronous state writes in a transaction. Multiple writes
-in one action produce one coherent update (one patch, one notification):
+An action wraps its synchronous state writes in a transaction. Multiple writes in one action produce one coherent update (one patch, one notification):
 
 ```ts
 class Cart {
@@ -99,14 +88,11 @@ class Cart {
 }
 ```
 
-If you enable **strict actions**, writes outside an action throw — a guardrail
-that keeps all mutations auditable. Async actions need an explicit boundary after
-`await`; see [State & Reactivity](./state-and-reactivity.md#strict-actions-and-runinaction).
+If you enable **strict actions**, writes outside an action throw — a guardrail that keeps all mutations auditable. Async actions need an explicit boundary after `await`; see [State & Reactivity](./state-and-reactivity.md#strict-actions-and-runinaction).
 
 ## Computed values
 
-A computed getter is memoized through Coaction's signal-backed computed runtime.
-It recomputes only when the state it read changes, and caches otherwise:
+A computed getter is memoized through Coaction's signal-backed computed runtime. It recomputes only when the state it read changes, and caches otherwise:
 
 ```ts
 class Cart {
@@ -122,8 +108,7 @@ Declare it in `defineModule({ computed: ["count"] })` or with `@Computed`.
 
 ## Effects
 
-An effect is a method that runs once after the app initializes, then re-runs
-whenever the state it reads changes. Effects are torn down on `app.dispose()`.
+An effect is a method that runs once after the app initializes, then re-runs whenever the state it reads changes. Effects are torn down on `app.dispose()`.
 
 ```ts
 class Counter {
@@ -141,14 +126,11 @@ defineModule(Counter, {
 });
 ```
 
-Use effects for reactions to state — logging, syncing to external systems,
-triggering follow-up work — not for deriving values (that is what computed is
-for).
+Use effects for reactions to state — logging, syncing to external systems, triggering follow-up work — not for deriving values (that is what computed is for).
 
 ## Providers and dependency injection
 
-Modules can depend on services. You register everything through `providers`, and
-declare a module's dependencies with `deps` (constructor arguments):
+Modules can depend on services. You register everything through `providers`, and declare a module's dependencies with `deps` (constructor arguments):
 
 ```ts
 abstract class Logger {
@@ -169,15 +151,11 @@ const app = createApp({
 });
 ```
 
-`@Module` classes are eagerly instantiated so their state can be bound. Plain
-service classes stay lazy until something needs them. The full model — tokens,
-provider kinds, scopes, lifetime safety, and disposal — is in
-[Dependency Injection](./dependency-injection.md).
+`@Module` classes are eagerly instantiated so their state can be bound. Plain service classes stay lazy until something needs them. The full model — tokens, provider kinds, scopes, lifetime safety, and disposal — is in [Dependency Injection](./dependency-injection.md).
 
 ## The app
 
-`createApp(options)` returns an `App`. It owns the DI container and the store,
-and exposes a small surface:
+`createApp(options)` returns an `App`. It owns the DI container and the store, and exposes a small surface:
 
 ```ts
 app.getModule(Counter); // the bound module facade
@@ -188,8 +166,7 @@ await app.start(); // run onStart hooks (optional)
 await app.dispose(); // tear everything down
 ```
 
-Lifecycle, options, lazy modules, and scopes are covered in
-[Application Lifecycle](./application-lifecycle.md).
+Lifecycle, options, lazy modules, and scopes are covered in [Application Lifecycle](./application-lifecycle.md).
 
 ## Putting it together
 

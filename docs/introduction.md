@@ -1,10 +1,6 @@
 # Introduction
 
-Coexist is a **UI-agnostic application meta-framework** built on top of
-[Coaction](https://www.npmjs.com/package/coaction). It gives you a typed
-application core — dependency injection, object-oriented stateful modules,
-lifecycle, plugins, testing, and worker execution — without binding your
-business logic to any one UI framework.
+Coexist is a **UI-agnostic application meta-framework** built on top of [Coaction](https://www.npmjs.com/package/coaction). It gives you a typed application core — dependency injection, object-oriented stateful modules, lifecycle, plugins, testing, and worker execution — without binding your business logic to any one UI framework.
 
 ## The one-line pitch
 
@@ -12,42 +8,28 @@ business logic to any one UI framework.
 
 The value is not "write one UI for every framework." It is:
 
-> Write business modules once. Run them with React, Vue, Svelte, Solid, Angular,
-> vanilla JS, workers, shared tabs, and tests.
+> Write business modules once. Run them with React, Vue, Svelte, Solid, Angular, vanilla JS, workers, shared tabs, and tests.
 
 ## What Coexist is
 
-- An **embeddable application runtime** for business logic, dependency
-  injection, stateful modules, lifecycle, worker execution, and cross-runtime
-  state synchronization.
-- A **programming model** inspired by Reactant — state, actions, computed
-  values, DI, lifecycle, plugins, and testing — without Reactant's React/Redux
-  coupling.
-- A set of **framework-native adapters** that expose your modules to React
-  hooks, Vue composables, Svelte stores/runes, Solid signals, and Angular
-  signals.
+- An **embeddable application runtime** for business logic, dependency injection, stateful modules, lifecycle, worker execution, and cross-runtime state synchronization.
+- A **programming model** inspired by Reactant — state, actions, computed values, DI, lifecycle, plugins, and testing — without Reactant's React/Redux coupling.
+- A set of **framework-native adapters** that expose your modules to React hooks, Vue composables, Svelte stores/runes, Solid signals, and Angular signals.
 
 ## What Coexist is not
 
-Coexist is **not** a replacement for Next.js, Nuxt, SvelteKit, Angular, or
-Vite. It deliberately does not provide:
+Coexist is **not** a replacement for Next.js, Nuxt, SvelteKit, Angular, or Vite. It deliberately does not provide:
 
 - A universal component abstraction or cross-framework template syntax.
-- A rendering or mounting layer — there is no `render()`, `bootstrap()`,
-  `ViewModule`, or root component base class. Rendering stays native to each
-  framework.
-- File-based routing, a full-stack server framework, a build/deploy system, or
-  a UI component library.
-- Reflection-based DI (`reflect-metadata` / `emitDecoratorMetadata`) or
-  automatic constructor-type injection.
+- A rendering or mounting layer — there is no `render()`, `bootstrap()`, `ViewModule`, or root component base class. Rendering stays native to each framework.
+- File-based routing, a full-stack server framework, a build/deploy system, or a UI component library.
+- Reflection-based DI (`reflect-metadata` / `emitDecoratorMetadata`) or automatic constructor-type injection.
 
-Routing, persistence, and devtools exist, but as **plugins** — never baked into
-the core.
+Routing, persistence, and devtools exist, but as **plugins** — never baked into the core.
 
 ## The mental model
 
-A Coexist app is a graph of **modules** wired by a small **DI container**. Each
-module is a plain class:
+A Coexist app is a graph of **modules** wired by a small **DI container**. Each module is a plain class:
 
 ```ts
 class Counter {
@@ -70,9 +52,7 @@ app.store.getPureState();
 // { counter: { count: 2 }, todos: { items: [] } }
 ```
 
-UI adapters read that store with each framework's native reactivity. The same
-`Counter` can drive a React component, a Vue component, or run inside a Web
-Worker — the business logic never changes.
+UI adapters read that store with each framework's native reactivity. The same `Counter` can drive a React component, a Vue component, or run inside a Web Worker — the business logic never changes.
 
 ```txt
 Application code
@@ -87,24 +67,18 @@ coaction ────────────────────── sign
 @coexist/react · @coexist/vue · @coexist/svelte · @coexist/solid · @coexist/angular
 ```
 
-The core runtime never imports a UI framework, and it never mounts UI. Coaction
-is a powerful implementation dependency — "powered by Coaction" — not a required
-part of your mental model.
+The core runtime never imports a UI framework, and it never mounts UI. Coaction is a powerful implementation dependency — "powered by Coaction" — not a required part of your mental model.
 
 ## When should you reach for Coexist?
 
 Coexist shines when:
 
 - Your **domain logic is non-trivial** and you want it decoupled from the view.
-- You need the **same logic across multiple frameworks** (a design-system team,
-  a migration from one framework to another, micro-frontends).
-- You want to **move work off the main thread** (Web Worker) or **coordinate
-  state across tabs** without rewriting your modules.
-- You value **testability**: plain classes with injected dependencies and a
-  first-class `testApp()`.
+- You need the **same logic across multiple frameworks** (a design-system team, a migration from one framework to another, micro-frontends).
+- You want to **move work off the main thread** (Web Worker) or **coordinate state across tabs** without rewriting your modules.
+- You value **testability**: plain classes with injected dependencies and a first-class `testApp()`.
 
-It is intentionally optional and incremental. You can adopt it for one feature
-module and keep the rest of your app as-is.
+It is intentionally optional and incremental. You can adopt it for one feature module and keep the rest of your app as-is.
 
 ## Next steps
 

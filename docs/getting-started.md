@@ -1,20 +1,17 @@
 # Getting Started
 
-This guide takes you from an empty directory to a running Coexist app with a UI
-framework of your choice.
+This guide takes you from an empty directory to a running Coexist app with a UI framework of your choice.
 
 ## Requirements
 
 - **Node.js** `>=22.12.0`
 - A package manager (pnpm, npm, or yarn). The examples below use pnpm.
 
-Coexist ships as **ESM only**. Your project should use `"type": "module"` (or
-`.mjs`/`.mts` files) and a modern bundler or Node version.
+Coexist ships as **ESM only**. Your project should use `"type": "module"` (or `.mjs`/`.mts` files) and a modern bundler or Node version.
 
 ## Option A — scaffold a project
 
-The fastest way to start is the `create-coexist` CLI. It generates a minimal
-`@coexist/core` project with a `defineModule()` counter:
+The fastest way to start is the `create-coexist` CLI. It generates a minimal `@coexist/core` project with a `defineModule()` counter:
 
 ```sh
 pnpm dlx @coexist/create my-app
@@ -46,9 +43,7 @@ pnpm add @coexist/react   # or @coexist/vue, @coexist/svelte, @coexist/solid, @c
 
 ## Your first module
 
-A module is a plain class. Declare which members are state/actions/computed
-either with decorators or with `defineModule()`. The no-decorator form works
-everywhere, so we start there:
+A module is a plain class. Declare which members are state/actions/computed either with decorators or with `defineModule()`. The no-decorator form works everywhere, so we start there:
 
 ```ts
 // src/counter.ts
@@ -78,9 +73,7 @@ defineModule(Counter, {
 });
 ```
 
-> Prefer decorators? See [Modules](./modules.md) for the `@Module`, `@State`,
-> `@Action`, `@Computed`, and `@Effect` equivalents. They require a build setup
-> with TC39 decorators and the `accessor` keyword.
+> Prefer decorators? See [Modules](./modules.md) for the `@Module`, `@State`, `@Action`, `@Computed`, and `@Effect` equivalents. They require a build setup with TC39 decorators and the `accessor` keyword.
 
 ## Create the app
 
@@ -104,8 +97,7 @@ console.log(app.store.getPureState()); // { counter: { count: 1 } }
 
 ## Render with a framework
 
-Pick the tab for your framework. Each adapter only provides context and
-subscription helpers — you keep your framework's normal mount API.
+Pick the tab for your framework. Each adapter only provides context and subscription helpers — you keep your framework's normal mount API.
 
 ### React
 

@@ -1,7 +1,6 @@
 # Contributing to Coexist
 
-Thanks for your interest in improving Coexist! This guide covers the local
-setup, the day-to-day workflow, and the conventions the repository enforces.
+Thanks for your interest in improving Coexist! This guide covers the local setup, the day-to-day workflow, and the conventions the repository enforces.
 
 ## Prerequisites
 
@@ -22,9 +21,7 @@ pnpm install
 pnpm run build   # build all packages once so cross-package types resolve
 ```
 
-This is a [pnpm workspace](https://pnpm.io/workspaces) monorepo with strict,
-catalog-managed dependency versions and [Turborepo](https://turbo.build/) task
-orchestration. Packages live in `packages/*` and runnable demos in `examples/*`.
+This is a [pnpm workspace](https://pnpm.io/workspaces) monorepo with strict, catalog-managed dependency versions and [Turborepo](https://turbo.build/) task orchestration. Packages live in `packages/*` and runnable demos in `examples/*`.
 
 ## Repository tooling
 
@@ -63,36 +60,28 @@ pnpm --filter @coexist/core test
 pnpm --filter @coexist/example-react-counter dev
 ```
 
-Before opening a pull request, make sure `pnpm run check` passes — it mirrors the
-CI `verify` job.
+Before opening a pull request, make sure `pnpm run check` passes — it mirrors the CI `verify` job.
 
 ## Tests
 
-Tests live next to the source as `*.test.ts` files and run through Vitest
-workspace projects (one per package). Add or update tests for any behavior change.
-For app-level tests, prefer [`@coexist/testing`](./packages/testing)'s `testApp`,
-which provides provider overrides and action/state/patch inspection.
+Tests live next to the source as `*.test.ts` files and run through Vitest workspace projects (one per package). Add or update tests for any behavior change. For app-level tests, prefer [`@coexist/testing`](./packages/testing)'s `testApp`, which provides provider overrides and action/state/patch inspection.
 
 ## Commit conventions
 
-Commits follow [Conventional Commits](https://www.conventionalcommits.org/) and
-are validated by commitlint on commit. Use the guided prompt:
+Commits follow [Conventional Commits](https://www.conventionalcommits.org/) and are validated by commitlint on commit. Use the guided prompt:
 
 ```sh
 pnpm run commit
 ```
 
-- **Types:** `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`,
-  `build`, `ci`, `chore`, `revert`.
-- **Scopes (preferred):** `core`, `config`, `repo`, `release`, `docs`, `ci`,
-  `deps` — custom scopes are allowed but a scope is required.
+- **Types:** `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`.
+- **Scopes (preferred):** `core`, `config`, `repo`, `release`, `docs`, `ci`, `deps` — custom scopes are allowed but a scope is required.
 
 Example: `docs(core): document worker transports`.
 
 ## Changesets and releases
 
-User-facing changes need a [changeset](https://github.com/changesets/changesets)
-describing the change and the semver bump for each affected package:
+User-facing changes need a [changeset](https://github.com/changesets/changesets) describing the change and the semver bump for each affected package:
 
 ```sh
 pnpm changeset
@@ -113,5 +102,4 @@ You generally only need to add a changeset; the rest is handled by CI.
 3. Run `pnpm run check`.
 4. Open a PR with a clear description of the motivation and approach.
 
-By contributing, you agree that your contributions are licensed under the
-[MIT License](./LICENSE).
+By contributing, you agree that your contributions are licensed under the [MIT License](./LICENSE).

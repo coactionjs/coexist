@@ -1,17 +1,8 @@
 # Dependency Injection
 
-Coexist ships a small, explicit DI container. It is deliberately **not**
-Inversify/TSyringe/TypeDI-style: there is no `reflect-metadata`, no
-`emitDecoratorMetadata`, no constructor-type reflection, no parameter decorators,
-and no Proxy-based resolution. You declare tokens and dependency lists
-explicitly, and the container resolves a typed graph.
+Coexist ships a small, explicit DI container. It is deliberately **not** Inversify/TSyringe/TypeDI-style: there is no `reflect-metadata`, no `emitDecoratorMetadata`, no constructor-type reflection, no parameter decorators, and no Proxy-based resolution. You declare tokens and dependency lists explicitly, and the container resolves a typed graph.
 
-> **Why explicit?** Standard (TC39) decorators are not compatible with
-> `emitDecoratorMetadata`, do not support parameter decorators, and automatic
-> constructor-type injection is not portable across TypeScript, Babel, SWC,
-> esbuild, and worker runtimes. Explicit declarations work everywhere and give
-> Coexist tight control over scopes, lifecycle, worker boundaries, test
-> overrides, and disposal.
+> **Why explicit?** Standard (TC39) decorators are not compatible with `emitDecoratorMetadata`, do not support parameter decorators, and automatic constructor-type injection is not portable across TypeScript, Babel, SWC, esbuild, and worker runtimes. Explicit declarations work everywhere and give Coexist tight control over scopes, lifecycle, worker boundaries, test overrides, and disposal.
 
 ## Injection tokens
 
@@ -21,10 +12,8 @@ A token identifies something the container can resolve. Any of these works:
 type InjectionToken<T> = Token<T> | ClassToken<T> | string | symbol;
 ```
 
-- **A class / abstract class** — the most common token. The class is both the
-  identity and (for `useClass`) the implementation.
-- **A typed `Token<T>`** created by `token<T>(description?)` — best for
-  interfaces and non-class contracts.
+- **A class / abstract class** — the most common token. The class is both the identity and (for `useClass`) the implementation.
+- **A typed `Token<T>`** created by `token<T>(description?)` — best for interfaces and non-class contracts.
 - **A string or symbol** — handy for ad-hoc or cross-boundary keys.
 
 ```ts
@@ -37,19 +26,15 @@ interface Logger {
 const LoggerToken = token<Logger>("Logger");
 ```
 
-Prefer `token<T>()` for interfaces (interfaces don't exist at runtime, so they
-can't be tokens), and prefer an `abstract class` when you want a single symbol
-that doubles as a type.
+Prefer `token<T>()` for interfaces (interfaces don't exist at runtime, so they can't be tokens), and prefer an `abstract class` when you want a single symbol that doubles as a type.
 
 ## Providers
 
-`providers` is the single composition entry point of an app. Each entry is one
-of:
+`providers` is the single composition entry point of an app. Each entry is one of:
 
 1. A **`@Module` class** — a stateful Coexist module, eagerly instantiated.
 2. A **plain class** — a normal DI class provider, lazy by default.
-3. A **`provide(token, options)`** entry — binds a token to a value, class,
-   factory, or existing provider.
+3. A **`provide(token, options)`** entry — binds a token to a value, class, factory, or existing provider.
 
 ```ts
 import { createApp, provide, token } from "@coexist/core";
@@ -79,14 +64,11 @@ createApp({
 | Factory  | `{ useFactory, deps?, scope?, eager?, autoDispose? }` | Calls the factory with resolved `deps`; may be async.   |
 | Existing | `{ useExisting }`                                     | Aliases one token to another.                           |
 
-`provide(token, options)` preserves the generic relationship between the token
-and the value: `provide(LoggerToken, { useValue })` constrains `useValue` to a
-`Logger`.
+`provide(token, options)` preserves the generic relationship between the token and the value: `provide(LoggerToken, { useValue })` constrains `useValue` to a `Logger`.
 
 ## Declaring dependencies
 
-Use `deps` to declare what a class/factory needs, in constructor-argument order.
-A dependency spec is a token, or an object with modifiers:
+Use `deps` to declare what a class/factory needs, in constructor-argument order. A dependency spec is a token, or an object with modifiers:
 
 ```ts
 type DependencySpec<T> =
@@ -112,8 +94,7 @@ provide(Dashboard, {
 });
 ```
 
-A class can also carry its own `static inject` list, which is used when `deps`
-is omitted.
+A class can also carry its own `static inject` list, which is used when `deps` is omitted.
 
 `@Module` classes declare `deps` in their metadata:
 
@@ -138,16 +119,11 @@ provide(RequestContext, { useClass: RequestContext, scope: "scoped" });
 provide(Id, { useFactory: () => crypto.randomUUID(), scope: "transient" });
 ```
 
-Coexist app modules must use `singleton`. A module owns exactly one slice in the
-app's single store and its bound facade must be the same instance seen by DI;
-`scoped`, `resolution`, and `transient` module scopes are rejected during app or
-lazy-module provider normalization. Those scopes remain fully supported for
-plain service/factory providers.
+Coexist app modules must use `singleton`. A module owns exactly one slice in the app's single store and its bound facade must be the same instance seen by DI; `scoped`, `resolution`, and `transient` module scopes are rejected during app or lazy-module provider normalization. Those scopes remain fully supported for plain service/factory providers.
 
 ## Lifetime safety
 
-A longer-lived provider that captures a shorter-lived one can leak scope state.
-The container guards against this:
+A longer-lived provider that captures a shorter-lived one can leak scope state. The container guards against this:
 
 ```txt
 singleton  → may NOT depend on scoped / resolution / transient
@@ -156,14 +132,11 @@ resolution → may depend on transient
 transient  → may depend on anything
 ```
 
-Violations throw `LifetimeLeakError`. If a dependency genuinely does not capture
-mutable scope state (a pure value or stateless factory), mark it `leakSafe: true`
-to opt out of the check for that provider.
+Violations throw `LifetimeLeakError`. If a dependency genuinely does not capture mutable scope state (a pure value or stateless factory), mark it `leakSafe: true` to opt out of the check for that provider.
 
 ## Multi providers
 
-Register several providers under one token with `multi: true`, then read them
-all with `getAll()` (or `{ many: true }` in `deps`):
+Register several providers under one token with `multi: true`, then read them all with `getAll()` (or `{ many: true }` in `deps`):
 
 ```ts
 import { createApp, provide, token, type Plugin } from "@coexist/core";
@@ -180,15 +153,12 @@ const app = createApp({
 app.getAll(PluginToken); // [PluginA, PluginB]
 ```
 
-Calling `get()` on a token with multiple providers throws
-`AmbiguousProviderError`.
+Calling `get()` on a token with multiple providers throws `AmbiguousProviderError`.
 
 ## Eager vs lazy
 
-- `@Module` classes and `useValue` providers are **eager** (created during
-  `createApp()`).
-- Plain class and factory providers are **lazy** — created only when something
-  resolves them.
+- `@Module` classes and `useValue` providers are **eager** (created during `createApp()`).
+- Plain class and factory providers are **lazy** — created only when something resolves them.
 
 Force eager creation for startup services:
 
@@ -198,8 +168,7 @@ provide(Analytics, { eager: true, useClass: Analytics });
 
 ## Imperative resolution: `inject()`
 
-Inside a factory or during provider construction you can resolve dependencies
-imperatively with `inject(token)`:
+Inside a factory or during provider construction you can resolve dependencies imperatively with `inject(token)`:
 
 ```ts
 import { inject, provide } from "@coexist/core";
@@ -209,9 +178,7 @@ provide(Service, {
 });
 ```
 
-`inject()` only works while a provider is being resolved or during the
-synchronous part of an app hook. For portable async hooks, resolve after an
-`await` through the explicit lifecycle context instead:
+`inject()` only works while a provider is being resolved or during the synchronous part of an app hook. For portable async hooks, resolve after an `await` through the explicit lifecycle context instead:
 
 ```ts
 async onInit(context: ModuleLifecycleContext): Promise<void> {
@@ -220,20 +187,11 @@ async onInit(context: ModuleLifecycleContext): Promise<void> {
 }
 ```
 
-Plugin setup uses `PluginContext.inject()` the same way. These explicit
-resolvers remain isolated when several apps initialize concurrently in a
-browser. Bare `inject()` also follows async execution in runtimes that provide
-native async context, but portable code should not depend on that capability.
-Outside an active resolution window it throws `InjectContextError`.
+Plugin setup uses `PluginContext.inject()` the same way. These explicit resolvers remain isolated when several apps initialize concurrently in a browser. Bare `inject()` also follows async execution in runtimes that provide native async context, but portable code should not depend on that capability. Outside an active resolution window it throws `InjectContextError`.
 
 ## The container
 
-`createApp()` normalizes providers, **freezes** the root provider graph,
-instantiates eager modules, builds the store, and binds module state/actions to
-that store. After freezing, `provide()` / `override()` throw
-`FrozenContainerError`. The `App` exposes the read side
-(`get`, `getAsync`, `getAll`); the mutable `Container` is reachable through a
-scope for advanced cases:
+`createApp()` normalizes providers, **freezes** the root provider graph, instantiates eager modules, builds the store, and binds module state/actions to that store. After freezing, `provide()` / `override()` throw `FrozenContainerError`. The `App` exposes the read side (`get`, `getAsync`, `getAll`); the mutable `Container` is reachable through a scope for advanced cases:
 
 ```ts
 interface Container {
@@ -252,25 +210,18 @@ interface Container {
 }
 ```
 
-`override()` replaces the container's existing records for the same token. Use
-`provide(..., { multi: true })` when you want to append to a multi-provider
-extension point instead.
+`override()` replaces the container's existing records for the same token. Use `provide(..., { multi: true })` when you want to append to a multi-provider extension point instead.
 
-`build()` / `buildAsync()` construct an **unregistered** class without caching it
-— useful in tests and advanced factories:
+`build()` / `buildAsync()` construct an **unregistered** class without caching it — useful in tests and advanced factories:
 
 ```ts
 const instance = app.createScope().container.build(Service);
 const asyncInstance = await app.createScope().container.buildAsync(ServiceWithAsyncDeps);
 ```
 
-Use the async variants whenever any dependency is backed by an async factory; the
-sync path throws `AsyncProviderInSyncResolutionError`.
+Use the async variants whenever any dependency is backed by an async factory; the sync path throws `AsyncProviderInSyncResolutionError`.
 
-If sync resolution discovers an async provider, its in-flight work remains
-owned by the container even though the sync call throws. A later `getAsync()`
-shares a cacheable pending provider, and container disposal waits for and cleans
-up any fulfilled resource, including transient results.
+If sync resolution discovers an async provider, its in-flight work remains owned by the container even though the sync call throws. A later `getAsync()` shares a cacheable pending provider, and container disposal waits for and cleans up any fulfilled resource, including transient results.
 
 ## Disposal
 
@@ -283,20 +234,9 @@ provide(Connection, {
 });
 ```
 
-Class and factory providers default to `autoDispose: true`: without a custom
-callback, the container looks for `Symbol.asyncDispose`, `Symbol.dispose`,
-`dispose()`, then `destroy()`. Values passed through `useValue` are external and
-default to `autoDispose: false`; opt in only when ownership is intentionally
-transferred. `useExisting` aliases never take ownership of the target. An
-explicit `dispose(value)` callback always runs and replaces convention-based
-disposal rather than running in addition to it.
+Class and factory providers default to `autoDispose: true`: without a custom callback, the container looks for `Symbol.asyncDispose`, `Symbol.dispose`, `dispose()`, then `destroy()`. Values passed through `useValue` are external and default to `autoDispose: false`; opt in only when ownership is intentionally transferred. `useExisting` aliases never take ownership of the target. An explicit `dispose(value)` callback always runs and replaces convention-based disposal rather than running in addition to it.
 
-`app.dispose()` disposes created instances in **reverse creation order**, then
-disposes scopes and the container. Modules can also implement `onDispose()` (see
-[Application Lifecycle](./application-lifecycle.md)). Disposal waits for
-in-flight async providers before releasing their results. Once a container or
-its root has begun disposal, further resolution, mutation, builds, and scope
-creation throw `DisposedContainerError`.
+`app.dispose()` disposes created instances in **reverse creation order**, then disposes scopes and the container. Modules can also implement `onDispose()` (see [Application Lifecycle](./application-lifecycle.md)). Disposal waits for in-flight async providers before releasing their results. Once a container or its root has begun disposal, further resolution, mutation, builds, and scope creation throw `DisposedContainerError`.
 
 ## Errors
 

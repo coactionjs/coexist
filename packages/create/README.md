@@ -1,13 +1,10 @@
 # @coexist/create
 
-> Project scaffolding for [Coexist](../../README.md). Ships the
-> `create-coexist` CLI and a programmatic `createCoexistProject()` API that
-> generate a minimal `@coexist/core` starter.
+> Project scaffolding for [Coexist](../../README.md). Ships the `create-coexist` CLI and a programmatic `createCoexistProject()` API that generate a minimal `@coexist/core` starter.
 
 ## Usage
 
-Scaffold a new project with your package manager's `create`/`dlx` command — no
-global install required:
+Scaffold a new project with your package manager's `create`/`dlx` command — no global install required:
 
 ```sh
 pnpm dlx @coexist/create my-app
@@ -19,8 +16,7 @@ pnpm install
 pnpm start
 ```
 
-The target directory defaults to `coexist-app` when no name is given. The
-generated project contains:
+The target directory defaults to `coexist-app` when no name is given. The generated project contains:
 
 ```text
 my-app/
@@ -73,8 +69,7 @@ Returns `{ root, files }`.
 
 ## Exports
 
-CLI bin `create-coexist`; module exports `createCoexistProject` and the
-`CreateCoexistProjectOptions`, `CreatedCoexistProject` types.
+CLI bin `create-coexist`; module exports `createCoexistProject` and the `CreateCoexistProjectOptions`, `CreatedCoexistProject` types.
 
 ## License
 

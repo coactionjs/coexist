@@ -1,8 +1,6 @@
 # Coexist Examples
 
-Each example is a runnable workspace package that demonstrates one slice of
-Coexist. They share the same `Counter` module across frameworks so you can
-compare adapters directly.
+Each example is a runnable workspace package that demonstrates one slice of Coexist. They share the same `Counter` module across frameworks so you can compare adapters directly.
 
 ## Overview
 

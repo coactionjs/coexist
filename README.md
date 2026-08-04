@@ -37,8 +37,7 @@ const app = createApp({ providers: [Counter] });
 app.getModule(Counter).increase();
 ```
 
-The same `Counter` module powers a React, Vue, Svelte, Solid, or Angular view —
-or runs inside a Web Worker — without rewriting a line of business logic.
+The same `Counter` module powers a React, Vue, Svelte, Solid, or Angular view — or runs inside a Web Worker — without rewriting a line of business logic.
 
 <details><summary>Prefer decorators? The same module, with decorators:</summary>
 
@@ -59,19 +58,12 @@ class Counter {
 
 ## Why Coexist
 
-- **Framework-agnostic core.** Your domain logic is plain classes. The UI layer
-  is an adapter, not a dependency — swap React for Vue without touching modules.
-- **One observable state tree.** Module state is merged into a single
-  Coaction-backed store, so devtools, persistence, and selectors all see the
-  whole app.
-- **Lightweight DI.** Constructor injection with tokens, scopes, lazy modules,
-  and lifecycle hooks — no reflection metadata required.
-- **Decorators optional.** Use TC39 decorators _or_ `defineModule()` metadata;
-  the runtime treats them identically.
-- **Runs anywhere.** The same modules can be hosted in a Worker, iframe, shared
-  tab, or custom RPC channel and consumed reactively from the UI thread.
-- **Test-first.** `testApp()` provides provider overrides, action/state/patch
-  inspection, and deterministic effect flushing.
+- **Framework-agnostic core.** Your domain logic is plain classes. The UI layer is an adapter, not a dependency — swap React for Vue without touching modules.
+- **One observable state tree.** Module state is merged into a single Coaction-backed store, so devtools, persistence, and selectors all see the whole app.
+- **Lightweight DI.** Constructor injection with tokens, scopes, lazy modules, and lifecycle hooks — no reflection metadata required.
+- **Decorators optional.** Use TC39 decorators _or_ `defineModule()` metadata; the runtime treats them identically.
+- **Runs anywhere.** The same modules can be hosted in a Worker, iframe, shared tab, or custom RPC channel and consumed reactively from the UI thread.
+- **Test-first.** `testApp()` provides provider overrides, action/state/patch inspection, and deterministic effect flushing.
 
 ## Concepts
 
@@ -88,15 +80,11 @@ A Coexist app is a graph of **modules** wired by a **DI container**:
 | **Plugin**   | A lifecycle/store observer (logger, storage, router, devtools).             |
 | **Adapter**  | A framework binding that reads the store with native reactivity.            |
 
-Coexist does **not** own rendering — there is no `ViewModule`, root component
-base class, or `render()` abstraction. UI packages only provide context and
-subscription helpers.
+Coexist does **not** own rendering — there is no `ViewModule`, root component base class, or `render()` abstraction. UI packages only provide context and subscription helpers.
 
 ## How Coexist compares
 
-Most state libraries are framework-specific and view-first. Coexist is a
-framework-agnostic application layer, so the comparison is about scope, not just
-ergonomics — and it is honest about where simpler tools win.
+Most state libraries are framework-specific and view-first. Coexist is a framework-agnostic application layer, so the comparison is about scope, not just ergonomics — and it is honest about where simpler tools win.
 
 |                                 | Coexist                        | Zustand        | Pinia       | MobX / MST    | Redux Toolkit   |
 | ------------------------------- | ------------------------------ | -------------- | ----------- | ------------- | --------------- |
@@ -121,16 +109,12 @@ ergonomics — and it is honest about where simpler tools win.
 
 - Complex domain logic you want decoupled from the view and trivially testable.
 - You ship the **same logic in 2+ frameworks**, or you are migrating frameworks.
-- You want to move logic **off the main thread** or **sync across tabs** without
-  rewriting it.
-- Your team values explicit dependency injection and a clear module boundary
-  (e.g. an Angular or NestJS background).
+- You want to move logic **off the main thread** or **sync across tabs** without rewriting it.
+- Your team values explicit dependency injection and a clear module boundary (e.g. an Angular or NestJS background).
 
 ## Packages
 
-Every app depends on [`@coexist/core`](./packages/core). Pick a UI adapter for
-your framework and add plugins as needed. Each package has its own README with a
-full API reference.
+Every app depends on [`@coexist/core`](./packages/core). Pick a UI adapter for your framework and add plugins as needed. Each package has its own README with a full API reference.
 
 ### Core
 
@@ -267,16 +251,7 @@ const counter = app.getModule(Counter);
 counter.increase();
 ```
 
-`@State` intentionally targets standard accessor decorators. Plain fields should
-use `defineModule()` metadata until a future compatibility layer is added.
-`@Computed` getters are cached through Coaction's signal-backed computed
-runtime and invalidate when the state they read changes.
-`@Effect` methods run after app initialization and rerun when the state they
-read changes.
-Async `@Action` methods may return promises; synchronous writes before the first
-`await` are part of the action transaction, while post-await writes need another
-action boundary or non-strict writes. Use `runInAction(this, ...)` after an
-`await` when strict action mode should remain enabled:
+`@State` intentionally targets standard accessor decorators. Plain fields should use `defineModule()` metadata until a future compatibility layer is added. `@Computed` getters are cached through Coaction's signal-backed computed runtime and invalidate when the state they read changes. `@Effect` methods run after app initialization and rerun when the state they read changes. Async `@Action` methods may return promises; synchronous writes before the first `await` are part of the action transaction, while post-await writes need another action boundary or non-strict writes. Use `runInAction(this, ...)` after an `await` when strict action mode should remain enabled:
 
 ```ts
 class Counter {
@@ -296,12 +271,9 @@ class Counter {
 
 ## Provider Lifetime
 
-`@Module` providers are instantiated during `createApp()` so their state can be
-bound to the Coaction-backed app store. Plain class and factory providers stay
-lazy unless a module or another eager provider depends on them.
+`@Module` providers are instantiated during `createApp()` so their state can be bound to the Coaction-backed app store. Plain class and factory providers stay lazy unless a module or another eager provider depends on them.
 
-Use `eager: true` for startup services that must be created during app
-composition:
+Use `eager: true` for startup services that must be created during app composition:
 
 ```ts
 const app = createApp({
@@ -315,21 +287,18 @@ const app = createApp({
 });
 ```
 
-For tests or advanced factories, the container can explicitly construct an
-unregistered class without caching it:
+For tests or advanced factories, the container can explicitly construct an unregistered class without caching it:
 
 ```ts
 const instance = app.createScope().container.build(Service);
 const asyncInstance = await app.createScope().container.buildAsync(ServiceWithAsyncDeps);
 ```
 
-`get()` still only resolves registered providers. Use `buildAsync()` when any
-dependency is backed by an async factory.
+`get()` still only resolves registered providers. Use `buildAsync()` when any dependency is backed by an async factory.
 
 ## Lazy Modules
 
-Lazy modules are explicit. They do not mutate the root provider graph or expose
-`app.provide()`:
+Lazy modules are explicit. They do not mutate the root provider graph or expose `app.provide()`:
 
 ```ts
 import { createApp, defineModule, lazyModule } from "@coexist/core";
@@ -359,29 +328,17 @@ await app.load(
 app.getModule(AdminCounter).increase();
 ```
 
-`createApp({ providers: [lazyModule(...)] })` records lazy entries without
-loading them. Call `await app.load()` to load all pending lazy modules.
+`createApp({ providers: [lazyModule(...)] })` records lazy entries without loading them. Call `await app.load()` to load all pending lazy modules.
 
-Every module must declare an explicit `name` in its metadata — state slices,
-persistence keys, and worker calls are addressed by it, and class names are
-not stable under minification.
+Every module must declare an explicit `name` in its metadata — state slices, persistence keys, and worker calls are addressed by it, and class names are not stable under minification.
 
-Actions compose: an action may call other actions (same module or another
-module) and write other modules' state directly. Everything inside the
-outermost action merges into a single store commit — one state notification,
-one patch set — and the whole commit rolls back if the outermost action
-throws. Errors caught inside an action keep the writes made before the catch.
+Actions compose: an action may call other actions (same module or another module) and write other modules' state directly. Everything inside the outermost action merges into a single store commit — one state notification, one patch set — and the whole commit rolls back if the outermost action throws. Errors caught inside an action keep the writes made before the catch.
 
-Actions and writes triggered synchronously from `watch` listeners or plugin
-state hooks are queued until the in-flight commit and notification batch finish,
-then run before the triggering mutation returns. Queued call sites receive
-`undefined`; self-triggering cascades abort after 1000 mutations.
+Actions and writes triggered synchronously from `watch` listeners or plugin state hooks are queued until the in-flight commit and notification batch finish, then run before the triggering mutation returns. Queued call sites receive `undefined`; self-triggering cascades abort after 1000 mutations.
 
 ## UI Adapters
 
-Coexist does not own rendering. There is no `ViewModule`, root component base
-class, or `render()` abstraction. UI packages only provide context and
-subscription helpers.
+Coexist does not own rendering. There is no `ViewModule`, root component base class, or `render()` abstraction. UI packages only provide context and subscription helpers.
 
 React:
 
@@ -492,8 +449,7 @@ const counter = workerModuleStore<Counter>("counter");
 const count = workerSelectorStore((state) => (state as CounterState).counter.count);
 ```
 
-Svelte 5 rune-friendly helpers are available from a separate subpath so the
-main Svelte 4 store contract stays unchanged:
+Svelte 5 rune-friendly helpers are available from a separate subpath so the main Svelte 4 store contract stays unchanged:
 
 ```ts
 import { moduleRune, selectedModuleRune } from "@coexist/svelte/runes";
@@ -627,8 +583,7 @@ const startedApp = await testApp({
 expect(startedApp.started).toBe(true);
 ```
 
-`testApp({ overrides })` can replace providers discovered from `providers`, but
-it cannot add a new `@Module` after app module discovery.
+`testApp({ overrides })` can replace providers discovered from `providers`, but it cannot add a new `@Module` after app module discovery.
 
 More focused examples live in [`examples/`](./examples).
 
@@ -681,9 +636,7 @@ client.dispose();
 await host.dispose();
 ```
 
-Worker hosts can isolate published state to selected top-level module sections.
-Method delegation still works for all hosted modules, but snapshots and patches
-only include the configured sections:
+Worker hosts can isolate published state to selected top-level module sections. Method delegation still works for all hosted modules, but snapshots and patches only include the configured sections:
 
 ```ts
 const host = createWorkerApp({
@@ -694,8 +647,7 @@ const host = createWorkerApp({
 });
 ```
 
-Worker clients can observe sync conflicts such as stale messages, missing
-snapshots, patch gaps, or invalid patches:
+Worker clients can observe sync conflicts such as stale messages, missing snapshots, patch gaps, or invalid patches:
 
 ```ts
 const client = createWorkerClient({
@@ -706,8 +658,7 @@ const client = createWorkerClient({
 });
 ```
 
-For real Worker, iframe, or `MessagePort` targets, adapt a `postMessage`
-endpoint instead of using the in-memory pair:
+For real Worker, iframe, or `MessagePort` targets, adapt a `postMessage` endpoint instead of using the in-memory pair:
 
 ```ts
 const worker = new Worker(new URL("./worker.ts", import.meta.url), {
@@ -721,8 +672,7 @@ const client = createWorkerClient({
 await client.ready;
 ```
 
-For shared tab coordination, adapt a browser `BroadcastChannel`. The client
-should subscribe before the host starts so it receives the initial snapshot:
+For shared tab coordination, adapt a browser `BroadcastChannel`. The client should subscribe before the host starts so it receives the initial snapshot:
 
 ```ts
 const hostChannel = new BroadcastChannel("counter-runtime");
@@ -747,8 +697,7 @@ await client.ready;
 await client.module<Counter>("counter").increase(1);
 ```
 
-Tests and non-browser environments can use `createMemoryBroadcastChannel()` with
-the same transport API.
+Tests and non-browser environments can use `createMemoryBroadcastChannel()` with the same transport API.
 
 For process, socket, or custom RPC channels, adapt a `data-transport` endpoint:
 
@@ -765,16 +714,9 @@ const host = createWorkerApp({
 await client.ready;
 ```
 
-The prototype covers app creation, method delegation, initial state snapshots,
-patch-only sync messages after startup, client-side readiness, selector watches
-for worker-hosted state, `postMessage` endpoints, and a `data-transport`-style
-`listen`/`emit` bridge. It also supports BroadcastChannel-style shared tab
-coordination with routed call results. It does not attempt full shared-runtime
-conflict handling or framework-specific worker bootstrapping.
+The prototype covers app creation, method delegation, initial state snapshots, patch-only sync messages after startup, client-side readiness, selector watches for worker-hosted state, `postMessage` endpoints, and a `data-transport`-style `listen`/`emit` bridge. It also supports BroadcastChannel-style shared tab coordination with routed call results. It does not attempt full shared-runtime conflict handling or framework-specific worker bootstrapping.
 
-Remote calls are limited to declared module actions by default. Additional
-methods can be enabled explicitly per module with
-`createWorkerApp({ expose: { counter: ["refresh"] }, ... })`.
+Remote calls are limited to declared module actions by default. Additional methods can be enabled explicitly per module with `createWorkerApp({ expose: { counter: ["refresh"] }, ... })`.
 
 ## Logger Plugin
 
@@ -847,8 +789,7 @@ await app.get(StorageToken).set("draft", { title: "Hello" });
 await app.dispose(); // also waits for pending storage writes
 ```
 
-Pass `throttleMs` to write at most once per interval (always with the latest
-state); pending writes flush on dispose or via `plugin.flush()`.
+Pass `throttleMs` to write at most once per interval (always with the latest state); pending writes flush on dispose or via `plugin.flush()`.
 
 ## Router
 
@@ -934,21 +875,10 @@ scripts/      # release/publish tooling
 
 ## Documentation
 
-- **Guides** — conceptual documentation lives in [`docs/`](./docs). Start with
-  the [Introduction](./docs/introduction.md) and
-  [Getting Started](./docs/getting-started.md), then dig into
-  [Core Concepts](./docs/core-concepts.md),
-  [Dependency Injection](./docs/dependency-injection.md),
-  [State & Reactivity](./docs/state-and-reactivity.md),
-  [UI Adapters](./docs/ui-adapters.md), [Plugins](./docs/plugins.md),
-  [Worker & Shared Runtime](./docs/worker-runtime.md),
-  [Testing](./docs/testing.md), and [Architecture](./docs/architecture.md).
-- **API reference** — each package's README documents its exports; see the
-  [Packages](#packages) table above.
-- **Examples** — runnable, framework-specific demos live in
-  [`examples/`](./examples).
-- **Contributing** — workflow and conventions in
-  [`CONTRIBUTING.md`](./CONTRIBUTING.md).
+- **Guides** — conceptual documentation lives in [`docs/`](./docs). Start with the [Introduction](./docs/introduction.md) and [Getting Started](./docs/getting-started.md), then dig into [Core Concepts](./docs/core-concepts.md), [Dependency Injection](./docs/dependency-injection.md), [State & Reactivity](./docs/state-and-reactivity.md), [UI Adapters](./docs/ui-adapters.md), [Plugins](./docs/plugins.md), [Worker & Shared Runtime](./docs/worker-runtime.md), [Testing](./docs/testing.md), and [Architecture](./docs/architecture.md).
+- **API reference** — each package's README documents its exports; see the [Packages](#packages) table above.
+- **Examples** — runnable, framework-specific demos live in [`examples/`](./examples).
+- **Contributing** — workflow and conventions in [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 
 ## Contributing
 
@@ -962,8 +892,7 @@ pnpm run commit       # commitizen-guided conventional commit
 pnpm changeset        # describe a release-worthy change
 ```
 
-See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for the full guide, including commit
-conventions, the changeset/release flow, and how to work with examples.
+See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for the full guide, including commit conventions, the changeset/release flow, and how to work with examples.
 
 ## License
 

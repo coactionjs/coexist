@@ -1,8 +1,6 @@
 # @coexist/angular
 
-> Angular bindings for [Coexist](../../README.md): an environment provider and
-> `inject*` helpers that expose a Coexist app (or a worker-hosted app) as
-> Angular signals.
+> Angular bindings for [Coexist](../../README.md): an environment provider and `inject*` helpers that expose a Coexist app (or a worker-hosted app) as Angular signals.
 
 ## Installation
 
@@ -14,8 +12,7 @@ Peer dependency: `@angular/core` `>=17 <23`.
 
 ## Quick start
 
-Register the app with `provideCoexist(app)` during bootstrap, then inject the
-module and signals inside components.
+Register the app with `provideCoexist(app)` during bootstrap, then inject the module and signals inside components.
 
 ```ts
 import { Component } from "@angular/core";
@@ -36,8 +33,7 @@ bootstrapApplication(CounterView, {
 });
 ```
 
-`injectSignal` returns a read-only Angular `Signal<T>` — call it (`count()`) in
-the template.
+`injectSignal` returns a read-only Angular `Signal<T>` — call it (`count()`) in the template.
 
 ## API
 
@@ -49,8 +45,7 @@ the template.
 | `injectSignal(fn, opts?)`        | `Signal<T>`            | Signal for `fn(app)`.           |
 | `injectSignal(token, fn, opts?)` | `Signal<TValue>`       | Signal for `fn(module, app)`.   |
 
-`injectSignal` accepts `{ equals }` (defaults to `Object.is`) and unsubscribes
-automatically through `DestroyRef`. It must run in an injection context.
+`injectSignal` accepts `{ equals }` (defaults to `Object.is`) and unsubscribes automatically through `DestroyRef`. It must run in an injection context.
 
 ## Worker-hosted state
 
@@ -82,10 +77,7 @@ bootstrapApplication(WorkerCounterView, {
 
 ## Exports
 
-`provideCoexist`, `provideWorkerClient`, the `COEXIST_APP` /
-`COEXIST_WORKER_CLIENT` injection tokens, `injectCoexistApp`, `injectModule`,
-`injectSignal`, `injectWorkerClient`, `injectWorkerModule`, `injectWorkerSignal`,
-and the `InjectSignalOptions`, `AppSelector`, `ModuleSelector` types.
+`provideCoexist`, `provideWorkerClient`, the `COEXIST_APP` / `COEXIST_WORKER_CLIENT` injection tokens, `injectCoexistApp`, `injectModule`, `injectSignal`, `injectWorkerClient`, `injectWorkerModule`, `injectWorkerSignal`, and the `InjectSignalOptions`, `AppSelector`, `ModuleSelector` types.
 
 ## License
 

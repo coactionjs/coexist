@@ -1,8 +1,6 @@
 # Application Lifecycle
 
-`createApp()` builds the runtime; the `App` then moves through init, start, stop,
-and dispose phases. This guide covers the options, the exact ordering, lazy
-modules, and scopes.
+`createApp()` builds the runtime; the `App` then moves through init, start, stop, and dispose phases. This guide covers the options, the exact ordering, lazy modules, and scopes.
 
 ## `createApp(options)`
 
@@ -25,9 +23,7 @@ const app = createApp({
 | `devOptions` | `{ strictActions?: boolean }`     | Enforce action boundaries for all writes.                     |
 | `engine`     | `{ patches?: boolean }`           | Enable patch generation on the store.                         |
 
-`createApp()` only creates the application runtime. It does not accept a root
-view, render function, DOM container, or framework component — rendering is
-always done by the host framework after the app exists.
+`createApp()` only creates the application runtime. It does not accept a root view, render function, DOM container, or framework component — rendering is always done by the host framework after the app exists.
 
 ## Phase ordering
 
@@ -76,40 +72,14 @@ app.dispose()
 
 A few consequences worth internalizing:
 
-- **Async initialization starts after `createApp()` returns.** Module creation
-  and `onModuleCreated` are synchronous; plugin `setup`, `onInit`, and effects
-  begin on the next microtask. Await `ready` (or `start()`) before work that
-  depends on those phases.
-- **`onInit` and effects run during creation**, not during `start()`. Many apps
-  never need `start()` at all — call it only when you have explicit startup work
-  in `onStart` hooks.
-- **`start()` awaits init.** If a plugin's `setup` (e.g. storage hydration) is
-  async, `start()` waits for it.
-- **`ready` exposes init completion.** `app.ready` is one stable promise. It
-  rejects with initialization failures; the runtime also observes that
-  rejection internally so creating an app without starting or awaiting it does
-  not emit an unhandled rejection.
-- **Lifecycle reentry is rejected.** App-managed setup, lifecycle, effect, and
-  teardown work cannot call `start()`, `stop()`, or `dispose()`: awaiting those
-  operations from a phase they control can create a self-dependency. Setup and
-  `onInit` work likewise cannot await `app.ready`. These calls return internally
-  observed rejections; invoke lifecycle controls from application bootstrap.
-  For portable enforcement after an `await`, use the app supplied to `setup` or
-  `ModuleLifecycleContext.app`; browser fallback does not treat unrelated
-  external controls as hook reentry.
-- **Lifecycle injection survives `await`.** Use `PluginContext.inject()` in
-  plugin setup and the `ModuleLifecycleContext` hook argument in modules. Their
-  explicit resolvers remain app-scoped even when browser hooks overlap.
-- **Teardown hooks run in reverse order and best-effort.** Errors from module
-  hooks, effects, scopes, plugins, providers, and the store are collected while
-  the remaining cleanup continues, then re-thrown together as an
-  `AggregateError`.
-- **Disposal is terminal.** As soon as disposal begins, provider resolution,
-  module lookup and writes, watches, explicit action boundaries, lazy loads, and
-  new scopes are rejected. A module facade or nested state reference retained
-  before disposal cannot run actions or mutate state after teardown. Disposed
-  containers (including descendants of a disposed root) likewise reject further
-  use.
+- **Async initialization starts after `createApp()` returns.** Module creation and `onModuleCreated` are synchronous; plugin `setup`, `onInit`, and effects begin on the next microtask. Await `ready` (or `start()`) before work that depends on those phases.
+- **`onInit` and effects run during creation**, not during `start()`. Many apps never need `start()` at all — call it only when you have explicit startup work in `onStart` hooks.
+- **`start()` awaits init.** If a plugin's `setup` (e.g. storage hydration) is async, `start()` waits for it.
+- **`ready` exposes init completion.** `app.ready` is one stable promise. It rejects with initialization failures; the runtime also observes that rejection internally so creating an app without starting or awaiting it does not emit an unhandled rejection.
+- **Lifecycle reentry is rejected.** App-managed setup, lifecycle, effect, and teardown work cannot call `start()`, `stop()`, or `dispose()`: awaiting those operations from a phase they control can create a self-dependency. Setup and `onInit` work likewise cannot await `app.ready`. These calls return internally observed rejections; invoke lifecycle controls from application bootstrap. For portable enforcement after an `await`, use the app supplied to `setup` or `ModuleLifecycleContext.app`; browser fallback does not treat unrelated external controls as hook reentry.
+- **Lifecycle injection survives `await`.** Use `PluginContext.inject()` in plugin setup and the `ModuleLifecycleContext` hook argument in modules. Their explicit resolvers remain app-scoped even when browser hooks overlap.
+- **Teardown hooks run in reverse order and best-effort.** Errors from module hooks, effects, scopes, plugins, providers, and the store are collected while the remaining cleanup continues, then re-thrown together as an `AggregateError`.
+- **Disposal is terminal.** As soon as disposal begins, provider resolution, module lookup and writes, watches, explicit action boundaries, lazy loads, and new scopes are rejected. A module facade or nested state reference retained before disposal cannot run actions or mutate state after teardown. Disposed containers (including descendants of a disposed root) likewise reject further use.
 
 ## Reading the app
 
@@ -126,8 +96,7 @@ await app.getAsync(Token); // resolve, allowing async factories
 app.getAll(MultiToken); // all multi providers
 ```
 
-Subscribe to derived values with `watch` (see
-[State & Reactivity](./state-and-reactivity.md#watching-state)):
+Subscribe to derived values with `watch` (see [State & Reactivity](./state-and-reactivity.md#watching-state)):
 
 ```ts
 const stop = app.watch(
@@ -140,9 +109,7 @@ stop();
 
 ## Lazy modules
 
-Lazy modules let you load functionality after the app is built — for code
-splitting or feature gating — **without mutating the root provider graph**. Each
-lazy module is loaded into its own child scope.
+Lazy modules let you load functionality after the app is built — for code splitting or feature gating — **without mutating the root provider graph**. Each lazy module is loaded into its own child scope.
 
 ```ts
 import { createApp, defineModule, lazyModule } from "@coexist/core";
@@ -163,37 +130,21 @@ app.getModule(AdminCounter).increase();
 
 ### Loading model
 
-- Passing `lazyModule(...)` in `createApp({ providers })` **records** the entry
-  without loading it.
+- Passing `lazyModule(...)` in `createApp({ providers })` **records** the entry without loading it.
 - `await app.load()` loads **all** pending lazy modules, in registration order.
-- `await app.load(module)` loads **one** specific lazy module (idempotent — a
-  second call returns the same result).
-- Concurrent loads of the same `LazyModule` share one loader and initialization
-  promise.
-- Providers and modules are staged in a temporary child scope. After `onInit`
-  and (for a started app) `onStart` succeed, the runtime installs the state and
-  performs each effect's initial synchronous run as one publication
-  transaction. State subscribers, watches, patches, and the app state version
-  observe only the committed result. A throwing store subscriber is reported to
-  plugin `onError` hooks with phase `"store:subscribe"`; it does not roll back
-  the committed load or prevent later subscribers from observing it.
-- A failed load, including a synchronous effect-startup failure, discards that
-  publication, restores local module bindings for teardown, disposes the
-  temporary scope, and rolls back all staged runtime state. A later call retries
-  from a fresh scope.
-- `app.stop()` waits for loads already in the staging phase to roll back. New
-  loads reject while stopping and may be retried after the stop completes.
+- `await app.load(module)` loads **one** specific lazy module (idempotent — a second call returns the same result).
+- Concurrent loads of the same `LazyModule` share one loader and initialization promise.
+- Providers and modules are staged in a temporary child scope. After `onInit` and (for a started app) `onStart` succeed, the runtime installs the state and performs each effect's initial synchronous run as one publication transaction. State subscribers, watches, patches, and the app state version observe only the committed result. A throwing store subscriber is reported to plugin `onError` hooks with phase `"store:subscribe"`; it does not roll back the committed load or prevent later subscribers from observing it.
+- A failed load, including a synchronous effect-startup failure, discards that publication, restores local module bindings for teardown, disposes the temporary scope, and rolls back all staged runtime state. A later call retries from a fresh scope.
+- `app.stop()` waits for loads already in the staging phase to roll back. New loads reject while stopping and may be retried after the stop completes.
 - Once app disposal begins, lazy loads reject instead of installing new modules.
-- A loader may return a provider, a provider array, or a module-namespace object
-  (`{ default }` / `{ providers }`), which makes dynamic `import()` ergonomic:
+- A loader may return a provider, a provider array, or a module-namespace object (`{ default }` / `{ providers }`), which makes dynamic `import()` ergonomic:
 
   ```ts
   await app.load(lazyModule(() => import("./admin/module.js")));
   ```
 
-When a lazy module loads after `start()`, its `onInit` and (if the app is
-started) `onStart` hooks run, and its effects start immediately. Loading after
-`dispose()` throws. The result describes the created modules and the scope:
+When a lazy module loads after `start()`, its `onInit` and (if the app is started) `onStart` hooks run, and its effects start immediately. Loading after `dispose()` throws. The result describes the created modules and the scope:
 
 ```ts
 const { modules, scope } = await app.load(adminModule);
@@ -201,33 +152,26 @@ const { modules, scope } = await app.load(adminModule);
 
 ## Scopes
 
-`app.createScope(options?)` returns an `AppScope` whose `container` is a child DI
-scope. Use it for request/view/worker-scoped providers, or to `build()`
-unregistered classes:
+`app.createScope(options?)` returns an `AppScope` whose `container` is a child DI scope. Use it for request/view/worker-scoped providers, or to `build()` unregistered classes:
 
 ```ts
 const scope = app.createScope();
 const handler = scope.container.build(RequestHandler);
 ```
 
-Scoped providers resolve to one instance per child scope; see
-[Dependency Injection](./dependency-injection.md#scopes).
+Scoped providers resolve to one instance per child scope; see [Dependency Injection](./dependency-injection.md#scopes).
 
 ## Hierarchical apps
 
-Pass `parent` to nest one app/container under another, so a child app can resolve
-the parent's providers:
+Pass `parent` to nest one app/container under another, so a child app can resolve the parent's providers:
 
 ```ts
 const child = createApp({ parent: app, providers: [FeatureModule] });
 ```
 
-When the parent is an `App`, `child.getModule(token)` and
-`child.getModuleByName(name)` search the app chain after checking the child's
-own modules. An inherited module remains bound to the parent app and its store.
+When the parent is an `App`, `child.getModule(token)` and `child.getModuleByName(name)` search the app chain after checking the child's own modules. An inherited module remains bound to the parent app and its store.
 
-Disposing a parent app disposes its child apps first, in reverse creation order.
-Once parent disposal begins, creating another child app is rejected.
+Disposing a parent app disposes its child apps first, in reverse creation order. Once parent disposal begins, creating another child app is rejected.
 
 ## Next
 

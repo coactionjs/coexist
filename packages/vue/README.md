@@ -1,7 +1,6 @@
 # @coexist/vue
 
-> Vue 3 bindings for [Coexist](../../README.md): provide/inject composables that
-> expose a Coexist app (or a worker-hosted app) as Vue refs.
+> Vue 3 bindings for [Coexist](../../README.md): provide/inject composables that expose a Coexist app (or a worker-hosted app) as Vue refs.
 
 ## Installation
 
@@ -13,8 +12,7 @@ Peer dependency: `vue` `>=3.5 <4`.
 
 ## Quick start
 
-Install the app with the plugin (or call `provideCoexist(app)` inside a parent
-`setup`), then read modules and selectors with the composables.
+Install the app with the plugin (or call `provideCoexist(app)` inside a parent `setup`), then read modules and selectors with the composables.
 
 ```ts
 import { createApp as createVueApp, defineComponent, h } from "vue";
@@ -55,8 +53,7 @@ const count = useSelector((app) => app.getModule(Counter).count);
 const double = useComputed((app) => app.getModule(Counter).double);
 ```
 
-Selectors accept `{ equals }` to control updates and clean up automatically via
-`onScopeDispose`.
+Selectors accept `{ equals }` to control updates and clean up automatically via `onScopeDispose`.
 
 ## Worker-hosted state
 
@@ -80,17 +77,11 @@ createVueApp(WorkerCounterView).use(workerClientPlugin(client)).mount("#app");
 
 - `useWorkerClient()` → the provided `WorkerClient`.
 - `useWorkerModule<T>(name)` → an `AsyncMethodProxy<T>`.
-- `useWorkerSelector(fn, opts?)` / `useWorkerComputed(fn, opts?)` →
-  `Readonly<Ref<T>>` of worker state.
+- `useWorkerSelector(fn, opts?)` / `useWorkerComputed(fn, opts?)` → `Readonly<Ref<T>>` of worker state.
 
 ## Exports
 
-`coexistPlugin`, `workerClientPlugin`, `provideCoexist`, `provideWorkerClient`,
-the `CoexistKey` / `WorkerClientKey` injection keys, `useApp`, `useCoexist`,
-`useModule`, `useSelector`, `useComputed`, `useWorkerClient`, `useWorkerModule`,
-`useWorkerSelector`, `useWorkerComputed`, and the `UseSelectorOptions` /
-`AppSelector` types. The `use*` composables throw a `CoexistError` when the app
-or client was never provided.
+`coexistPlugin`, `workerClientPlugin`, `provideCoexist`, `provideWorkerClient`, the `CoexistKey` / `WorkerClientKey` injection keys, `useApp`, `useCoexist`, `useModule`, `useSelector`, `useComputed`, `useWorkerClient`, `useWorkerModule`, `useWorkerSelector`, `useWorkerComputed`, and the `UseSelectorOptions` / `AppSelector` types. The `use*` composables throw a `CoexistError` when the app or client was never provided.
 
 ## License
 

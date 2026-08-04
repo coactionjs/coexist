@@ -1,14 +1,8 @@
 # @coexist/storage
 
-> Cross-framework persistence plugin for [Coexist](../../README.md), powered by
-> [`localspace`](https://www.npmjs.com/package/localspace): hydrate app state on
-> startup, persist state changes, and expose a shared storage service through app
-> DI.
+> Cross-framework persistence plugin for [Coexist](../../README.md), powered by [`localspace`](https://www.npmjs.com/package/localspace): hydrate app state on startup, persist state changes, and expose a shared storage service through app DI.
 
-The recommended `createLocalSpaceStoragePlugin()` uses localspace drivers and
-plugins, including IndexedDB, localStorage, memory fallback, TTL, encryption,
-compression, multi-tab sync, and quota helpers. The older `createStoragePlugin()`
-adapter is still available for simple `getItem` / `setItem` backends.
+The recommended `createLocalSpaceStoragePlugin()` uses localspace drivers and plugins, including IndexedDB, localStorage, memory fallback, TTL, encryption, compression, multi-tab sync, and quota helpers. The older `createStoragePlugin()` adapter is still available for simple `getItem` / `setItem` backends.
 
 ## Installation
 
@@ -88,13 +82,9 @@ await storage.setMany([
 ]);
 ```
 
-`StorageService.instance` exposes the underlying localspace instance when you
-need lower-level APIs or performance stats.
+`StorageService.instance` exposes the underlying localspace instance when you need lower-level APIs or performance stats.
 
-`destroyOnDispose` is the sole ownership switch for the supplied storage
-service. It defaults to `true` only when the plugin created the service itself;
-an external `service` or `instance` is retained by default. Setting it explicitly
-to `true` destroys that resource exactly once during app disposal.
+`destroyOnDispose` is the sole ownership switch for the supplied storage service. It defaults to `true` only when the plugin created the service itself; an external `service` or `instance` is retained by default. Setting it explicitly to `true` destroys that resource exactly once during app disposal.
 
 ## Legacy StorageLike Adapter
 
@@ -123,14 +113,9 @@ await storage.persist(app); // force-write the current full state
 await storage.clear(); // remove the persisted entry
 ```
 
-`app.dispose()` also waits for pending storage writes through the plugin context,
-so production teardown does not need an extra `flush()` call.
-Hydration is committed through an app action boundary, so both storage adapters
-remain compatible with `devOptions.strictActions: true`.
+`app.dispose()` also waits for pending storage writes through the plugin context, so production teardown does not need an extra `flush()` call. Hydration is committed through an app action boundary, so both storage adapters remain compatible with `devOptions.strictActions: true`.
 
-For the localspace plugin, `storage.clear()` removes the persisted app-state key.
-Use `app.get(StorageToken).clear()` when you want to clear the whole localspace
-store.
+For the localspace plugin, `storage.clear()` removes the persisted app-state key. Use `app.get(StorageToken).clear()` when you want to clear the whole localspace store.
 
 `StorageLike`:
 
@@ -144,10 +129,7 @@ interface StorageLike {
 
 ## Exports
 
-`createLocalSpaceStoragePlugin`, `createLocalSpaceStorage`, `StorageToken`,
-`createStoragePlugin`, localspace plugin/driver re-exports, and the
-`StorageService`, `StoragePlugin`, `StoragePluginOptions`, `StorageLike`,
-`StoragePluginErrorPhase` types.
+`createLocalSpaceStoragePlugin`, `createLocalSpaceStorage`, `StorageToken`, `createStoragePlugin`, localspace plugin/driver re-exports, and the `StorageService`, `StoragePlugin`, `StoragePluginOptions`, `StorageLike`, `StoragePluginErrorPhase` types.
 
 ## License
 

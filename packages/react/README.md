@@ -1,11 +1,8 @@
 # @coexist/react
 
-> React bindings for [Coexist](../../README.md): context provider and hooks for
-> consuming a Coexist app (or a worker-hosted app) with native React reactivity.
+> React bindings for [Coexist](../../README.md): context provider and hooks for consuming a Coexist app (or a worker-hosted app) with native React reactivity.
 
-This adapter does not own rendering or define a view base class. It exposes a
-`CoexistProvider`, a `WorkerClientProvider`, and a small set of hooks built on
-`useSyncExternalStore`, so selectors stay tear-free and concurrent-safe.
+This adapter does not own rendering or define a view base class. It exposes a `CoexistProvider`, a `WorkerClientProvider`, and a small set of hooks built on `useSyncExternalStore`, so selectors stay tear-free and concurrent-safe.
 
 ## Installation
 
@@ -69,8 +66,7 @@ createRoot(document.getElementById("root")!).render(
 | `useSelector(selector)`     | `T`      | Subscribe to `selector(app)`.                   |
 | `useSelector(token, fn)`    | `TValue` | Subscribe to `fn(module, app)` for a module.    |
 
-`useSelector` accepts a `{ equals }` option (defaults to `Object.is`) to control
-re-renders.
+`useSelector` accepts a `{ equals }` option (defaults to `Object.is`) to control re-renders.
 
 ```tsx
 const count = useSelector(Counter, (m) => m.count);
@@ -82,8 +78,7 @@ const items = useSelector(Todos, (m) => m.items, {
 
 ## Worker-hosted state
 
-Wrap the tree in `WorkerClientProvider` and use the worker hooks to consume an
-app running in a Worker, iframe, or other [transport](../core/README.md#worker--shared-runtime).
+Wrap the tree in `WorkerClientProvider` and use the worker hooks to consume an app running in a Worker, iframe, or other [transport](../core/README.md#worker--shared-runtime).
 
 ```tsx
 import { WorkerClientProvider, useWorkerModule, useWorkerSelector } from "@coexist/react";
@@ -108,12 +103,7 @@ function WorkerCounterView() {
 
 ## Exports
 
-Providers `CoexistProvider`, `WorkerClientProvider`; contexts `CoexistContext`,
-`WorkerClientContext`; hooks `useApp`, `useCoexist`, `useModule`, `useSelector`,
-`useWorkerClient`, `useWorkerModule`, `useWorkerSelector`; and the
-`CoexistProviderProps`, `WorkerClientProviderProps`, `UseSelectorOptions`,
-`AppSelector`, `ModuleSelector` types. Missing-provider hooks throw a
-`CoexistError`.
+Providers `CoexistProvider`, `WorkerClientProvider`; contexts `CoexistContext`, `WorkerClientContext`; hooks `useApp`, `useCoexist`, `useModule`, `useSelector`, `useWorkerClient`, `useWorkerModule`, `useWorkerSelector`; and the `CoexistProviderProps`, `WorkerClientProviderProps`, `UseSelectorOptions`, `AppSelector`, `ModuleSelector` types. Missing-provider hooks throw a `CoexistError`.
 
 ## License
 
