@@ -1,13 +1,10 @@
 #!/usr/bin/env node
-import { execFile } from "node:child_process";
 import { mkdir, mkdtemp, realpath, rm, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
-import { promisify } from "node:util";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 
-const execFileAsync = promisify(execFile);
-const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+import { rootDir, run } from "./lib/smoke.ts";
+
 const cliPath = join(rootDir, "packages/create/dist/cli.mjs");
 const corePackageDir = join(rootDir, "packages/core");
 const tempDir = await mkdtemp(join(tmpdir(), "coexist-create-runtime-"));
@@ -38,23 +35,4 @@ try {
   console.log("Verified generated project runtime execution.");
 } finally {
   await rm(tempDir, { force: true, recursive: true });
-}
-
-async function run(command, args, cwd) {
-  try {
-    return await execFileAsync(command, args, {
-      cwd,
-      maxBuffer: 1024 * 1024,
-    });
-  } catch (error) {
-    if (typeof error.stdout === "string" && error.stdout.length > 0) {
-      process.stdout.write(error.stdout);
-    }
-
-    if (typeof error.stderr === "string" && error.stderr.length > 0) {
-      process.stderr.write(error.stderr);
-    }
-
-    throw error;
-  }
 }

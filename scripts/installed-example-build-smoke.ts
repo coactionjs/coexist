@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 /* eslint-disable no-await-in-loop */
-import { execFile } from "node:child_process";
 import { createServer } from "node:http";
 import { accessSync, constants } from "node:fs";
 import {
@@ -15,21 +14,24 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { basename, dirname, extname, join, normalize, resolve } from "node:path";
-import { promisify } from "node:util";
-import { fileURLToPath } from "node:url";
+import { basename, extname, join, normalize, resolve } from "node:path";
 import { chromium } from "playwright";
 
-const execFileAsync = promisify(execFile);
-const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const examplesDir = join(rootDir, "examples");
-const packagesDir = join(rootDir, "packages");
-const workspacePath = join(rootDir, "pnpm-workspace.yaml");
-const lockfilePath = join(rootDir, "pnpm-lock.yaml");
+import {
+  createPackPackage,
+  examplesDir,
+  lockfilePath,
+  packagesDir,
+  readCatalog,
+  rootDir,
+  run,
+} from "./lib/smoke.ts";
+
 const rootPackagePath = join(rootDir, "package.json");
 const tempDir = await mkdtemp(join(tmpdir(), "coexist-installed-examples-"));
 const tempExamplesDir = join(tempDir, "examples");
 const tarballsDir = join(tempDir, "tarballs");
+const packPackage = createPackPackage(tarballsDir);
 const chromeExecutable = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ?? findSystemChrome();
 
 const exampleSmokes = [
@@ -148,7 +150,10 @@ try {
   await mkdir(tarballsDir, { recursive: true });
 
   for (const pkg of packages) {
-    tarballByName.set(pkg.packageJson.name, await packPackage(pkg));
+    tarballByName.set(
+      pkg.packageJson.name,
+      await packPackage({ dir: pkg.dir, name: pkg.packageJson.name }),
+    );
   }
 
   await writeInstalledExamplesWorkspace(buildableExamples, tarballByName, catalog, rootPackageJson);
@@ -253,24 +258,6 @@ async function readBuildableExamples() {
   }
 
   return examples.toSorted((left, right) => left.name.localeCompare(right.name));
-}
-
-async function packPackage(pkg) {
-  const destination = join(
-    tarballsDir,
-    pkg.packageJson.name.replaceAll("@", "").replaceAll("/", "__"),
-  );
-
-  await mkdir(destination, { recursive: true });
-  await run("pnpm", ["pack", "--pack-destination", destination], pkg.dir);
-
-  const tarballs = (await readdir(destination)).filter((file) => file.endsWith(".tgz"));
-
-  if (tarballs.length !== 1) {
-    throw new Error(`${pkg.packageJson.name} must produce exactly one tarball.`);
-  }
-
-  return join(destination, tarballs[0]);
 }
 
 async function writeInstalledExamplesWorkspace(
@@ -678,44 +665,6 @@ function contentType(filePath) {
   }
 }
 
-async function readCatalog() {
-  const workspaceYaml = await readFile(workspacePath, "utf8");
-  const catalog = new Map();
-  let inCatalog = false;
-  let catalogIndent = 0;
-
-  for (const line of workspaceYaml.split("\n")) {
-    if (/^\s*catalog:\s*$/.test(line)) {
-      inCatalog = true;
-      catalogIndent = line.match(/^\s*/)?.[0].length ?? 0;
-      continue;
-    }
-
-    if (!inCatalog || line.trim() === "" || line.trimStart().startsWith("#")) {
-      continue;
-    }
-
-    const indent = line.match(/^\s*/)?.[0].length ?? 0;
-    if (indent <= catalogIndent) {
-      break;
-    }
-
-    const match = line.match(/^\s*(?:"([^"]+)"|([^:]+)):\s*(?:"([^"]+)"|(.+))\s*$/);
-    if (match === null) {
-      continue;
-    }
-
-    const name = match[1] ?? match[2]?.trim();
-    const version = match[3] ?? match[4]?.trim();
-
-    if (name !== undefined && version !== undefined) {
-      catalog.set(name, version);
-    }
-  }
-
-  return catalog;
-}
-
 function readCatalogVersion(catalog, name) {
   const version = catalog.get(name);
 
@@ -724,25 +673,6 @@ function readCatalogVersion(catalog, name) {
   }
 
   return version;
-}
-
-async function run(command, args, cwd) {
-  try {
-    return await execFileAsync(command, args, {
-      cwd,
-      maxBuffer: 1024 * 1024 * 10,
-    });
-  } catch (error) {
-    if (typeof error.stdout === "string" && error.stdout.length > 0) {
-      process.stdout.write(error.stdout);
-    }
-
-    if (typeof error.stderr === "string" && error.stderr.length > 0) {
-      process.stderr.write(error.stderr);
-    }
-
-    throw error;
-  }
 }
 
 function findSystemChrome() {

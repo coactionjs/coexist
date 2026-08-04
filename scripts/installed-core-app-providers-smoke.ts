@@ -1,18 +1,13 @@
 #!/usr/bin/env node
-import { execFile } from "node:child_process";
-import { mkdtemp, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
-import { promisify } from "node:util";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 
-const execFileAsync = promisify(execFile);
-const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const packagesDir = join(rootDir, "packages");
-const workspacePath = join(rootDir, "pnpm-workspace.yaml");
-const lockfilePath = join(rootDir, "pnpm-lock.yaml");
+import { createPackPackage, lockfilePath, readCatalog, rootDir, run } from "./lib/smoke.ts";
+
 const tempDir = await mkdtemp(join(tmpdir(), "coexist-core-app-providers-"));
 const tarballsDir = join(tempDir, "tarballs");
+const packPackage = createPackPackage(tarballsDir);
 const consumerDir = join(tempDir, "consumer");
 const tscBin = join(rootDir, "node_modules/.bin/tsc");
 
@@ -32,22 +27,6 @@ try {
   console.log("Verified installed core app provider runtime.");
 } finally {
   await rm(tempDir, { force: true, recursive: true });
-}
-
-async function packPackage(name) {
-  const packageDir = join(packagesDir, name.slice("@coexist/".length));
-  const destination = join(tarballsDir, name.replaceAll("@", "").replaceAll("/", "__"));
-
-  await mkdir(destination, { recursive: true });
-  await run("pnpm", ["pack", "--pack-destination", destination], packageDir);
-
-  const tarballs = (await readdir(destination)).filter((file) => file.endsWith(".tgz"));
-
-  if (tarballs.length !== 1) {
-    throw new Error(`${name} must produce exactly one tarball.`);
-  }
-
-  return join(destination, tarballs[0]);
 }
 
 async function writeConsumerProject(coreTarball, catalog) {
@@ -530,44 +509,6 @@ function formatError(error) {
 `;
 }
 
-async function readCatalog() {
-  const workspaceYaml = await readFile(workspacePath, "utf8");
-  const catalog = new Map();
-  let inCatalog = false;
-  let catalogIndent = 0;
-
-  for (const line of workspaceYaml.split("\n")) {
-    if (/^\s*catalog:\s*$/.test(line)) {
-      inCatalog = true;
-      catalogIndent = line.match(/^\s*/)?.[0].length ?? 0;
-      continue;
-    }
-
-    if (!inCatalog || line.trim() === "" || line.trimStart().startsWith("#")) {
-      continue;
-    }
-
-    const indent = line.match(/^\s*/)?.[0].length ?? 0;
-    if (indent <= catalogIndent) {
-      break;
-    }
-
-    const match = line.match(/^\s*(?:"([^"]+)"|([^:]+)):\s*(?:"([^"]+)"|(.+))\s*$/);
-    if (match === null) {
-      continue;
-    }
-
-    const name = match[1] ?? match[2]?.trim();
-    const version = match[3] ?? match[4]?.trim();
-
-    if (name !== undefined && version !== undefined) {
-      catalog.set(name, version);
-    }
-  }
-
-  return catalog;
-}
-
 function readCatalogVersion(catalog, name) {
   const version = catalog.get(name);
 
@@ -576,24 +517,4 @@ function readCatalogVersion(catalog, name) {
   }
 
   return version;
-}
-
-async function run(command, args, cwd) {
-  try {
-    await execFileAsync(command, args, {
-      cwd,
-      env: {
-        ...process.env,
-        npm_config_registry: process.env.npm_config_registry ?? "https://registry.npmjs.org/",
-      },
-      maxBuffer: 1024 * 1024 * 20,
-    });
-  } catch (error) {
-    const stdout = error.stdout === undefined ? "" : `\nstdout:\n${error.stdout}`;
-    const stderr = error.stderr === undefined ? "" : `\nstderr:\n${error.stderr}`;
-
-    throw new Error(`${command} ${args.join(" ")} failed in ${cwd}.${stdout}${stderr}`, {
-      cause: error,
-    });
-  }
 }

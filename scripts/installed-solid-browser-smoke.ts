@@ -1,22 +1,17 @@
 #!/usr/bin/env node
 /* eslint-disable no-underscore-dangle */
-import { execFile } from "node:child_process";
 import { createServer } from "node:http";
 import { accessSync, constants } from "node:fs";
-import { mkdtemp, mkdir, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, extname, join, normalize, resolve } from "node:path";
-import { promisify } from "node:util";
-import { fileURLToPath } from "node:url";
+import { extname, join, normalize, resolve } from "node:path";
 import { chromium } from "playwright";
 
-const execFileAsync = promisify(execFile);
-const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const packagesDir = join(rootDir, "packages");
-const workspacePath = join(rootDir, "pnpm-workspace.yaml");
-const lockfilePath = join(rootDir, "pnpm-lock.yaml");
+import { createPackPackage, lockfilePath, readCatalog, run } from "./lib/smoke.ts";
+
 const tempDir = await mkdtemp(join(tmpdir(), "coexist-solid-browser-"));
 const tarballsDir = join(tempDir, "tarballs");
+const packPackage = createPackPackage(tarballsDir);
 const consumerDir = join(tempDir, "consumer");
 const chromeExecutable = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ?? findSystemChrome();
 
@@ -43,22 +38,6 @@ try {
   await browser?.close();
   await server?.close();
   await rm(tempDir, { force: true, recursive: true });
-}
-
-async function packPackage(name) {
-  const packageDir = join(packagesDir, name.slice("@coexist/".length));
-  const destination = join(tarballsDir, name.replaceAll("@", "").replaceAll("/", "__"));
-
-  await mkdir(destination, { recursive: true });
-  await run("pnpm", ["pack", "--pack-destination", destination], packageDir);
-
-  const tarballs = (await readdir(destination)).filter((file) => file.endsWith(".tgz"));
-
-  if (tarballs.length !== 1) {
-    throw new Error(`${name} must produce exactly one tarball.`);
-  }
-
-  return join(destination, tarballs[0]);
 }
 
 async function writeConsumerProject(coreTarball, solidTarball, catalog) {
@@ -617,44 +596,6 @@ async function assertReadableFile(path) {
   }
 }
 
-async function readCatalog() {
-  const workspaceYaml = await readFile(workspacePath, "utf8");
-  const catalog = new Map();
-  let inCatalog = false;
-  let catalogIndent = 0;
-
-  for (const line of workspaceYaml.split("\n")) {
-    if (/^\s*catalog:\s*$/.test(line)) {
-      inCatalog = true;
-      catalogIndent = line.match(/^\s*/)?.[0].length ?? 0;
-      continue;
-    }
-
-    if (!inCatalog || line.trim() === "" || line.trimStart().startsWith("#")) {
-      continue;
-    }
-
-    const indent = line.match(/^\s*/)?.[0].length ?? 0;
-    if (indent <= catalogIndent) {
-      break;
-    }
-
-    const match = line.match(/^\s*(?:"([^"]+)"|([^:]+)):\s*(?:"([^"]+)"|(.+))\s*$/);
-    if (match === null) {
-      continue;
-    }
-
-    const name = match[1] ?? match[2]?.trim();
-    const version = match[3] ?? match[4]?.trim();
-
-    if (name !== undefined && version !== undefined) {
-      catalog.set(name, version);
-    }
-  }
-
-  return catalog;
-}
-
 function readCatalogVersion(catalog, name) {
   const version = catalog.get(name);
 
@@ -663,25 +604,6 @@ function readCatalogVersion(catalog, name) {
   }
 
   return version;
-}
-
-async function run(command, args, cwd) {
-  try {
-    return await execFileAsync(command, args, {
-      cwd,
-      maxBuffer: 1024 * 1024 * 20,
-    });
-  } catch (error) {
-    if (typeof error.stdout === "string" && error.stdout.length > 0) {
-      process.stdout.write(error.stdout);
-    }
-
-    if (typeof error.stderr === "string" && error.stderr.length > 0) {
-      process.stderr.write(error.stderr);
-    }
-
-    throw error;
-  }
 }
 
 function findSystemChrome() {

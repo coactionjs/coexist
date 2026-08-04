@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 /* eslint-disable no-await-in-loop */
-import { execFile } from "node:child_process";
 import { constants } from "node:fs";
 import {
   access,
@@ -13,13 +12,10 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
-import { promisify } from "node:util";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 
-const execFileAsync = promisify(execFile);
-const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const packagesDir = join(rootDir, "packages");
+import { packagesDir, rootDir, run } from "./lib/smoke.ts";
+
 const tempDir = await mkdtemp(join(tmpdir(), "coexist-package-exports-"));
 const tscBin = join(rootDir, "node_modules/.bin/tsc");
 
@@ -42,8 +38,8 @@ try {
   }
 
   await writeConsumerProject(specifiers);
-  await run(tscBin, ["-p", "tsconfig.json"]);
-  await run(process.execPath, ["runtime.mjs"]);
+  await run(tscBin, ["-p", "tsconfig.json"], tempDir);
+  await run(process.execPath, ["runtime.mjs"], tempDir);
 
   console.log(
     `Verified ${specifiers.length} public export(s) across ${packages.length} package(s).`,
@@ -208,23 +204,4 @@ for (let index = 0; index < modules.length; index += 1) {
   }
 }
 `;
-}
-
-async function run(command, args) {
-  try {
-    await execFileAsync(command, args, {
-      cwd: tempDir,
-      maxBuffer: 1024 * 1024 * 10,
-    });
-  } catch (error) {
-    if (typeof error.stdout === "string" && error.stdout.length > 0) {
-      process.stdout.write(error.stdout);
-    }
-
-    if (typeof error.stderr === "string" && error.stderr.length > 0) {
-      process.stderr.write(error.stderr);
-    }
-
-    throw error;
-  }
 }
