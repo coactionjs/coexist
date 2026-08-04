@@ -12,7 +12,7 @@ This keeps every framework idiomatic: React users get hooks, Vue users get compo
 `@coexist/core` exposes a framework-neutral reactive runtime — `getModule()` and `watch()` — rather than a selector-first external-store API. Why selectors still appear in adapters:
 
 - Coaction is **signal-backed**. Frameworks with native signal tracking (Vue, Solid, Svelte, Angular) can read module state directly inside their reactive scopes and stay subscribed automatically.
-- **React** does not track external signal reads during render, so its adapter is selector-first and built on `useSyncExternalStore` for tear-free, concurrent- safe reads.
+- **React** does not track external signal reads during render, so its adapter is selector-first and built on `useSyncExternalStore` for tear-free, concurrent-safe reads.
 
 Every adapter ultimately wraps two core calls:
 
