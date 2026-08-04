@@ -1,7 +1,7 @@
 import { render } from "solid-js/web";
 
 import { createApp, defineModule } from "@coexist/core";
-import { CoSystemProvider, useComputed, useModule } from "@coexist/solid";
+import { CoexistProvider, useComputed, useModule } from "@coexist/solid";
 
 // oxlint-disable-next-line import/no-unassigned-import -- Vite loads example styles through CSS side effects.
 import "./styles.css";
@@ -41,7 +41,7 @@ function CounterView() {
   return (
     <main class="shell">
       <section class="panel">
-        <span class="eyebrow">Solid + CoSystem</span>
+        <span class="eyebrow">Solid + Coexist</span>
         <h1>Counter module</h1>
         <dl class="stats">
           <div>
@@ -68,9 +68,9 @@ function CounterView() {
 
 render(
   () => (
-    <CoSystemProvider app={app}>
+    <CoexistProvider app={app}>
       <CounterView />
-    </CoSystemProvider>
+    </CoexistProvider>
   ),
   document.getElementById("root")!,
 );

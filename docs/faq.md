@@ -10,7 +10,7 @@ them identically. The no-decorator form also supports **plain fields** as state
 (decorators only support `accessor` state) and works on any toolchain. See
 [Modules](./modules.md).
 
-## Does CoSystem need `reflect-metadata`?
+## Does Coexist need `reflect-metadata`?
 
 No. The DI container is reflection-free: no `reflect-metadata`, no
 `emitDecoratorMetadata`, no constructor-type or parameter-name parsing, and no
@@ -28,7 +28,7 @@ async setup task such as storage hydration. See
 
 ## How is this different from using Coaction directly?
 
-Coaction is the reactive state/signal/transport engine. CoSystem adds the
+Coaction is the reactive state/signal/transport engine. Coexist adds the
 **application layer** on top: dependency injection, OO modules with
 lifecycle, a single composed store from many modules, plugins, a worker
 host/client, framework-native adapters, and `testApp()`. You can think of it as
@@ -85,16 +85,16 @@ to it. The [`createLoggerPlugin`](../packages/core/README.md#logger-plugin) prin
 actions and errors. In tests, the `testApp` inspector exposes recorded actions,
 state, and patches. See [Plugins](./plugins.md) and [Testing](./testing.md).
 
-## Does CoSystem support SSR?
+## Does Coexist support SSR?
 
 The core is environment-agnostic and headless, so modules run on the server. For
 routing, `createMemoryRouter({ initialPath })` is the server-side counterpart to
 `createBrowserRouter()`. Framework-specific SSR (hydration, streaming) is handled
-by each framework's own tooling, not by CoSystem.
+by each framework's own tooling, not by Coexist.
 
 ## TypeScript / build setup?
 
-CoSystem is ESM-only and targets modern runtimes. For decorators you need a
+Coexist is ESM-only and targets modern runtimes. For decorators you need a
 toolchain supporting TC39 decorators and the `accessor` keyword; otherwise use
 `defineModule()`. The repo's shared config is
 [`@coexist/tsconfig`](../packages/tsconfig/README.md).

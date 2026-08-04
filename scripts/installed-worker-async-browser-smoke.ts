@@ -130,7 +130,7 @@ async function writeConsumerProject(coreTarball, catalog) {
       "  <head>",
       '    <meta charset="UTF-8" />',
       '    <meta name="viewport" content="width=device-width, initial-scale=1.0" />',
-      "    <title>CoSystem worker async browser smoke</title>",
+      "    <title>Coexist worker async browser smoke</title>",
       "  </head>",
       "  <body>",
       '    <main aria-label="Worker async smoke">',

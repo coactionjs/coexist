@@ -1,6 +1,6 @@
 # @coexist/devtools
 
-> Timeline inspection plugin for [CoSystem](../../README.md): records a
+> Timeline inspection plugin for [Coexist](../../README.md): records a
 > chronological log of app setup, module creation, actions, patches, state
 > changes, and errors for development tooling.
 

@@ -1,4 +1,4 @@
-# CoSystem
+# Coexist
 
 **The meta-framework for coexisting UI frameworks.**
 
@@ -11,7 +11,7 @@
 
 **Facts:** [5 UI frameworks](./docs/ui-adapters.md) · [no base class, no inheritance](./docs/modules.md) · [no `reflect-metadata`](./docs/dependency-injection.md) · [runs in a Web Worker](./docs/worker-runtime.md)
 
-CoSystem creates a typed application core powered by [Coaction](https://www.npmjs.com/package/coaction),
+Coexist creates a typed application core powered by [Coaction](https://www.npmjs.com/package/coaction),
 then lets each UI framework render with its own native API. Business modules are
 plain classes with lightweight DI, object-oriented state, actions, computed
 getters, effects, and test-friendly app composition.
@@ -60,7 +60,7 @@ class Counter {
 
 </details>
 
-## Why CoSystem
+## Why Coexist
 
 - **Framework-agnostic core.** Your domain logic is plain classes. The UI layer
   is an adapter, not a dependency — swap React for Vue without touching modules.
@@ -78,7 +78,7 @@ class Counter {
 
 ## Concepts
 
-A CoSystem app is a graph of **modules** wired by a **DI container**:
+A Coexist app is a graph of **modules** wired by a **DI container**:
 
 | Term         | What it is                                                                  |
 | ------------ | --------------------------------------------------------------------------- |
@@ -91,17 +91,17 @@ A CoSystem app is a graph of **modules** wired by a **DI container**:
 | **Plugin**   | A lifecycle/store observer (logger, storage, router, devtools).             |
 | **Adapter**  | A framework binding that reads the store with native reactivity.            |
 
-CoSystem does **not** own rendering — there is no `ViewModule`, root component
+Coexist does **not** own rendering — there is no `ViewModule`, root component
 base class, or `render()` abstraction. UI packages only provide context and
 subscription helpers.
 
-## How CoSystem compares
+## How Coexist compares
 
-Most state libraries are framework-specific and view-first. CoSystem is a
+Most state libraries are framework-specific and view-first. Coexist is a
 framework-agnostic application layer, so the comparison is about scope, not just
 ergonomics — and it is honest about where simpler tools win.
 
-|                                 | CoSystem                       | Zustand        | Pinia       | MobX / MST    | Redux Toolkit   |
+|                                 | Coexist                        | Zustand        | Pinia       | MobX / MST    | Redux Toolkit   |
 | ------------------------------- | ------------------------------ | -------------- | ----------- | ------------- | --------------- |
 | Target frameworks               | React/Vue/Svelte/Solid/Angular | React          | Vue         | React-first   | React-first     |
 | Same logic across frameworks    | ✅ first-class                 | ❌             | ❌          | ⚠️ manual     | ❌              |
@@ -114,7 +114,7 @@ ergonomics — and it is honest about where simpler tools win.
 | Ecosystem & maturity            | 🟡 new (v0.x)                  | 🟢 huge        | 🟢 huge     | 🟢 mature     | 🟢 huge         |
 | Best for small / single-fw apps | ⚠️ overkill                    | 🟢             | 🟢          | 🟢            | ⚠️              |
 
-### When _not_ to reach for CoSystem
+### When _not_ to reach for Coexist
 
 - A small or single-framework app — Zustand, Pinia, or signals are simpler.
 - You need a mature SSR meta-framework today — Next, Nuxt, or SvelteKit.
@@ -382,7 +382,7 @@ then run before the triggering mutation returns. Queued call sites receive
 
 ## UI Adapters
 
-CoSystem does not own rendering. There is no `ViewModule`, root component base
+Coexist does not own rendering. There is no `ViewModule`, root component base
 class, or `render()` abstraction. UI packages only provide context and
 subscription helpers.
 
@@ -390,7 +390,7 @@ React:
 
 ```tsx
 import { createRoot } from "react-dom/client";
-import { CoSystemProvider, useModule, useSelector } from "@coexist/react";
+import { CoexistProvider, useModule, useSelector } from "@coexist/react";
 
 function CounterView() {
   const counter = useModule(Counter);
@@ -400,9 +400,9 @@ function CounterView() {
 }
 
 createRoot(document.getElementById("root")!).render(
-  <CoSystemProvider app={app}>
+  <CoexistProvider app={app}>
     <CounterView />
-  </CoSystemProvider>,
+  </CoexistProvider>,
 );
 ```
 
@@ -429,7 +429,7 @@ Vue:
 
 ```ts
 import { createApp as createVueApp, defineComponent, h } from "vue";
-import { cosystemPlugin, useComputed, useModule } from "@coexist/vue";
+import { coexistPlugin, useComputed, useModule } from "@coexist/vue";
 
 const CounterView = defineComponent({
   setup() {
@@ -440,7 +440,7 @@ const CounterView = defineComponent({
   },
 });
 
-createVueApp(CounterView).use(cosystemPlugin(app)).mount("#app");
+createVueApp(CounterView).use(coexistPlugin(app)).mount("#app");
 ```
 
 Vue can consume worker-hosted modules through the same provide/inject model:
@@ -470,9 +470,9 @@ createVueApp(WorkerCounterView).use(workerClientPlugin(client)).mount("#app");
 Svelte:
 
 ```ts
-import { moduleStore, selectedModuleStore, setCoSystemApp } from "@coexist/svelte";
+import { moduleStore, selectedModuleStore, setCoexistApp } from "@coexist/svelte";
 
-setCoSystemApp(app);
+setCoexistApp(app);
 
 const counter = moduleStore(Counter);
 const count = selectedModuleStore(Counter, (module) => module.count);
@@ -517,7 +517,7 @@ const count = workerSelectorRune((state) => (state as CounterState).counter.coun
 Solid:
 
 ```tsx
-import { CoSystemProvider, useComputed, useModule } from "@coexist/solid";
+import { CoexistProvider, useComputed, useModule } from "@coexist/solid";
 
 function CounterView() {
   const counter = useModule(Counter);
@@ -526,9 +526,9 @@ function CounterView() {
   return <button onClick={() => counter.increase()}>{count()}</button>;
 }
 
-<CoSystemProvider app={app}>
+<CoexistProvider app={app}>
   <CounterView />
-</CoSystemProvider>;
+</CoexistProvider>;
 ```
 
 Solid can render worker-hosted state through a worker client provider:
@@ -559,7 +559,7 @@ Angular:
 ```ts
 import { Component } from "@angular/core";
 import { bootstrapApplication } from "@angular/platform-browser";
-import { injectModule, injectSignal, provideCoSystem } from "@coexist/angular";
+import { injectModule, injectSignal, provideCoexist } from "@coexist/angular";
 
 @Component({
   selector: "counter-view",
@@ -571,7 +571,7 @@ class CounterView {
 }
 
 bootstrapApplication(CounterView, {
-  providers: [provideCoSystem(app)],
+  providers: [provideCoexist(app)],
 });
 ```
 
@@ -920,7 +920,7 @@ pnpm run commit
 ```text
 packages/
   angular/    # Angular adapter
-  core/       # CoSystem core runtime (DI, app, decorators, worker)
+  core/       # Coexist core runtime (DI, app, decorators, worker)
   create/     # create-coexist scaffolding CLI
   devtools/   # timeline inspection plugin
   react/      # React adapter

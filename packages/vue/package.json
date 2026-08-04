@@ -1,7 +1,7 @@
 {
   "name": "@coexist/vue",
   "version": "0.2.0",
-  "description": "Vue adapter for CoSystem.",
+  "description": "Vue adapter for Coexist.",
   "license": "MIT",
   "repository": {
     "type": "git",

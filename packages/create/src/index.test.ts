@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { createCosystemProject } from "./index.js";
+import { createCoexistProject } from "./index.js";
 
 const roots: string[] = [];
 const execFileAsync = promisify(execFile);
@@ -18,11 +18,11 @@ describe("create package", () => {
     await Promise.all(roots.splice(0).map((root) => rm(root, { force: true, recursive: true })));
   });
 
-  it("scaffolds a minimal CoSystem project", async () => {
+  it("scaffolds a minimal Coexist project", async () => {
     const root = await mkdtemp(join(tmpdir(), "cosystem-create-"));
     roots.push(root);
 
-    const result = await createCosystemProject({
+    const result = await createCoexistProject({
       name: "demo",
       root,
     });
@@ -43,7 +43,7 @@ describe("create package", () => {
   it("generates a project entrypoint that typechecks against the current core package", async () => {
     const root = await mkdtemp(join(tmpdir(), "cosystem-create-e2e-"));
     roots.push(root);
-    await createCosystemProject({
+    await createCoexistProject({
       name: "demo",
       root,
     });
@@ -99,7 +99,7 @@ describe("create package", () => {
       log.mockRestore();
     }
 
-    expect(logs).toEqual([[`Created CoSystem project at ${root}`]]);
+    expect(logs).toEqual([[`Created Coexist project at ${root}`]]);
     await expect(readFile(join(root, "package.json"), "utf8")).resolves.toContain(
       '"name": "cli-demo"',
     );

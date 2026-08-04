@@ -12,7 +12,7 @@ import {
 } from "react";
 
 import {
-  CosystemError,
+  CoexistError,
   type App,
   type AsyncMethodProxy,
   type InjectionToken,
@@ -20,7 +20,7 @@ import {
   type WorkerStateSelector,
 } from "@coexist/core";
 
-export interface CoSystemProviderProps {
+export interface CoexistProviderProps {
   readonly app: App;
   readonly children?: ReactNode;
 }
@@ -37,13 +37,13 @@ export interface UseSelectorOptions<T> {
 export type AppSelector<T> = (app: App) => T;
 export type ModuleSelector<TModule, TValue> = (module: TModule, app: App) => TValue;
 
-export const CoSystemContext: Context<App | null> = createContext<App | null>(null);
+export const CoexistContext: Context<App | null> = createContext<App | null>(null);
 export const WorkerClientContext: Context<WorkerClient | null> = createContext<WorkerClient | null>(
   null,
 );
 
-export function CoSystemProvider({ app, children }: CoSystemProviderProps): ReactElement {
-  return createElement(CoSystemContext.Provider, { value: app }, children);
+export function CoexistProvider({ app, children }: CoexistProviderProps): ReactElement {
+  return createElement(CoexistContext.Provider, { value: app }, children);
 }
 
 export function WorkerClientProvider({
@@ -53,29 +53,29 @@ export function WorkerClientProvider({
   return createElement(WorkerClientContext.Provider, { value: client }, children);
 }
 
-export function useCoSystem(): App {
-  const app = useContext(CoSystemContext);
+export function useCoexist(): App {
+  const app = useContext(CoexistContext);
 
   if (app === null) {
-    throw new CosystemError("Missing CoSystemProvider.");
+    throw new CoexistError("Missing CoexistProvider.");
   }
 
   return app;
 }
 
 export function useApp(): App {
-  return useCoSystem();
+  return useCoexist();
 }
 
 export function useModule<T>(token: InjectionToken<T>): T {
-  return useCoSystem().getModule(token);
+  return useCoexist().getModule(token);
 }
 
 export function useWorkerClient(): WorkerClient {
   const client = useContext(WorkerClientContext);
 
   if (client === null) {
-    throw new CosystemError("Missing WorkerClientProvider.");
+    throw new CoexistError("Missing WorkerClientProvider.");
   }
 
   return client;
@@ -146,7 +146,7 @@ export function useSelector<TModule, TValue>(
   second?: ModuleSelector<TModule, TValue> | UseSelectorOptions<TValue>,
   third?: UseSelectorOptions<TValue>,
 ): TValue {
-  const app = useCoSystem();
+  const app = useCoexist();
   const selector =
     typeof second === "function"
       ? (currentApp: App) =>

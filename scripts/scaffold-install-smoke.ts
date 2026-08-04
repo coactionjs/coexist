@@ -30,7 +30,7 @@ try {
   );
 
   const createResult = await run("pnpm", ["exec", "create-coexist", appName], cliConsumerDir);
-  const createdPath = createResult.stdout.trim().replace("Created CoSystem project at ", "");
+  const createdPath = createResult.stdout.trim().replace("Created Coexist project at ", "");
   const [expectedAppDir, reportedAppDir] = await Promise.all([
     realpath(appDir),
     realpath(createdPath),

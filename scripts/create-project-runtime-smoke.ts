@@ -16,7 +16,7 @@ const appDir = join(tempDir, appName);
 
 try {
   const createResult = await run(process.execPath, [cliPath, appName], tempDir);
-  const createdPath = createResult.stdout.trim().replace("Created CoSystem project at ", "");
+  const createdPath = createResult.stdout.trim().replace("Created Coexist project at ", "");
   const [actualAppDir, reportedAppDir] = await Promise.all([
     realpath(appDir),
     realpath(createdPath),

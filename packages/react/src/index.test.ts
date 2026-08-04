@@ -12,7 +12,7 @@ import {
 } from "@coexist/core";
 
 import {
-  CoSystemProvider,
+  CoexistProvider,
   WorkerClientProvider,
   useApp,
   useModule,
@@ -61,7 +61,7 @@ describe("React adapter", () => {
     }
 
     act(() => {
-      renderer = create(createElement(CoSystemProvider, { app }, createElement(View)));
+      renderer = create(createElement(CoexistProvider, { app }, createElement(View)));
     });
 
     expect(renderer?.toJSON()).toMatchObject({
@@ -102,7 +102,7 @@ describe("React adapter", () => {
     }
 
     act(() => {
-      create(createElement(CoSystemProvider, { app }, createElement(View)));
+      create(createElement(CoexistProvider, { app }, createElement(View)));
     });
 
     expect(renders).toBe(1);

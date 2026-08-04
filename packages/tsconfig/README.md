@@ -1,9 +1,9 @@
 # @coexist/tsconfig
 
-> Shared TypeScript configuration for the [CoSystem](../../README.md) monorepo.
+> Shared TypeScript configuration for the [Coexist](../../README.md) monorepo.
 
 A private, internal package (`workspace:*`) that centralizes the `tsconfig`
-presets used across CoSystem packages. It is not published to npm.
+presets used across Coexist packages. It is not published to npm.
 
 ## Configurations
 

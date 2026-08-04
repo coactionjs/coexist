@@ -11,7 +11,7 @@ import {
 import {
   type App,
   type AsyncMethodProxy,
-  type InjectionToken as CoSystemToken,
+  type InjectionToken as CoexistToken,
   type WorkerClient,
   type WorkerStateSelector,
 } from "@coexist/core";
@@ -23,14 +23,15 @@ export interface InjectSignalOptions<T> {
 export type AppSelector<T> = (app: App) => T;
 export type ModuleSelector<TModule, TValue> = (module: TModule, app: App) => TValue;
 
-export const COSYSTEM_APP: InjectionToken<App> = new InjectionToken<App>("CoSystem App");
-export const COSYSTEM_WORKER_CLIENT: InjectionToken<WorkerClient> =
-  new InjectionToken<WorkerClient>("CoSystem WorkerClient");
+export const COEXIST_APP: InjectionToken<App> = new InjectionToken<App>("Coexist App");
+export const COEXIST_WORKER_CLIENT: InjectionToken<WorkerClient> = new InjectionToken<WorkerClient>(
+  "Coexist WorkerClient",
+);
 
-export function provideCoSystem(app: App): EnvironmentProviders {
+export function provideCoexist(app: App): EnvironmentProviders {
   return makeEnvironmentProviders([
     {
-      provide: COSYSTEM_APP,
+      provide: COEXIST_APP,
       useValue: app,
     },
   ]);
@@ -39,22 +40,22 @@ export function provideCoSystem(app: App): EnvironmentProviders {
 export function provideWorkerClient(client: WorkerClient): EnvironmentProviders {
   return makeEnvironmentProviders([
     {
-      provide: COSYSTEM_WORKER_CLIENT,
+      provide: COEXIST_WORKER_CLIENT,
       useValue: client,
     },
   ]);
 }
 
-export function injectCoSystemApp(): App {
-  return inject(COSYSTEM_APP);
+export function injectCoexistApp(): App {
+  return inject(COEXIST_APP);
 }
 
-export function injectModule<T>(token: CoSystemToken<T>): T {
-  return injectCoSystemApp().getModule(token);
+export function injectModule<T>(token: CoexistToken<T>): T {
+  return injectCoexistApp().getModule(token);
 }
 
 export function injectWorkerClient(): WorkerClient {
-  return inject(COSYSTEM_WORKER_CLIENT);
+  return inject(COEXIST_WORKER_CLIENT);
 }
 
 export function injectWorkerModule<T extends object>(name: string): AsyncMethodProxy<T> {
@@ -87,21 +88,21 @@ export function injectSignal<T>(
   options?: InjectSignalOptions<T>,
 ): Signal<T>;
 export function injectSignal<TModule, TValue>(
-  token: CoSystemToken<TModule>,
+  token: CoexistToken<TModule>,
   selector: ModuleSelector<TModule, TValue>,
   options?: InjectSignalOptions<TValue>,
 ): Signal<TValue>;
 export function injectSignal<TModule, TValue>(
-  first: AppSelector<TValue> | CoSystemToken<TModule>,
+  first: AppSelector<TValue> | CoexistToken<TModule>,
   second?: ModuleSelector<TModule, TValue> | InjectSignalOptions<TValue>,
   third?: InjectSignalOptions<TValue>,
 ): Signal<TValue> {
-  const app = injectCoSystemApp();
+  const app = injectCoexistApp();
   const destroyRef = inject(DestroyRef);
   const selector =
     typeof second === "function"
       ? (currentApp: App) =>
-          second(currentApp.getModule(first as CoSystemToken<TModule>), currentApp)
+          second(currentApp.getModule(first as CoexistToken<TModule>), currentApp)
       : (first as AppSelector<TValue>);
   const options = typeof second === "function" ? third : second;
   const equals = options?.equals ?? Object.is;

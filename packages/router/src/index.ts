@@ -50,7 +50,7 @@ export interface RouterPluginOptions {
   readonly onError?: (error: unknown) => void;
 }
 
-export const RouterToken: Token<Router> = token<Router>("CoSystem Router");
+export const RouterToken: Token<Router> = token<Router>("Coexist Router");
 
 export function createMemoryRouter(options: RouterOptions = {}): Router {
   const listeners = new Set<(location: RouteLocation) => void>();

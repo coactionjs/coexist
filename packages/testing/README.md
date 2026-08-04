@@ -1,6 +1,6 @@
 # @coexist/testing
 
-> Testing helper facade for [CoSystem](../../README.md). Re-exports `testApp`
+> Testing helper facade for [Coexist](../../README.md). Re-exports `testApp`
 > and its types from [`@coexist/core`](../core) under a dedicated, intention-
 > revealing import for test files.
 

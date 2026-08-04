@@ -1,6 +1,6 @@
 # State & Reactivity
 
-CoSystem's reactivity is provided by [Coaction](https://www.npmjs.com/package/coaction).
+Coexist's reactivity is provided by [Coaction](https://www.npmjs.com/package/coaction).
 You rarely call Coaction directly — modules and adapters sit on top — but
 understanding the store helps when you reach for `watch`, strict actions, or
 patches.
@@ -19,7 +19,7 @@ app.store.getPureState();
 
 One store (not one per module) is a deliberate choice: app-level patches,
 persistence, devtools, and selectors all operate over the whole application at
-once. User modules stay plain classes; CoSystem generates the Coaction-compatible
+once. User modules stay plain classes; Coexist generates the Coaction-compatible
 state/action layer internally.
 
 ## Accessing state

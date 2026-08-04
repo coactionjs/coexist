@@ -135,7 +135,7 @@ async function writeConsumerProject({ catalog, coreTarball, solidTarball }) {
       "  <head>",
       '    <meta charset="UTF-8" />',
       '    <meta name="viewport" content="width=device-width, initial-scale=1.0" />',
-      "    <title>CoSystem Solid worker browser smoke</title>",
+      "    <title>Coexist Solid worker browser smoke</title>",
       "  </head>",
       "  <body>",
       '    <main aria-label="Solid worker browser smoke">',

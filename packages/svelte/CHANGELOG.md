@@ -4,9 +4,9 @@
 
 ### Patch Changes
 
-- 4475394: `getCoSystemApp` now resolves the component context before the global default
+- 4475394: `getCoexistApp` now resolves the component context before the global default
   app, so nested apps and per-request (SSR) apps are not shadowed by
-  module-level state. The global app set with `setCoSystemApp` remains the
+  module-level state. The global app set with `setCoexistApp` remains the
   fallback outside component context.
 - Updated dependencies [c9e64c3]
 - Updated dependencies [6aec125]
@@ -40,7 +40,7 @@
 
 ### Major Changes
 
-- Release CoSystem 0.1 with the app runtime, lightweight DI, module decorators and no-decorator metadata, framework-native UI adapters, worker/shared runtime transports, persistence, router, devtools, testing helpers, examples, and CI/CD publishing support.
+- Release Coexist 0.1 with the app runtime, lightweight DI, module decorators and no-decorator metadata, framework-native UI adapters, worker/shared runtime transports, persistence, router, devtools, testing helpers, examples, and CI/CD publishing support.
 
 ### Minor Changes
 

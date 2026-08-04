@@ -11,7 +11,7 @@ import {
 } from "vue";
 
 import {
-  CosystemError,
+  CoexistError,
   type App,
   type AsyncMethodProxy,
   type InjectionToken,
@@ -25,11 +25,11 @@ export interface UseSelectorOptions<T> {
 
 export type AppSelector<T> = (app: App) => T;
 
-export const CoSystemKey: InjectionKey<App> = Symbol("CoSystem");
-export const WorkerClientKey: InjectionKey<WorkerClient> = Symbol("CoSystem WorkerClient");
+export const CoexistKey: InjectionKey<App> = Symbol("Coexist");
+export const WorkerClientKey: InjectionKey<WorkerClient> = Symbol("Coexist WorkerClient");
 
-export function provideCoSystem(app: App): App {
-  provide(CoSystemKey, app);
+export function provideCoexist(app: App): App {
+  provide(CoexistKey, app);
   return app;
 }
 
@@ -38,10 +38,10 @@ export function provideWorkerClient(client: WorkerClient): WorkerClient {
   return client;
 }
 
-export function cosystemPlugin(app: App): VuePlugin {
+export function coexistPlugin(app: App): VuePlugin {
   return {
     install(vueApp: VueApplication) {
-      vueApp.provide(CoSystemKey, app);
+      vueApp.provide(CoexistKey, app);
     },
   };
 }
@@ -54,29 +54,29 @@ export function workerClientPlugin(client: WorkerClient): VuePlugin {
   };
 }
 
-export function useCoSystem(): App {
-  const app = inject(CoSystemKey, null);
+export function useCoexist(): App {
+  const app = inject(CoexistKey, null);
 
   if (app === null) {
-    throw new CosystemError("Missing provideCoSystem(app).");
+    throw new CoexistError("Missing provideCoexist(app).");
   }
 
   return app;
 }
 
 export function useApp(): App {
-  return useCoSystem();
+  return useCoexist();
 }
 
 export function useModule<T>(token: InjectionToken<T>): T {
-  return useCoSystem().getModule(token);
+  return useCoexist().getModule(token);
 }
 
 export function useWorkerClient(): WorkerClient {
   const client = inject(WorkerClientKey, null);
 
   if (client === null) {
-    throw new CosystemError("Missing provideWorkerClient(client).");
+    throw new CoexistError("Missing provideWorkerClient(client).");
   }
 
   return client;
@@ -122,7 +122,7 @@ export function useSelector<T>(
   selector: AppSelector<T>,
   options: UseSelectorOptions<T> = {},
 ): Readonly<Ref<T>> {
-  const app = useCoSystem();
+  const app = useCoexist();
   const value = shallowRef(selector(app)) as Ref<T>;
   const watchOptions =
     options.equals === undefined

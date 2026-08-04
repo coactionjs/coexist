@@ -1,18 +1,18 @@
-# CoSystem Examples
+# Coexist Examples
 
 Each example is a runnable workspace package that demonstrates one slice of
-CoSystem. They share the same `Counter` module across frameworks so you can
+Coexist. They share the same `Counter` module across frameworks so you can
 compare adapters directly.
 
 ## Overview
 
 | Example                                | Package                            | Demonstrates                                                             |
 | -------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------ |
-| [`react-counter`](./react-counter)     | `@coexist/example-react-counter`   | React adapter: `CoSystemProvider`, `useModule`, `useSelector`.           |
-| [`vue-counter`](./vue-counter)         | `@coexist/example-vue-counter`     | Vue adapter: `cosystemPlugin`, `useModule`, `useComputed`.               |
+| [`react-counter`](./react-counter)     | `@coexist/example-react-counter`   | React adapter: `CoexistProvider`, `useModule`, `useSelector`.            |
+| [`vue-counter`](./vue-counter)         | `@coexist/example-vue-counter`     | Vue adapter: `coexistPlugin`, `useModule`, `useComputed`.                |
 | [`svelte-counter`](./svelte-counter)   | `@coexist/example-svelte-counter`  | Svelte adapter: readable stores and `$store` syntax.                     |
-| [`solid-counter`](./solid-counter)     | `@coexist/example-solid-counter`   | Solid adapter: `CoSystemProvider`, `useComputed` accessors.              |
-| [`angular-counter`](./angular-counter) | `@coexist/example-angular-counter` | Angular adapter: `provideCoSystem`, `injectModule`, `injectSignal`.      |
+| [`solid-counter`](./solid-counter)     | `@coexist/example-solid-counter`   | Solid adapter: `CoexistProvider`, `useComputed` accessors.               |
+| [`angular-counter`](./angular-counter) | `@coexist/example-angular-counter` | Angular adapter: `provideCoexist`, `injectModule`, `injectSignal`.       |
 | [`ts-decorator`](./ts-decorator)       | `@coexist/example-ts-decorator`    | TypeScript standard decorators: `@Module`, `@State accessor`, metadata.  |
 | [`js-decorator`](./js-decorator)       | `@coexist/example-js-decorator`    | JavaScript standard decorators with explicit dependency metadata.        |
 | [`no-decorator`](./no-decorator)       | `@coexist/example-no-decorator`    | Defining modules with `defineModule()` metadata instead of decorators.   |

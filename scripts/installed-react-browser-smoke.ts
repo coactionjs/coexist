@@ -141,7 +141,7 @@ async function writeConsumerProject(coreTarball, reactTarball, catalog) {
       "  <head>",
       '    <meta charset="UTF-8" />',
       '    <meta name="viewport" content="width=device-width, initial-scale=1.0" />',
-      "    <title>CoSystem React browser smoke</title>",
+      "    <title>Coexist React browser smoke</title>",
       "  </head>",
       "  <body>",
       '    <main aria-label="React browser smoke">',
@@ -161,7 +161,7 @@ function createBrowserSource() {
   return `import { createElement, useRef, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { createApp, defineModule, type App } from "@coexist/core";
-import { CoSystemProvider, useApp, useModule, useSelector } from "@coexist/react";
+import { CoexistProvider, useApp, useModule, useSelector } from "@coexist/react";
 
 type SmokeSnapshot = {
   readonly count: number;
@@ -226,7 +226,7 @@ if (!(rootElement instanceof HTMLElement)) {
 
 const root = createRoot(rootElement);
 
-root.render(createElement(CoSystemProvider, { app }, createElement(SmokeApp)));
+root.render(createElement(CoexistProvider, { app }, createElement(SmokeApp)));
 
 window.__cosystemReactSmoke = {
   app,

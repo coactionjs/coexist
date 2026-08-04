@@ -1,7 +1,7 @@
 # @coexist/create
 
-> Project scaffolding for [CoSystem](../../README.md). Ships the
-> `create-coexist` CLI and a programmatic `createCosystemProject()` API that
+> Project scaffolding for [Coexist](../../README.md). Ships the
+> `create-coexist` CLI and a programmatic `createCoexistProject()` API that
 > generate a minimal `@coexist/core` starter.
 
 ## Usage
@@ -52,9 +52,9 @@ console.log(app.store.getPureState());
 ## Programmatic API
 
 ```ts
-import { createCosystemProject } from "@coexist/create";
+import { createCoexistProject } from "@coexist/create";
 
-const result = await createCosystemProject({
+const result = await createCoexistProject({
   root: "/abs/path/to/my-app",
   name: "my-app",
   packageManager: "pnpm@11.8.0", // optional
@@ -73,8 +73,8 @@ Returns `{ root, files }`.
 
 ## Exports
 
-CLI bin `create-coexist`; module exports `createCosystemProject` and the
-`CreateCosystemProjectOptions`, `CreatedCosystemProject` types.
+CLI bin `create-coexist`; module exports `createCoexistProject` and the
+`CreateCoexistProjectOptions`, `CreatedCoexistProject` types.
 
 ## License
 

@@ -1,6 +1,6 @@
 # @coexist/storage
 
-> Cross-framework persistence plugin for [CoSystem](../../README.md), powered by
+> Cross-framework persistence plugin for [Coexist](../../README.md), powered by
 > [`localspace`](https://www.npmjs.com/package/localspace): hydrate app state on
 > startup, persist state changes, and expose a shared storage service through app
 > DI.
@@ -62,10 +62,10 @@ await kv.set("draft", { title: "Hello" });
 
 | Option             | Type                                   | Default            | Description                                                          |
 | ------------------ | -------------------------------------- | ------------------ | -------------------------------------------------------------------- |
-| `key`              | `string`                               | `cosystem:state`   | localspace key used for CoSystem app state.                          |
+| `key`              | `string`                               | `cosystem:state`   | localspace key used for Coexist app state.                           |
 | `options`          | `LocalSpaceOptions`                    | localspace default | localspace instance config (`name`, `storeName`, `driver`, plugins). |
 | `instance`         | `LocalSpaceInstance`                   | —                  | Existing localspace instance to wrap.                                |
-| `service`          | `StorageService`                       | —                  | Existing CoSystem storage service to provide.                        |
+| `service`          | `StorageService`                       | —                  | Existing Coexist storage service to provide.                         |
 | `hydrate`          | `boolean`                              | `true`             | Hydrate app state from `key` during plugin setup.                    |
 | `persist`          | `boolean`                              | `true`             | Persist app state on store changes.                                  |
 | `throttleMs`       | `number`                               | `0`                | Trailing throttle for app-state persistence writes.                  |
@@ -84,7 +84,7 @@ await storage.set("theme", "dark");
 const theme = await storage.get<string>("theme");
 await storage.setMany([
   { key: "cache:user", value: { name: "Ada" } },
-  { key: "cache:org", value: { name: "CoSystem" } },
+  { key: "cache:org", value: { name: "Coexist" } },
 ]);
 ```
 

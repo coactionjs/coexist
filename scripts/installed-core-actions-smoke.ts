@@ -109,7 +109,7 @@ async function writeConsumerProject(coreTarball, catalog) {
 
 function createTypeConsumerSource() {
   return `import {
-  CosystemError,
+  CoexistError,
   createApp,
   defineModule,
   runInAction,
@@ -171,7 +171,7 @@ const instanceResult: number = runInAction(
 try {
   counter.count = 3;
 } catch (error) {
-  if (!(error instanceof CosystemError)) {
+  if (!(error instanceof CoexistError)) {
     throw error;
   }
 }
@@ -182,7 +182,7 @@ void [app, events, errors, instanceResult, tokenResult];
 
 function createRuntimeConsumerSource() {
   return `import {
-  CosystemError,
+  CoexistError,
   createApp,
   defineModule,
   runInAction,
@@ -303,7 +303,7 @@ expectThrowsInstance(
   () => {
     counter.count = 10;
   },
-  CosystemError,
+  CoexistError,
   "strict action rejects direct writes",
 );
 
@@ -343,7 +343,7 @@ expectEqual(writer.count, 2, "post-await runInAction state");
 await expectRejects(failing.failLater(), "async boom", "async failing action");
 expectThrowsInstance(
   () => runInAction({}, () => undefined),
-  CosystemError,
+  CoexistError,
   "global runInAction rejects unknown modules",
 );
 

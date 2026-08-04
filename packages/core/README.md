@@ -1,10 +1,10 @@
 # @coexist/core
 
-> The CoSystem core runtime: a typed application core with lightweight dependency
+> The Coexist core runtime: a typed application core with lightweight dependency
 > injection, object-oriented state, actions, computed getters, effects, and a
 > framework-agnostic store powered by [Coaction](https://www.npmjs.com/package/coaction).
 
-`@coexist/core` is the only package every CoSystem app depends on. It owns the
+`@coexist/core` is the only package every Coexist app depends on. It owns the
 DI container, module metadata, the app runtime and lifecycle, the reactive
 store, and a worker-hosting prototype. UI adapters (`@coexist/react`,
 `@coexist/vue`, …) and plugins (`@coexist/storage`, `@coexist/router`, …) are
@@ -18,7 +18,7 @@ pnpm add @coexist/core
 # yarn add @coexist/core
 ```
 
-CoSystem ships as ESM only and targets Node.js `>=22.12.0` and modern browsers.
+Coexist ships as ESM only and targets Node.js `>=22.12.0` and modern browsers.
 
 ## Table of contents
 
@@ -42,7 +42,7 @@ CoSystem ships as ESM only and targets Node.js `>=22.12.0` and modern browsers.
 
 ## Concepts
 
-A CoSystem app is a graph of **modules**. A module is a plain class that:
+A Coexist app is a graph of **modules**. A module is a plain class that:
 
 - holds **state** (reactive fields),
 - exposes **actions** (methods that mutate state inside a transaction),
@@ -58,7 +58,7 @@ has one observable state tree:
 { counter: { count: 2 }, todos: { items: [] } }
 ```
 
-CoSystem does **not** own rendering. There is no view base class or `render()`
+Coexist does **not** own rendering. There is no view base class or `render()`
 abstraction. Framework adapters read the store and subscribe to changes using
 each framework's native reactivity.
 
@@ -189,7 +189,7 @@ started.
 
 ## Dependency injection
 
-CoSystem includes a small but complete DI container. You register **providers**
+Coexist includes a small but complete DI container. You register **providers**
 keyed by **injection tokens** (a class, a `Token`, a string, or a symbol).
 
 ```ts
@@ -309,7 +309,7 @@ Providers default to the `"singleton"` scope. Available scopes:
 | `"resolution"` | One instance per resolution graph (shared within a single get). |
 | `"transient"`  | A fresh instance on every resolution.                           |
 
-These four scopes apply to plain DI services. CoSystem modules are
+These four scopes apply to plain DI services. Coexist modules are
 singleton-only: each module owns one app store slice and must have the same
 identity through `getModule()` and dependency injection. Configuring a module as
 `scoped`, `resolution`, or `transient` throws during provider normalization.
@@ -425,7 +425,7 @@ const plugin: Plugin = {
 `PluginContext` gives plugins managed cleanup. `context.watch()` is `app.watch()`
 with automatic teardown, and `context.onDispose()` registers any other disposer.
 Plugin `providers` can contribute service/token dependencies before app providers
-are registered, but they cannot register CoSystem modules. App-level non-`multi`
+are registered, but they cannot register Coexist modules. App-level non-`multi`
 providers replace plugin providers for the same token; app-level `multi`
 providers append to plugin `multi` providers.
 
@@ -570,7 +570,7 @@ resolution or framework-specific worker bootstrapping. Adapters
 
 ## Errors
 
-All errors extend `CosystemError`:
+All errors extend `CoexistError`:
 
 | Error                                | Thrown when                                                           |
 | ------------------------------------ | --------------------------------------------------------------------- |

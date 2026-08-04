@@ -1,6 +1,6 @@
 # Testing
 
-CoSystem is designed to be tested without a UI. Modules are plain classes with
+Coexist is designed to be tested without a UI. Modules are plain classes with
 injected dependencies, and `testApp()` gives you provider overrides plus an
 inspector for actions, state, and patches.
 

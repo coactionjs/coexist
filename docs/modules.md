@@ -6,7 +6,7 @@ store, and the lifecycle hooks a module can implement.
 
 ## Two ways to declare a module
 
-CoSystem treats decorators and `defineModule()` identically — they write the same
+Coexist treats decorators and `defineModule()` identically — they write the same
 metadata. Pick whichever fits your build setup and taste.
 
 ### With decorators

@@ -153,7 +153,7 @@ async function writeConsumerProject({
       "  <head>",
       '    <meta charset="UTF-8" />',
       '    <meta name="viewport" content="width=device-width, initial-scale=1.0" />',
-      "    <title>CoSystem plugin stack browser smoke</title>",
+      "    <title>Coexist plugin stack browser smoke</title>",
       "  </head>",
       "  <body>",
       '    <main aria-label="Plugin stack smoke">',
@@ -226,7 +226,7 @@ type PluginStackSnapshot = {
 
 declare global {
   interface Window {
-    __cosystemPluginStackSmoke?: {
+    __coexistPluginStackSmoke?: {
       readonly ready: Promise<void>;
       increase(): Promise<PluginStackSnapshot>;
       navigate(to: string): Promise<PluginStackSnapshot>;
@@ -294,7 +294,7 @@ let shell: Shell;
 
 const ready = start();
 
-window.__cosystemPluginStackSmoke = {
+window.__coexistPluginStackSmoke = {
   ready,
   increase,
   navigate,
@@ -422,7 +422,7 @@ async function runPluginStackSmoke(browserInstance, url) {
 
   try {
     await page.goto(url, { waitUntil: "networkidle" });
-    await page.evaluate(() => window.__cosystemPluginStackSmoke?.ready);
+    await page.evaluate(() => window.__coexistPluginStackSmoke?.ready);
     await expectText(page, "h1", "Plugin stack browser smoke");
     await expectStat(page, "Status", "ready");
 
@@ -475,7 +475,7 @@ async function runPluginStackSmoke(browserInstance, url) {
     await expectStat(page, "Stored path", "/settings");
 
     await page.reload({ waitUntil: "networkidle" });
-    await page.evaluate(() => window.__cosystemPluginStackSmoke?.ready);
+    await page.evaluate(() => window.__coexistPluginStackSmoke?.ready);
 
     const afterReload = await readSmokeSnapshot(page);
     assertSnapshot(afterReload, {
@@ -514,7 +514,7 @@ async function runPluginStackSmoke(browserInstance, url) {
 
 async function readSmokeSnapshot(page) {
   return await page.evaluate(async () => {
-    const smoke = window.__cosystemPluginStackSmoke;
+    const smoke = window.__coexistPluginStackSmoke;
 
     if (smoke === undefined) {
       throw new Error("Plugin stack smoke API was not registered.");
@@ -527,7 +527,7 @@ async function readSmokeSnapshot(page) {
 async function callSmoke(page, method, ...args) {
   return await page.evaluate(
     async ({ callArgs, methodName }) => {
-      const smoke = window.__cosystemPluginStackSmoke;
+      const smoke = window.__coexistPluginStackSmoke;
 
       if (smoke === undefined) {
         throw new Error("Plugin stack smoke API was not registered.");

@@ -160,25 +160,25 @@ function createTypeConsumerSource() {
 import {
   injectModule as injectAngularModule,
   injectSignal as injectAngularSignal,
-  provideCoSystem as provideAngularCoSystem,
+  provideCoexist as provideAngularCoexist,
 } from "@coexist/angular";
 import {
-  CoSystemProvider as ReactCoSystemProvider,
+  CoexistProvider as ReactCoexistProvider,
   useModule as useReactModule,
   useSelector as useReactSelector,
 } from "@coexist/react";
 import {
-  CoSystemProvider as SolidCoSystemProvider,
+  CoexistProvider as SolidCoexistProvider,
   useComputed as useSolidComputed,
   useModule as useSolidModule,
 } from "@coexist/solid";
 import {
   moduleStore as svelteModuleStore,
   selectedModuleStore as selectedSvelteModuleStore,
-  setCoSystemApp,
+  setCoexistApp,
 } from "@coexist/svelte";
 import {
-  provideCoSystem as provideVueCoSystem,
+  provideCoexist as provideVueCoexist,
   useComputed as useVueComputed,
   useModule as useVueModule,
 } from "@coexist/vue";
@@ -213,7 +213,7 @@ const app: App = createApp({
 });
 const moduleSelector = (module: TypeFrameworkCounter): number => module.count;
 const appSelector = (runtime: App): number => runtime.getModule(TypeFrameworkCounter).count;
-const angularProviders = provideAngularCoSystem(app);
+const angularProviders = provideAngularCoexist(app);
 const angularModuleFactory = injectAngularModule<TypeFrameworkCounter>;
 const angularSignalFactory: (
   token: typeof TypeFrameworkCounter,
@@ -228,7 +228,7 @@ const svelteCountStore: Readable<number> = selectedSvelteModuleStore(
 );
 const vueCount: Readonly<Ref<number>> | undefined = undefined;
 
-setCoSystemApp(app);
+setCoexistApp(app);
 
 void [
   angularProviders,
@@ -238,13 +238,13 @@ void [
   svelteCounterStore,
   svelteCountStore,
   vueCount,
-  ReactCoSystemProvider,
+  ReactCoexistProvider,
   useReactModule,
   useReactSelector,
-  SolidCoSystemProvider,
+  SolidCoexistProvider,
   useSolidModule,
   useSolidComputed,
-  provideVueCoSystem,
+  provideVueCoexist,
   useVueModule,
   useVueComputed,
   appSelector,
@@ -267,26 +267,26 @@ import { createApp, defineModule } from "@coexist/core";
 import {
   injectModule as injectAngularModule,
   injectSignal as injectAngularSignal,
-  provideCoSystem as provideAngularCoSystem,
+  provideCoexist as provideAngularCoexist,
 } from "@coexist/angular";
 import {
-  CoSystemProvider as ReactCoSystemProvider,
+  CoexistProvider as ReactCoexistProvider,
   useModule as useReactModule,
   useSelector as useReactSelector,
 } from "@coexist/react";
 import {
-  CoSystemProvider as SolidCoSystemProvider,
+  CoexistProvider as SolidCoexistProvider,
   useComputed as useSolidComputed,
   useModule as useSolidModule,
 } from "@coexist/solid";
 import {
-  clearCoSystemApp,
+  clearCoexistApp,
   moduleStore as svelteModuleStore,
   selectedModuleStore as selectedSvelteModuleStore,
-  setCoSystemApp,
+  setCoexistApp,
 } from "@coexist/svelte";
 import {
-  provideCoSystem as provideVueCoSystem,
+  provideCoexist as provideVueCoexist,
   useComputed as useVueComputed,
   useModule as useVueModule,
 } from "@coexist/vue";
@@ -344,7 +344,7 @@ try {
 
   act(() => {
     reactRenderer = create(
-      createElement(ReactCoSystemProvider, { app }, createElement(ReactView)),
+      createElement(ReactCoexistProvider, { app }, createElement(ReactView)),
     );
   });
 
@@ -357,7 +357,7 @@ try {
   });
   const VueRoot = defineComponent({
     setup() {
-      provideVueCoSystem(app);
+      provideVueCoexist(app);
       return () => h(VueConsumer);
     },
   });
@@ -366,7 +366,7 @@ try {
 
   createRoot((dispose) => {
     solidDispose = dispose;
-    SolidCoSystemProvider({
+    SolidCoexistProvider({
       app,
       get children() {
         const owner = getOwner();
@@ -385,14 +385,14 @@ try {
     });
   });
 
-  setCoSystemApp(app);
+  setCoexistApp(app);
   svelteCounter = get(svelteModuleStore(SharedCounter));
   const svelteCount = selectedSvelteModuleStore(SharedCounter, (module) => module.count);
   svelteUnsubscribe = svelteCount.subscribe((value) => {
     svelteValues.push(value);
   });
 
-  angularInjector = createEnvironmentInjector([provideAngularCoSystem(app)], null);
+  angularInjector = createEnvironmentInjector([provideAngularCoexist(app)], null);
   runInInjectionContext(angularInjector, () => {
     angularCounter = injectAngularModule(SharedCounter);
     angularCount = injectAngularSignal(SharedCounter, (module) => module.count);
@@ -459,7 +459,7 @@ try {
   }
 
   svelteUnsubscribe?.();
-  clearCoSystemApp();
+  clearCoexistApp();
   solidDispose?.();
   angularInjector?.destroy();
 }

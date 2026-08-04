@@ -1,10 +1,10 @@
 # @coexist/react
 
-> React bindings for [CoSystem](../../README.md): context provider and hooks for
-> consuming a CoSystem app (or a worker-hosted app) with native React reactivity.
+> React bindings for [Coexist](../../README.md): context provider and hooks for
+> consuming a Coexist app (or a worker-hosted app) with native React reactivity.
 
 This adapter does not own rendering or define a view base class. It exposes a
-`CoSystemProvider`, a `WorkerClientProvider`, and a small set of hooks built on
+`CoexistProvider`, a `WorkerClientProvider`, and a small set of hooks built on
 `useSyncExternalStore`, so selectors stay tear-free and concurrent-safe.
 
 ## Installation
@@ -20,7 +20,7 @@ Peer dependency: `react` `>=18.3` (React 19 supported).
 ```tsx
 import { createRoot } from "react-dom/client";
 import { createApp, defineModule } from "@coexist/core";
-import { CoSystemProvider, useModule, useSelector } from "@coexist/react";
+import { CoexistProvider, useModule, useSelector } from "@coexist/react";
 
 class Counter {
   count = 0;
@@ -54,20 +54,20 @@ function CounterView() {
 }
 
 createRoot(document.getElementById("root")!).render(
-  <CoSystemProvider app={app}>
+  <CoexistProvider app={app}>
     <CounterView />
-  </CoSystemProvider>,
+  </CoexistProvider>,
 );
 ```
 
 ## Hooks
 
-| Hook                         | Returns  | Description                                     |
-| ---------------------------- | -------- | ----------------------------------------------- |
-| `useApp()` / `useCoSystem()` | `App`    | The app from the nearest provider.              |
-| `useModule(token)`           | `T`      | The bound module facade. Methods stay callable. |
-| `useSelector(selector)`      | `T`      | Subscribe to `selector(app)`.                   |
-| `useSelector(token, fn)`     | `TValue` | Subscribe to `fn(module, app)` for a module.    |
+| Hook                        | Returns  | Description                                     |
+| --------------------------- | -------- | ----------------------------------------------- |
+| `useApp()` / `useCoexist()` | `App`    | The app from the nearest provider.              |
+| `useModule(token)`          | `T`      | The bound module facade. Methods stay callable. |
+| `useSelector(selector)`     | `T`      | Subscribe to `selector(app)`.                   |
+| `useSelector(token, fn)`    | `TValue` | Subscribe to `fn(module, app)` for a module.    |
 
 `useSelector` accepts a `{ equals }` option (defaults to `Object.is`) to control
 re-renders.
@@ -108,12 +108,12 @@ function WorkerCounterView() {
 
 ## Exports
 
-Providers `CoSystemProvider`, `WorkerClientProvider`; contexts `CoSystemContext`,
-`WorkerClientContext`; hooks `useApp`, `useCoSystem`, `useModule`, `useSelector`,
+Providers `CoexistProvider`, `WorkerClientProvider`; contexts `CoexistContext`,
+`WorkerClientContext`; hooks `useApp`, `useCoexist`, `useModule`, `useSelector`,
 `useWorkerClient`, `useWorkerModule`, `useWorkerSelector`; and the
-`CoSystemProviderProps`, `WorkerClientProviderProps`, `UseSelectorOptions`,
+`CoexistProviderProps`, `WorkerClientProviderProps`, `UseSelectorOptions`,
 `AppSelector`, `ModuleSelector` types. Missing-provider hooks throw a
-`CosystemError`.
+`CoexistError`.
 
 ## License
 

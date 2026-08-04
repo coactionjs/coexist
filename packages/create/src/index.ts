@@ -1,20 +1,20 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
-export interface CreateCosystemProjectOptions {
+export interface CreateCoexistProjectOptions {
   readonly root: string;
   readonly name: string;
   readonly packageManager?: string;
 }
 
-export interface CreatedCosystemProject {
+export interface CreatedCoexistProject {
   readonly root: string;
   readonly files: readonly string[];
 }
 
-export async function createCosystemProject(
-  options: CreateCosystemProjectOptions,
-): Promise<CreatedCosystemProject> {
+export async function createCoexistProject(
+  options: CreateCoexistProjectOptions,
+): Promise<CreatedCoexistProject> {
   const packageManager = options.packageManager ?? "pnpm@11.8.0";
   const files = ["package.json", "tsconfig.json", "src/main.ts"] as const;
 

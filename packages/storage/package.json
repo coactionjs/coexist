@@ -1,7 +1,7 @@
 {
   "name": "@coexist/storage",
   "version": "0.2.0",
-  "description": "Persistence plugin for CoSystem.",
+  "description": "Persistence plugin for Coexist.",
   "license": "MIT",
   "repository": {
     "type": "git",

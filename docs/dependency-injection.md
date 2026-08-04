@@ -1,6 +1,6 @@
 # Dependency Injection
 
-CoSystem ships a small, explicit DI container. It is deliberately **not**
+Coexist ships a small, explicit DI container. It is deliberately **not**
 Inversify/TSyringe/TypeDI-style: there is no `reflect-metadata`, no
 `emitDecoratorMetadata`, no constructor-type reflection, no parameter decorators,
 and no Proxy-based resolution. You declare tokens and dependency lists
@@ -10,7 +10,7 @@ explicitly, and the container resolves a typed graph.
 > `emitDecoratorMetadata`, do not support parameter decorators, and automatic
 > constructor-type injection is not portable across TypeScript, Babel, SWC,
 > esbuild, and worker runtimes. Explicit declarations work everywhere and give
-> CoSystem tight control over scopes, lifecycle, worker boundaries, test
+> Coexist tight control over scopes, lifecycle, worker boundaries, test
 > overrides, and disposal.
 
 ## Injection tokens
@@ -46,7 +46,7 @@ that doubles as a type.
 `providers` is the single composition entry point of an app. Each entry is one
 of:
 
-1. A **`@Module` class** — a stateful CoSystem module, eagerly instantiated.
+1. A **`@Module` class** — a stateful Coexist module, eagerly instantiated.
 2. A **plain class** — a normal DI class provider, lazy by default.
 3. A **`provide(token, options)`** entry — binds a token to a value, class,
    factory, or existing provider.
@@ -138,7 +138,7 @@ provide(RequestContext, { useClass: RequestContext, scope: "scoped" });
 provide(Id, { useFactory: () => crypto.randomUUID(), scope: "transient" });
 ```
 
-CoSystem app modules must use `singleton`. A module owns exactly one slice in the
+Coexist app modules must use `singleton`. A module owns exactly one slice in the
 app's single store and its bound facade must be the same instance seen by DI;
 `scoped`, `resolution`, and `transient` module scopes are rejected during app or
 lazy-module provider normalization. Those scopes remain fully supported for
@@ -300,7 +300,7 @@ creation throw `DisposedContainerError`.
 
 ## Errors
 
-All extend `CosystemError`:
+All extend `CoexistError`:
 
 | Error                                | Cause                                                   |
 | ------------------------------------ | ------------------------------------------------------- |

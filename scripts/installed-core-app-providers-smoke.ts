@@ -196,7 +196,7 @@ void [counter.increase(), extensions];
 function createRuntimeConsumerSource() {
   return `import {
   AsyncProviderInSyncResolutionError,
-  CosystemError,
+  CoexistError,
   createApp,
   defineModule,
   provide,
@@ -292,7 +292,7 @@ function verifyModuleScopeGuard() {
       providers: [TransientScopedCounter],
     });
   } catch (error) {
-    if (!(error instanceof CosystemError)) {
+    if (!(error instanceof CoexistError)) {
       throw error;
     }
 
@@ -300,7 +300,7 @@ function verifyModuleScopeGuard() {
     return;
   }
 
-  throw new Error("transient CoSystem module should be rejected");
+  throw new Error("transient Coexist module should be rejected");
 }
 
 async function verifyProviderEagerness() {

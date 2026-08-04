@@ -134,7 +134,7 @@ async function writeConsumerProject(coreTarball, storageTarball, catalog) {
       "  <head>",
       '    <meta charset="UTF-8" />',
       '    <meta name="viewport" content="width=device-width, initial-scale=1.0" />',
-      "    <title>CoSystem storage browser smoke</title>",
+      "    <title>Coexist storage browser smoke</title>",
       "  </head>",
       "  <body>",
       '    <main aria-label="Storage smoke">',

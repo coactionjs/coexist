@@ -1,7 +1,7 @@
 # @coexist/solid
 
-> Solid bindings for [CoSystem](../../README.md): a context provider and signals
-> for consuming a CoSystem app (or a worker-hosted app).
+> Solid bindings for [Coexist](../../README.md): a context provider and signals
+> for consuming a Coexist app (or a worker-hosted app).
 
 ## Installation
 
@@ -14,7 +14,7 @@ Peer dependency: `solid-js` `>=1.9 <2`.
 ## Quick start
 
 ```tsx
-import { CoSystemProvider, useComputed, useModule } from "@coexist/solid";
+import { CoexistProvider, useComputed, useModule } from "@coexist/solid";
 
 function CounterView() {
   const counter = useModule(Counter);
@@ -23,9 +23,9 @@ function CounterView() {
   return <button onClick={() => counter.increase()}>{count()}</button>;
 }
 
-<CoSystemProvider app={app}>
+<CoexistProvider app={app}>
   <CounterView />
-</CoSystemProvider>;
+</CoexistProvider>;
 ```
 
 `useComputed` returns a Solid `Accessor<T>` — call it (`count()`) to read inside
@@ -33,12 +33,12 @@ JSX or an effect.
 
 ## API
 
-| Function                        | Returns            | Description                      |
-| ------------------------------- | ------------------ | -------------------------------- |
-| `useApp()`                      | `App`              | The app from `CoSystemProvider`. |
-| `useModule(token)`              | `T`                | The bound module facade.         |
-| `useComputed(fn, opts?)`        | `Accessor<T>`      | Signal for `fn(app)`.            |
-| `useComputed(token, fn, opts?)` | `Accessor<TValue>` | Signal for `fn(module, app)`.    |
+| Function                        | Returns            | Description                     |
+| ------------------------------- | ------------------ | ------------------------------- |
+| `useApp()`                      | `App`              | The app from `CoexistProvider`. |
+| `useModule(token)`              | `T`                | The bound module facade.        |
+| `useComputed(fn, opts?)`        | `Accessor<T>`      | Signal for `fn(app)`.           |
+| `useComputed(token, fn, opts?)` | `Accessor<TValue>` | Signal for `fn(module, app)`.   |
 
 Both `useComputed` overloads accept `{ equals }` (defaults to `Object.is`) and
 clean up with `onCleanup`.
@@ -73,12 +73,12 @@ function WorkerCounterView() {
 
 ## Exports
 
-`CoSystemProvider`, `WorkerClientProvider`, the `CoSystemContext` /
+`CoexistProvider`, `WorkerClientProvider`, the `CoexistContext` /
 `WorkerClientContext` contexts, `useApp`, `useModule`, `useComputed`,
 `useWorkerClient`, `useWorkerModule`, `useWorkerComputed`, `useWorkerSelector`,
-and the `CoSystemProviderProps`, `WorkerClientProviderProps`,
+and the `CoexistProviderProps`, `WorkerClientProviderProps`,
 `UseComputedOptions`, `AppSelector`, `ModuleSelector` types. Hooks throw a
-`CosystemError` when the matching provider is missing.
+`CoexistError` when the matching provider is missing.
 
 ## License
 

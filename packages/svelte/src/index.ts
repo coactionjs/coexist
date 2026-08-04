@@ -2,7 +2,7 @@ import { getContext, hasContext, setContext } from "svelte";
 import { readable, type Readable } from "svelte/store";
 
 import {
-  CosystemError,
+  CoexistError,
   type App,
   type AsyncMethodProxy,
   type InjectionToken,
@@ -17,18 +17,18 @@ export interface SelectorStoreOptions<T> {
 export type AppSelector<T> = (app: App) => T;
 export type ModuleSelector<TModule, TValue> = (module: TModule, app: App) => TValue;
 
-export const CoSystemContextKey: unique symbol = Symbol("CoSystem");
-export const WorkerClientContextKey: unique symbol = Symbol("CoSystem WorkerClient");
+export const CoexistContextKey: unique symbol = Symbol("Coexist");
+export const WorkerClientContextKey: unique symbol = Symbol("Coexist WorkerClient");
 
 let defaultApp: App | undefined;
 let defaultWorkerClient: WorkerClient | undefined;
 
-export function setCoSystemApp(app: App): App {
+export function setCoexistApp(app: App): App {
   defaultApp = app;
   return app;
 }
 
-export function clearCoSystemApp(): void {
+export function clearCoexistApp(): void {
   defaultApp = undefined;
 }
 
@@ -41,8 +41,8 @@ export function clearWorkerClient(): void {
   defaultWorkerClient = undefined;
 }
 
-export function setCoSystemContext(app: App): App {
-  setContext(CoSystemContextKey, app);
+export function setCoexistContext(app: App): App {
+  setContext(CoexistContextKey, app);
   return app;
 }
 
@@ -51,10 +51,10 @@ export function setWorkerClientContext(client: WorkerClient): WorkerClient {
   return client;
 }
 
-export function getCoSystemApp(): App {
+export function getCoexistApp(): App {
   // Component context wins over the global default so nested apps and
   // per-request (SSR) apps are not shadowed by module-level state.
-  const contextApp = getCoSystemContextApp();
+  const contextApp = getCoexistContextApp();
 
   if (contextApp !== undefined) {
     return contextApp;
@@ -64,8 +64,8 @@ export function getCoSystemApp(): App {
     return defaultApp;
   }
 
-  throw new CosystemError(
-    "Missing CoSystem Svelte app. Call setCoSystemApp(app) or setCoSystemContext(app).",
+  throw new CoexistError(
+    "Missing Coexist Svelte app. Call setCoexistApp(app) or setCoexistContext(app).",
   );
 }
 
@@ -80,13 +80,13 @@ export function getWorkerClient(): WorkerClient {
     return contextClient;
   }
 
-  throw new CosystemError(
-    "Missing CoSystem Svelte worker client. Call setWorkerClient(client) or setWorkerClientContext(client).",
+  throw new CoexistError(
+    "Missing Coexist Svelte worker client. Call setWorkerClient(client) or setWorkerClientContext(client).",
   );
 }
 
 export function moduleStore<T>(token: InjectionToken<T>, app?: App): Readable<T> {
-  const resolvedApp = app ?? getCoSystemApp();
+  const resolvedApp = app ?? getCoexistApp();
   return selectorStore(() => resolvedApp.getModule(token), { app: resolvedApp });
 }
 
@@ -128,7 +128,7 @@ export function selectorStore<T>(
   selector: AppSelector<T>,
   options: SelectorStoreOptions<T> & { readonly app?: App } = {},
 ): Readable<T> {
-  const app = options.app ?? getCoSystemApp();
+  const app = options.app ?? getCoexistApp();
   const equals = options.equals ?? Object.is;
 
   return readable(selector(app), (set) => {
@@ -158,9 +158,9 @@ export function selectedModuleStore<TModule, TValue>(
   return selectorStore((app) => selector(app.getModule(token), app), options);
 }
 
-function getCoSystemContextApp(): App | undefined {
+function getCoexistContextApp(): App | undefined {
   try {
-    return hasContext(CoSystemContextKey) ? getContext<App>(CoSystemContextKey) : undefined;
+    return hasContext(CoexistContextKey) ? getContext<App>(CoexistContextKey) : undefined;
   } catch {
     return undefined;
   }

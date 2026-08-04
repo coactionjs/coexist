@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { createApp } from "@coexist/core";
 
-import { clearCoSystemApp, getCoSystemApp, setCoSystemApp, setCoSystemContext } from "./index.js";
+import { clearCoexistApp, getCoexistApp, setCoexistApp, setCoexistContext } from "./index.js";
 
 const context = vi.hoisted(() => new Map<unknown, unknown>());
 
@@ -20,17 +20,17 @@ describe("Svelte app resolution precedence", () => {
     const globalApp = createApp();
     const contextApp = createApp();
 
-    setCoSystemApp(globalApp);
-    setCoSystemContext(contextApp);
+    setCoexistApp(globalApp);
+    setCoexistContext(contextApp);
 
-    expect(getCoSystemApp()).toBe(contextApp);
+    expect(getCoexistApp()).toBe(contextApp);
 
     context.clear();
 
-    expect(getCoSystemApp()).toBe(globalApp);
+    expect(getCoexistApp()).toBe(globalApp);
 
-    clearCoSystemApp();
+    clearCoexistApp();
 
-    expect(() => getCoSystemApp()).toThrow(/Missing CoSystem Svelte app/);
+    expect(() => getCoexistApp()).toThrow(/Missing Coexist Svelte app/);
   });
 });

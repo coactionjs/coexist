@@ -1,7 +1,7 @@
 {
   "name": "@coexist/router",
   "version": "0.2.0",
-  "description": "Router integration primitives for CoSystem.",
+  "description": "Router integration primitives for Coexist.",
   "license": "MIT",
   "repository": {
     "type": "git",

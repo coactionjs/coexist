@@ -9,7 +9,7 @@ import { createReactiveTracker } from "coaction/adapter";
 
 import { createRuntimeAsyncContext } from "./async-context.js";
 import { createContainer } from "./container.js";
-import { CosystemError, DuplicateProviderError, InjectContextError } from "./errors.js";
+import { CoexistError, DuplicateProviderError, InjectContextError } from "./errors.js";
 import {
   isLazyModule,
   normalizeLazyModuleProviders,
@@ -276,7 +276,7 @@ export function runInAction<T>(module: object, callback: () => T, options?: RunI
   const metadata = getRuntimeModuleMetadata(module);
 
   if (metadata === undefined) {
-    throw new CosystemError("runInAction() target is not a CoSystem module instance.");
+    throw new CoexistError("runInAction() target is not a Coexist module instance.");
   }
 
   return metadata.app.runInAction(module, callback, options);
@@ -298,8 +298,8 @@ export function createAppInternal(options: InternalCreateAppOptions = {}): App {
         const normalized = normalizeAppProvider(provider);
 
         if (normalized.moduleToken !== undefined) {
-          throw new CosystemError(
-            `${plugin.name ?? "Anonymous plugin"} cannot register CoSystem modules through plugin providers.`,
+          throw new CoexistError(
+            `${plugin.name ?? "Anonymous plugin"} cannot register Coexist modules through plugin providers.`,
           );
         }
 
@@ -334,8 +334,8 @@ export function createAppInternal(options: InternalCreateAppOptions = {}): App {
       const replacesModule = moduleTokens.some((moduleToken) => moduleToken === token);
 
       if (normalized.moduleToken !== undefined && !replacesModule) {
-        throw new CosystemError(
-          `Cannot add ${tokenName(normalized.moduleToken)} as a new CoSystem module through overrides.`,
+        throw new CoexistError(
+          `Cannot add ${tokenName(normalized.moduleToken)} as a new Coexist module through overrides.`,
         );
       }
 
@@ -449,7 +449,7 @@ class RuntimePluginContext implements PluginContext {
 
   onDispose(disposer: () => void | Promise<void>): void {
     if (this.#disposed) {
-      throw new CosystemError(`Plugin context ${this.name} has been disposed.`);
+      throw new CoexistError(`Plugin context ${this.name} has been disposed.`);
     }
 
     this.#disposers.push(disposer);
@@ -716,7 +716,7 @@ class RuntimeApp implements App {
     // Preserve the container's MissingProviderError for a token that is not
     // registered anywhere. A registered plain provider is still not a module.
     this.get(token);
-    throw new CosystemError(`${tokenName(token)} is not a CoSystem module.`);
+    throw new CoexistError(`${tokenName(token)} is not a Coexist module.`);
   }
 
   getModuleByName<T = unknown>(name: string): T {
@@ -726,7 +726,7 @@ class RuntimeApp implements App {
       return moduleBinding.instance as T;
     }
 
-    throw new CosystemError(`${name} is not a CoSystem module.`);
+    throw new CoexistError(`${name} is not a Coexist module.`);
   }
 
   private findModuleBindingByToken(token: InjectionToken): ModuleBinding | undefined {
@@ -824,7 +824,7 @@ class RuntimeApp implements App {
     }
 
     if (this.isDisposing || this.isDisposed) {
-      return Promise.reject(new CosystemError("Cannot start an app after disposal."));
+      return Promise.reject(new CoexistError("Cannot start an app after disposal."));
     }
 
     this.shouldBeStarted = true;
@@ -866,14 +866,14 @@ class RuntimeApp implements App {
     const startedModules: ModuleBinding[] = [];
 
     if (this.isDisposing || this.isDisposed) {
-      throw new CosystemError("Cannot start an app after disposal.");
+      throw new CoexistError("Cannot start an app after disposal.");
     }
 
     try {
       await this.initPromise;
 
       if (this.isDisposing || this.isDisposed) {
-        throw new CosystemError("Cannot start an app after disposal.");
+        throw new CoexistError("Cannot start an app after disposal.");
       }
 
       await this.runLifecycle("onStart", false, this.modules, this.#container, (moduleBinding) =>
@@ -1486,7 +1486,7 @@ class RuntimeApp implements App {
     }
 
     if (this.devOptions.strictActions === true && this.actionDepth === 0) {
-      throw new CosystemError(
+      throw new CoexistError(
         `Cannot write ${moduleBinding.name}.${String(property)} outside an action.`,
       );
     }
@@ -1524,7 +1524,7 @@ class RuntimeApp implements App {
     const action = moduleBinding.originalActions.get(property);
 
     if (action === undefined) {
-      throw new CosystemError(`${moduleBinding.name}.${String(property)} is not an action.`);
+      throw new CoexistError(`${moduleBinding.name}.${String(property)} is not an action.`);
     }
 
     if (this.shouldQueueMutation()) {
@@ -1689,7 +1689,7 @@ class RuntimeApp implements App {
 
       if (metadata !== undefined) {
         if (metadata.app !== this) {
-          throw new CosystemError("runInAction() target belongs to another CoSystem app.");
+          throw new CoexistError("runInAction() target belongs to another Coexist app.");
         }
 
         const moduleBinding = this.moduleByToken.get(metadata.token);
@@ -1707,7 +1707,7 @@ class RuntimeApp implements App {
         }
       }
 
-      throw new CosystemError("runInAction() target is not a CoSystem module.");
+      throw new CoexistError("runInAction() target is not a Coexist module.");
     }
 
     if (typeof target === "string") {
@@ -1717,7 +1717,7 @@ class RuntimeApp implements App {
         return moduleBinding;
       }
 
-      throw new CosystemError(`${target} is not a CoSystem module.`);
+      throw new CoexistError(`${target} is not a Coexist module.`);
     }
 
     const moduleBinding = this.moduleByToken.get(target);
@@ -1726,7 +1726,7 @@ class RuntimeApp implements App {
       return moduleBinding;
     }
 
-    throw new CosystemError(`${tokenName(target)} is not a CoSystem module.`);
+    throw new CoexistError(`${tokenName(target)} is not a Coexist module.`);
   }
 
   private finishAction(event: ActionEvent, error?: unknown, failed = false): void {
@@ -1802,7 +1802,7 @@ class RuntimeApp implements App {
     const context = this.detachedDraftContext;
 
     if (context === undefined) {
-      throw new CosystemError("Cannot create a detached module draft outside a store update.");
+      throw new CoexistError("Cannot create a detached module draft outside a store update.");
     }
 
     let draft = context.drafts.get(moduleBinding);
@@ -2234,7 +2234,7 @@ class RuntimeApp implements App {
     activePhase: AppManagedPhase,
     errorPhase: string,
   ): Promise<never> {
-    const error = new CosystemError(`Cannot ${operation} from app-managed ${activePhase} work.`);
+    const error = new CoexistError(`Cannot ${operation} from app-managed ${activePhase} work.`);
     this.emitError(error, { phase: errorPhase });
     return createObservedRejection(error);
   }
@@ -2391,7 +2391,7 @@ class RuntimeApp implements App {
 
         if (iterations > maxQueuedMutations) {
           this.pendingMutations.length = 0;
-          throw new CosystemError(
+          throw new CoexistError(
             `Aborted a mutation cascade after ${maxQueuedMutations} queued mutations; ` +
               "a watch listener or plugin hook is likely re-triggering itself.",
           );
@@ -2427,7 +2427,7 @@ class RuntimeApp implements App {
       this.actionDepth === 0 &&
       this.internalMutationDepth === 0
     ) {
-      throw new CosystemError(`Cannot call store.${operation}() outside an action.`);
+      throw new CoexistError(`Cannot call store.${operation}() outside an action.`);
     }
   }
 
@@ -2468,7 +2468,7 @@ class RuntimeApp implements App {
 
   private runStatePublicationTransaction<T>(callback: (control: StatePublicationControl) => T): T {
     if (this.statePublication !== undefined) {
-      throw new CosystemError("Cannot nest state publication transactions.");
+      throw new CoexistError("Cannot nest state publication transactions.");
     }
 
     const publication: StatePublication = {
@@ -2606,7 +2606,7 @@ class RuntimeApp implements App {
       this.devOptions.strictActions === true &&
       (draftMutation === null || this.draftMutationContext?.token !== draftMutation)
     ) {
-      throw new CosystemError("Cannot mutate state outside an action.");
+      throw new CoexistError("Cannot mutate state outside an action.");
     }
   }
 
@@ -2663,17 +2663,17 @@ class RuntimeApp implements App {
 
   private assertCanLoadLazyModule(): void {
     if (this.isDisposing || this.isDisposed) {
-      throw new CosystemError("Cannot load a lazy module after app disposal.");
+      throw new CoexistError("Cannot load a lazy module after app disposal.");
     }
 
     if (this.stopPromise !== undefined) {
-      throw new CosystemError("Cannot load a lazy module while the app is stopping.");
+      throw new CoexistError("Cannot load a lazy module while the app is stopping.");
     }
   }
 
   private assertActive(operation: string): void {
     if (this.isDisposing || this.isDisposed) {
-      throw new CosystemError(`Cannot ${operation} after app disposal has begun.`);
+      throw new CoexistError(`Cannot ${operation} after app disposal has begun.`);
     }
   }
 
@@ -2688,7 +2688,7 @@ class RuntimeApp implements App {
       return;
     }
 
-    throw new CosystemError(`Cannot ${operation} after app disposal has begun.`);
+    throw new CoexistError(`Cannot ${operation} after app disposal has begun.`);
   }
 
   private installModuleState(
@@ -2857,8 +2857,8 @@ function assertSingletonModuleScope(token: InjectionToken, scope: Scope | undefi
   const resolvedScope = scope ?? "singleton";
 
   if (resolvedScope !== "singleton") {
-    throw new CosystemError(
-      `CoSystem module ${tokenName(token)} must use singleton scope; received ${resolvedScope}. ` +
+    throw new CoexistError(
+      `Coexist module ${tokenName(token)} must use singleton scope; received ${resolvedScope}. ` +
         "A module owns one app store slice and cannot have multiple instances.",
     );
   }
@@ -3032,8 +3032,8 @@ function instantiateModules(
     const resolved = container.get(moduleToken) as unknown;
 
     if (resolved === null || (typeof resolved !== "object" && typeof resolved !== "function")) {
-      throw new CosystemError(
-        `${tokenName(moduleToken)} resolved to a value that is not a CoSystem module.`,
+      throw new CoexistError(
+        `${tokenName(moduleToken)} resolved to a value that is not a Coexist module.`,
       );
     }
 
@@ -3041,15 +3041,15 @@ function instantiateModules(
     const metadata = getModuleMetadata(instance.constructor);
 
     if (metadata === undefined) {
-      throw new CosystemError(
-        `${tokenName(moduleToken)} resolved to a value that is not a CoSystem module.`,
+      throw new CoexistError(
+        `${tokenName(moduleToken)} resolved to a value that is not a Coexist module.`,
       );
     }
 
     const name = metadata.name;
 
     if (name === undefined) {
-      throw new CosystemError(
+      throw new CoexistError(
         `Module ${tokenName(moduleToken)} has no explicit name. ` +
           "Set name in @Module()/defineModule metadata; class names are not stable under minification.",
       );
@@ -3123,7 +3123,7 @@ function createRootState(modules: readonly ModuleBinding[]): RootState {
 
 function assertSafeModuleMetadata(name: string, metadata: ModuleMetadata): void {
   if (isUnsafeStateKey(name)) {
-    throw new CosystemError(`CoSystem module name ${name} is unsafe.`);
+    throw new CoexistError(`Coexist module name ${name} is unsafe.`);
   }
 
   for (const [kind, properties] of [
@@ -3134,7 +3134,7 @@ function assertSafeModuleMetadata(name: string, metadata: ModuleMetadata): void 
   ] as const) {
     for (const property of properties) {
       if (typeof property === "string" && isUnsafeStateKey(property)) {
-        throw new CosystemError(`CoSystem module ${name} has an unsafe ${kind} key: ${property}.`);
+        throw new CoexistError(`Coexist module ${name} has an unsafe ${kind} key: ${property}.`);
       }
     }
   }
@@ -3150,7 +3150,7 @@ function getMethod(
   const descriptor = getDescriptor(instance, property);
 
   if (descriptor?.value === undefined || typeof descriptor.value !== "function") {
-    throw new CosystemError(`${String(property)} is not a method.`);
+    throw new CoexistError(`${String(property)} is not a method.`);
   }
 
   return descriptor.value as (...args: unknown[]) => unknown;
@@ -3160,7 +3160,7 @@ function getGetter(instance: Record<PropertyKey, unknown>, property: PropertyKey
   const descriptor = getDescriptor(instance, property);
 
   if (descriptor?.get === undefined) {
-    throw new CosystemError(`${String(property)} is not a getter.`);
+    throw new CoexistError(`${String(property)} is not a getter.`);
   }
 
   return descriptor.get;
@@ -3310,7 +3310,7 @@ function getAppContainer(app: App): Container {
   const container = appContainerMap.get(app);
 
   if (container === undefined) {
-    throw new CosystemError("Parent app was not created by CoSystem.");
+    throw new CoexistError("Parent app was not created by Coexist.");
   }
 
   return container;

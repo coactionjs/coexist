@@ -1,6 +1,6 @@
-# Contributing to CoSystem
+# Contributing to Coexist
 
-Thanks for your interest in improving CoSystem! This guide covers the local
+Thanks for your interest in improving Coexist! This guide covers the local
 setup, the day-to-day workflow, and the conventions the repository enforces.
 
 ## Prerequisites

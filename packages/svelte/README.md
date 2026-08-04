@@ -1,7 +1,7 @@
 # @coexist/svelte
 
-> Svelte bindings for [CoSystem](../../README.md): readable stores (Svelte 4+)
-> and rune-friendly helpers (Svelte 5) for consuming a CoSystem app or a
+> Svelte bindings for [Coexist](../../README.md): readable stores (Svelte 4+)
+> and rune-friendly helpers (Svelte 5) for consuming a Coexist app or a
 > worker-hosted app.
 
 The package root exports the store-based API, which works in Svelte 4 and 5. A
@@ -22,9 +22,9 @@ Register the app once (globally, or per component tree via context), then create
 readable stores and use the `$store` auto-subscription syntax.
 
 ```ts
-import { moduleStore, selectedModuleStore, setCoSystemApp } from "@coexist/svelte";
+import { moduleStore, selectedModuleStore, setCoexistApp } from "@coexist/svelte";
 
-setCoSystemApp(app); // or setCoSystemContext(app) inside a component
+setCoexistApp(app); // or setCoexistContext(app) inside a component
 
 const counter = moduleStore(Counter);
 const count = selectedModuleStore(Counter, (module) => module.count);
@@ -34,17 +34,17 @@ const count = selectedModuleStore(Counter, (module) => module.count);
 <button on:click={() => $counter.increase()}>{$count}</button>
 ```
 
-| Function                                     | Returns            | Description                                |
-| -------------------------------------------- | ------------------ | ------------------------------------------ |
-| `setCoSystemApp(app)` / `clearCoSystemApp()` | `App`              | Set/clear the module-global app.           |
-| `setCoSystemContext(app)`                    | `App`              | Provide the app via Svelte context.        |
-| `getCoSystemApp()`                           | `App`              | Resolve the active app (context → global). |
-| `moduleStore(token, app?)`                   | `Readable<T>`      | Store of the bound module facade.          |
-| `selectorStore(fn, opts?)`                   | `Readable<T>`      | Store of `fn(app)`.                        |
-| `selectedModuleStore(token, fn, opts?)`      | `Readable<TValue>` | Store of `fn(module, app)`.                |
+| Function                                   | Returns            | Description                                |
+| ------------------------------------------ | ------------------ | ------------------------------------------ |
+| `setCoexistApp(app)` / `clearCoexistApp()` | `App`              | Set/clear the module-global app.           |
+| `setCoexistContext(app)`                   | `App`              | Provide the app via Svelte context.        |
+| `getCoexistApp()`                          | `App`              | Resolve the active app (context → global). |
+| `moduleStore(token, app?)`                 | `Readable<T>`      | Store of the bound module facade.          |
+| `selectorStore(fn, opts?)`                 | `Readable<T>`      | Store of `fn(app)`.                        |
+| `selectedModuleStore(token, fn, opts?)`    | `Readable<TValue>` | Store of `fn(module, app)`.                |
 
-Selector stores accept `{ equals, app }`; `getCoSystemApp()` throws a
-`CosystemError` if no app was set.
+Selector stores accept `{ equals, app }`; `getCoexistApp()` throws a
+`CoexistError` if no app was set.
 
 ## Runes (Svelte 5)
 
@@ -60,7 +60,7 @@ const count = selectedModuleRune(Counter, (module) => module.count, { app });
 ```
 
 Runes expose `.current`, `.value`, and `.get()` (all equivalent). When `app` is
-omitted they fall back to `getCoSystemApp()`. `selectorRune`, `moduleRune`, and
+omitted they fall back to `getCoexistApp()`. `selectorRune`, `moduleRune`, and
 `selectedModuleRune` accept `{ app, equals }`.
 
 ## Worker-hosted state
@@ -95,14 +95,14 @@ const count = workerSelectorRune((state) => (state as CounterState).counter.coun
 
 ## Exports
 
-Root: `setCoSystemApp`, `clearCoSystemApp`, `setCoSystemContext`, `getCoSystemApp`,
+Root: `setCoexistApp`, `clearCoexistApp`, `setCoexistContext`, `getCoexistApp`,
 `setWorkerClient`, `clearWorkerClient`, `setWorkerClientContext`, `getWorkerClient`,
 `moduleStore`, `selectorStore`, `selectedModuleStore`, `workerModuleStore`,
-`workerSelectorStore`, the `CoSystemContextKey` / `WorkerClientContextKey` keys,
+`workerSelectorStore`, the `CoexistContextKey` / `WorkerClientContextKey` keys,
 and the `SelectorStoreOptions`, `AppSelector`, `ModuleSelector` types.
 
 `/runes`: `moduleRune`, `selectorRune`, `selectedModuleRune`, `workerModuleRune`,
-`workerSelectorRune`, and the `CoSystemRune`, `RuneSelectorOptions`,
+`workerSelectorRune`, and the `CoexistRune`, `RuneSelectorOptions`,
 `ModuleRuneOptions`, `WorkerRuneSelectorOptions`, `WorkerModuleRuneOptions` types.
 
 ## License

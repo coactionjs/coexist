@@ -1,8 +1,8 @@
 import { createApp } from "vue";
 
-import { cosystemPlugin } from "@coexist/vue";
+import { coexistPlugin } from "@coexist/vue";
 
 import App from "./App.vue";
-import { cosystem } from "./counter";
+import { coexist } from "./counter";
 
-createApp(App).use(cosystemPlugin(cosystem)).mount("#app");
+createApp(App).use(coexistPlugin(coexist)).mount("#app");

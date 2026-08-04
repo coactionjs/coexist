@@ -122,12 +122,12 @@ function createTypeConsumerSource() {
   type AsyncMethodProxy,
 } from "@coexist/core";
 import {
-  clearCoSystemApp,
+  clearCoexistApp,
   clearWorkerClient,
   moduleStore,
   selectedModuleStore,
   selectorStore,
-  setCoSystemApp,
+  setCoexistApp,
   setWorkerClient,
   workerModuleStore,
   workerSelectorStore,
@@ -170,7 +170,7 @@ const host = createWorkerApp({
   transport: hostTransport,
 });
 
-setCoSystemApp(app);
+setCoexistApp(app);
 setWorkerClient(client);
 
 const counterStore: Readable<TypeSvelteCounter> = moduleStore(TypeSvelteCounter);
@@ -204,7 +204,7 @@ void [
   ),
 ];
 
-clearCoSystemApp();
+clearCoexistApp();
 clearWorkerClient();
 client.dispose();
 void host.dispose();
@@ -221,12 +221,12 @@ function createRuntimeConsumerSource() {
   defineModule,
 } from "@coexist/core";
 import {
-  clearCoSystemApp,
+  clearCoexistApp,
   clearWorkerClient,
   moduleStore,
   selectedModuleStore,
   selectorStore,
-  setCoSystemApp,
+  setCoexistApp,
   setWorkerClient,
   workerModuleStore,
   workerSelectorStore,
@@ -266,7 +266,7 @@ const app = createApp({
 });
 const counter = app.getModule(SvelteCounter);
 
-setCoSystemApp(app);
+setCoexistApp(app);
 
 const moduleValues = [];
 const counterStore = moduleStore(SvelteCounter);
@@ -327,7 +327,7 @@ expectEqual(parityRune.current.value, 0, "selectorRune refreshes when equality c
 unsubscribeCounter();
 unsubscribeDouble();
 unsubscribeParity();
-clearCoSystemApp();
+clearCoexistApp();
 
 const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
 const client = createWorkerClient({

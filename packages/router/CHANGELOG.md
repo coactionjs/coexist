@@ -40,12 +40,12 @@
 
 ### Major Changes
 
-- Release CoSystem 0.1 with the app runtime, lightweight DI, module decorators and no-decorator metadata, framework-native UI adapters, worker/shared runtime transports, persistence, router, devtools, testing helpers, examples, and CI/CD publishing support.
+- Release Coexist 0.1 with the app runtime, lightweight DI, module decorators and no-decorator metadata, framework-native UI adapters, worker/shared runtime transports, persistence, router, devtools, testing helpers, examples, and CI/CD publishing support.
 
 ### Minor Changes
 
 - 246c541: Add `createBrowserRouter()` and `formatLocation()` for browser history based routing without introducing file-based routing.
-- 2f51753: Advance the CoSystem runtime toward the v0.1 application model:
+- 2f51753: Advance the Coexist runtime toward the v0.1 application model:
 
   - add explicit lazy modules with `lazyModule()` and `app.load()`
   - add async container construction through `buildAsync()`

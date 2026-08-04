@@ -1,4 +1,4 @@
-import { CosystemError } from "./errors.js";
+import { CoexistError } from "./errors.js";
 import { createApp, type App, type CreateAppOptions, type Plugin } from "./app.js";
 import { getModuleMetadata } from "./metadata.js";
 import type { Constructor } from "./types.js";
@@ -300,7 +300,7 @@ export function createWorkerApp(options: CreateWorkerAppOptions): WorkerAppHost 
   let disposePromise: Promise<void> | undefined;
   const ready = app.start().then(() => {
     if (disposed) {
-      throw new CosystemError("Worker host disposed before initial state.");
+      throw new CoexistError("Worker host disposed before initial state.");
     }
 
     publishPatches = true;
@@ -419,7 +419,7 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
     },
     callWithOptions(module, method, args, callOptions = {}) {
       if (disposed) {
-        return Promise.reject(new CosystemError("Worker client has been disposed."));
+        return Promise.reject(new CoexistError("Worker client has been disposed."));
       }
 
       const timeout = callOptions.timeout ?? requestTimeout;
@@ -431,7 +431,7 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
       return new Promise((resolve, reject) => {
         let timeoutId: ReturnType<typeof setTimeout> | undefined;
         const abort = () => {
-          fail(new CosystemError("Worker call aborted."));
+          fail(new CoexistError("Worker call aborted."));
         };
         const cleanup = () => {
           if (timeoutId !== undefined) {
@@ -462,7 +462,7 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
 
         if (timeout > 0) {
           timeoutId = setTimeout(() => {
-            fail(new CosystemError(`Worker call timed out after ${timeout}ms.`));
+            fail(new CoexistError(`Worker call timed out after ${timeout}ms.`));
           }, timeout);
         }
 
@@ -497,12 +497,12 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
 
       if (!readySettled) {
         readySettled = true;
-        rejectReady(new CosystemError("Worker client disposed before initial state."));
+        rejectReady(new CoexistError("Worker client disposed before initial state."));
       }
 
       for (const entry of pending.values()) {
         entry.cleanup();
-        entry.reject(new CosystemError("Worker client disposed before response."));
+        entry.reject(new CoexistError("Worker client disposed before response."));
       }
 
       pending.clear();
@@ -532,7 +532,7 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
     },
     select<T>(selector: WorkerStateSelector<T>): T {
       if (snapshot === undefined) {
-        throw new CosystemError("Worker client state is not ready.");
+        throw new CoexistError("Worker client state is not ready.");
       }
 
       return selector(snapshot, client);
@@ -726,7 +726,7 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
           : message.state;
 
         if (!isWorkerStateRoot(nextSnapshot)) {
-          throw new CosystemError("Worker state root must remain a plain object.");
+          throw new CoexistError("Worker state root must remain a plain object.");
         }
 
         snapshot = nextSnapshot;
@@ -1165,7 +1165,7 @@ async function handleCall(
       metadata?.actions.has(message.method) !== true &&
       expose?.[message.module]?.includes(message.method) !== true
     ) {
-      throw new CosystemError(
+      throw new CoexistError(
         `${message.module}.${message.method} is not exposed as a remote action ` +
           "or through createWorkerApp({ expose }).",
       );
@@ -1174,7 +1174,7 @@ async function handleCall(
     const method = module[message.method];
 
     if (typeof method !== "function") {
-      throw new CosystemError(`${message.module}.${message.method} is not callable.`);
+      throw new CoexistError(`${message.module}.${message.method} is not callable.`);
     }
 
     const value = await method.apply(module, message.args);
@@ -1269,7 +1269,7 @@ function filterWorkerPatches(
 
   return patches.filter((patch) => {
     if (!isWorkerPatch(patch)) {
-      throw new CosystemError("Worker state patch is invalid.");
+      throw new CoexistError("Worker state patch is invalid.");
     }
 
     const section = getWorkerPatchSection(patch);
@@ -1294,7 +1294,7 @@ function applyWorkerPatches(state: unknown, patches: readonly unknown[]): unknow
 
 function applyWorkerPatch(state: unknown, patch: unknown): unknown {
   if (!isWorkerPatch(patch)) {
-    throw new CosystemError("Worker state patch is invalid.");
+    throw new CoexistError("Worker state patch is invalid.");
   }
 
   const path = normalizePatchPath(patch.path);
@@ -1318,7 +1318,7 @@ function applyPatchAtPath(
   const [segment, ...rest] = path;
 
   if (segment === undefined) {
-    throw new CosystemError("Worker state patch path is invalid.");
+    throw new CoexistError("Worker state patch path is invalid.");
   }
 
   const container = clonePatchContainer(state);
@@ -1334,7 +1334,7 @@ function applyPatchAtPath(
   }
 
   if (!hasPatchValue(container, segment)) {
-    throw new CosystemError("Worker state patch parent path does not exist.");
+    throw new CoexistError("Worker state patch parent path does not exist.");
   }
 
   setPatchValue(
@@ -1356,7 +1356,7 @@ function clonePatchContainer(state: unknown): PatchContainer {
     return { ...state };
   }
 
-  throw new CosystemError("Worker state patch parent must be an object or array.");
+  throw new CoexistError("Worker state patch parent must be an object or array.");
 }
 
 function getPatchValue(container: PatchContainer, segment: PatchPathSegment): unknown {
@@ -1386,7 +1386,7 @@ function setPatchValue(
 
     if (operation === "add") {
       if (index > container.length) {
-        throw new CosystemError("Worker state patch array index is out of range.");
+        throw new CoexistError("Worker state patch array index is out of range.");
       }
 
       container.splice(index, 0, value);
@@ -1394,7 +1394,7 @@ function setPatchValue(
     }
 
     if (index >= container.length) {
-      throw new CosystemError("Worker state patch array index is out of range.");
+      throw new CoexistError("Worker state patch array index is out of range.");
     }
 
     container[index] = value;
@@ -1404,7 +1404,7 @@ function setPatchValue(
   const key = String(segment);
 
   if (operation === "replace" && !Object.hasOwn(container, key)) {
-    throw new CosystemError("Worker state patch target does not exist.");
+    throw new CoexistError("Worker state patch target does not exist.");
   }
 
   container[key] = value;
@@ -1415,7 +1415,7 @@ function removePatchValue(container: PatchContainer, segment: PatchPathSegment):
     const index = toArrayIndex(segment);
 
     if (index >= container.length) {
-      throw new CosystemError("Worker state patch array index is out of range.");
+      throw new CoexistError("Worker state patch array index is out of range.");
     }
 
     container.splice(index, 1);
@@ -1425,7 +1425,7 @@ function removePatchValue(container: PatchContainer, segment: PatchPathSegment):
   const key = String(segment);
 
   if (!Object.hasOwn(container, key)) {
-    throw new CosystemError("Worker state patch target does not exist.");
+    throw new CoexistError("Worker state patch target does not exist.");
   }
 
   delete container[key];
@@ -1433,13 +1433,13 @@ function removePatchValue(container: PatchContainer, segment: PatchPathSegment):
 
 function toArrayIndex(segment: PatchPathSegment): number {
   if (typeof segment === "string" && !/^(?:0|[1-9]\d*)$/.test(segment)) {
-    throw new CosystemError("Worker state patch array index is invalid.");
+    throw new CoexistError("Worker state patch array index is invalid.");
   }
 
   const index = typeof segment === "number" ? segment : Number(segment);
 
   if (!Number.isSafeInteger(index) || index < 0 || index > maximumArrayIndex) {
-    throw new CosystemError("Worker state patch array index is invalid.");
+    throw new CoexistError("Worker state patch array index is invalid.");
   }
 
   return index;
@@ -1460,14 +1460,14 @@ function normalizePatchPath(path: unknown): readonly PatchPathSegment[] {
       .slice(1)
       .map((segment) => {
         if (/~(?![01])/u.test(segment)) {
-          throw new CosystemError("Worker state patch path escape is invalid.");
+          throw new CoexistError("Worker state patch path escape is invalid.");
         }
 
         return normalizePatchPathSegment(segment.replaceAll("~1", "/").replaceAll("~0", "~"));
       });
   }
 
-  throw new CosystemError("Worker state patch path is invalid.");
+  throw new CoexistError("Worker state patch path is invalid.");
 }
 
 function normalizePatchPathSegment(segment: unknown): PatchPathSegment {
@@ -1484,7 +1484,7 @@ function normalizePatchPathSegment(segment: unknown): PatchPathSegment {
     return segment;
   }
 
-  throw new CosystemError("Worker state patch path segment is invalid.");
+  throw new CoexistError("Worker state patch path segment is invalid.");
 }
 
 function isWorkerPatch(value: unknown): value is WorkerPatch {
@@ -1722,7 +1722,7 @@ function isAllowedPostMessageOrigin(origin: string, allowedOrigins: readonly str
 
 function assertValidWorkerTimeout(timeout: number, option: string): void {
   if (!Number.isFinite(timeout) || timeout < 0) {
-    throw new CosystemError(`${option} must be a finite, non-negative number.`);
+    throw new CoexistError(`${option} must be a finite, non-negative number.`);
   }
 }
 
@@ -1763,8 +1763,8 @@ function serializeError(error: unknown): SerializedWorkerError {
   };
 }
 
-function createRemoteError(error: SerializedWorkerError): CosystemError {
-  const remoteError = new CosystemError(`Remote worker error: ${error.message}`);
+function createRemoteError(error: SerializedWorkerError): CoexistError {
+  const remoteError = new CoexistError(`Remote worker error: ${error.message}`);
   remoteError.name = error.name;
 
   if (error.stack !== undefined) {

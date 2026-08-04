@@ -14,28 +14,28 @@ import { describe, expect, it } from "vitest";
 
 import { createApp, defineModule } from "@coexist/core";
 import {
-  CoSystemProvider as ReactCoSystemProvider,
+  CoexistProvider as ReactCoexistProvider,
   useModule as useReactModule,
   useSelector as useReactSelector,
 } from "@coexist/react";
 import {
-  CoSystemProvider as SolidCoSystemProvider,
+  CoexistProvider as SolidCoexistProvider,
   useComputed as useSolidComputed,
   useModule as useSolidModule,
 } from "@coexist/solid";
 import {
-  clearCoSystemApp,
+  clearCoexistApp,
   moduleStore as svelteModuleStore,
   selectedModuleStore as selectedSvelteModuleStore,
-  setCoSystemApp,
+  setCoexistApp,
 } from "@coexist/svelte";
 import {
   injectModule as injectAngularModule,
   injectSignal as injectAngularSignal,
-  provideCoSystem as provideAngularCoSystem,
+  provideCoexist as provideAngularCoexist,
 } from "@coexist/angular";
 import {
-  provideCoSystem as provideVueCoSystem,
+  provideCoexist as provideVueCoexist,
   useComputed as useVueComputed,
   useModule as useVueModule,
 } from "@coexist/vue";
@@ -92,7 +92,7 @@ describe("framework adapter integration", () => {
 
       act(() => {
         reactRenderer = create(
-          createElement(ReactCoSystemProvider, { app }, createElement(ReactView)),
+          createElement(ReactCoexistProvider, { app }, createElement(ReactView)),
         );
       });
 
@@ -105,7 +105,7 @@ describe("framework adapter integration", () => {
       });
       const VueRoot = defineComponent({
         setup() {
-          provideVueCoSystem(app);
+          provideVueCoexist(app);
           return () => h(VueConsumer);
         },
       });
@@ -114,7 +114,7 @@ describe("framework adapter integration", () => {
 
       createRoot((dispose) => {
         solidDispose = dispose;
-        SolidCoSystemProvider({
+        SolidCoexistProvider({
           app,
           get children() {
             const owner = getOwner();
@@ -133,7 +133,7 @@ describe("framework adapter integration", () => {
         });
       });
 
-      setCoSystemApp(app);
+      setCoexistApp(app);
       svelteCounter = get(svelteModuleStore(SharedCounter));
       const svelteCount = selectedSvelteModuleStore(SharedCounter, (module) => module.count);
       svelteUnsubscribe = svelteCount.subscribe((value) => {
@@ -141,7 +141,7 @@ describe("framework adapter integration", () => {
       });
 
       angularInjector = createEnvironmentInjector(
-        [provideAngularCoSystem(app)],
+        [provideAngularCoexist(app)],
         null as unknown as EnvironmentInjector,
       );
       runInInjectionContext(angularInjector, () => {
@@ -220,7 +220,7 @@ describe("framework adapter integration", () => {
       }
 
       svelteUnsubscribe?.();
-      clearCoSystemApp();
+      clearCoexistApp();
       solidDispose?.();
       angularInjector?.destroy();
     }

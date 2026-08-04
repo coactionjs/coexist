@@ -2,7 +2,7 @@ export {
   AmbiguousProviderError,
   AsyncProviderInSyncResolutionError,
   CircularDependencyError,
-  CosystemError,
+  CoexistError,
   DisposedContainerError,
   DuplicateProviderError,
   FrozenContainerError,

@@ -29,7 +29,7 @@ try {
     ["dlx", "--package", `file:${createTarball}`, "create-coexist", appName],
     workspaceDir,
   );
-  const createdPath = createResult.stdout.trim().replace("Created CoSystem project at ", "");
+  const createdPath = createResult.stdout.trim().replace("Created Coexist project at ", "");
   const [expectedAppDir, reportedAppDir] = await Promise.all([
     realpath(appDir),
     realpath(createdPath),

@@ -135,7 +135,7 @@ async function writeConsumerProject({ catalog, coreTarball, vueTarball }) {
       "  <head>",
       '    <meta charset="UTF-8" />',
       '    <meta name="viewport" content="width=device-width, initial-scale=1.0" />',
-      "    <title>CoSystem Vue worker browser smoke</title>",
+      "    <title>Coexist Vue worker browser smoke</title>",
       "  </head>",
       "  <body>",
       '    <main aria-label="Vue worker browser smoke">',

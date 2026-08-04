@@ -1,6 +1,6 @@
 # Architecture
 
-This document explains how CoSystem is layered, where the boundaries are, and the
+This document explains how Coexist is layered, where the boundaries are, and the
 principles behind the design decisions.
 
 ## Layered design
@@ -24,22 +24,22 @@ The boundary between the two libraries is intentional:
 Coaction
   Reactive state, signals, transport, worker/share synchronization.
 
-CoSystem
+Coexist
   Application runtime, DI, OO modules, lifecycle, testing, UI adapters.
 ```
 
-CoSystem is "powered by Coaction" — Coaction is a powerful implementation
-dependency, not part of the user's required mental model. CoSystem owns the
+Coexist is "powered by Coaction" — Coaction is a powerful implementation
+dependency, not part of the user's required mental model. Coexist owns the
 app-framework API, docs, examples, release cadence, and brand.
 
 ## Package boundaries
 
-| Layer    | Packages                                     | Rule                                                                                                                      |
-| -------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| Core     | `@coexist/core`                              | Depends only on `coaction`. Must **not** import any UI framework. Owns the public app-runtime API.                        |
-| Adapters | `react`, `vue`, `svelte`, `solid`, `angular` | Depend on `@coexist/core` + their target framework (peer dependency). Expose CoSystem-branded, framework-native bindings. |
-| Plugins  | `router`, `storage`, `devtools`              | Depend on `@coexist/core`. Implement the `Plugin` contract. Never required by the core.                                   |
-| Tooling  | `create`, `testing`, `tsconfig`              | Scaffolding, test facade, and shared TS config.                                                                           |
+| Layer    | Packages                                     | Rule                                                                                                                     |
+| -------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Core     | `@coexist/core`                              | Depends only on `coaction`. Must **not** import any UI framework. Owns the public app-runtime API.                       |
+| Adapters | `react`, `vue`, `svelte`, `solid`, `angular` | Depend on `@coexist/core` + their target framework (peer dependency). Expose Coexist-branded, framework-native bindings. |
+| Plugins  | `router`, `storage`, `devtools`              | Depend on `@coexist/core`. Implement the `Plugin` contract. Never required by the core.                                  |
+| Tooling  | `create`, `testing`, `tsconfig`              | Scaffolding, test facade, and shared TS config.                                                                          |
 
 Two hard constraints:
 
@@ -76,7 +76,7 @@ once. (Per-module isolated stores are an explicitly deferred idea.) See
 ### Single composition entry
 
 There is one composition entry: `createApp({ providers })`. `@Module` is the
-marker that promotes a provider entry into a stateful CoSystem module. There is
+marker that promotes a provider entry into a stateful Coexist module. There is
 deliberately no separate `modules` array.
 
 ### Rendering stays native
@@ -103,11 +103,11 @@ root graph. Full detail: [Application Lifecycle](./application-lifecycle.md).
 
 ## What is intentionally out of scope
 
-CoSystem is not a rendering layer, a router framework, a full-stack server, a
+Coexist is not a rendering layer, a router framework, a full-stack server, a
 build system, a component library, or a Next/Nuxt/SvelteKit replacement. It does
 not provide a universal component abstraction or cross-framework templates. These
 omissions are what keep it embeddable. See
-[Introduction](./introduction.md#what-cosystem-is-not).
+[Introduction](./introduction.md#what-coexist-is-not).
 
 ## Risks the design accounts for
 

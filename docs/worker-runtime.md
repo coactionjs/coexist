@@ -16,11 +16,11 @@ Host (e.g. Worker thread)                 Client (e.g. UI thread)
 │ createWorkerApp({          │ ──────────► │ createWorkerClient({      │
 │   providers, sync, ...     │ ◄────────── │   transport, onConflict   │
 │ })                         │  messages   │ })                        │
-│  runs real CoSystem app    │             │  state mirror + RPC proxy │
+│  runs real Coexist app    │             │  state mirror + RPC proxy │
 └───────────────────────────┘             └───────────────────────────┘
 ```
 
-- The **host** runs an actual CoSystem app and publishes state over a transport.
+- The **host** runs an actual Coexist app and publishes state over a transport.
 - The **client** mirrors that state, exposes selectors, and delegates module
   method calls back to the host as RPC.
 

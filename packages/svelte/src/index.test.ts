@@ -10,12 +10,12 @@ import {
 } from "@coexist/core";
 
 import {
-  clearCoSystemApp,
+  clearCoexistApp,
   clearWorkerClient,
   moduleStore,
   selectedModuleStore,
   selectorStore,
-  setCoSystemApp,
+  setCoexistApp,
   setWorkerClient,
   workerModuleStore,
   workerSelectorStore,
@@ -42,7 +42,7 @@ defineModule(Counter, {
 
 describe("Svelte adapter", () => {
   afterEach(() => {
-    clearCoSystemApp();
+    clearCoexistApp();
     clearWorkerClient();
   });
 
@@ -50,7 +50,7 @@ describe("Svelte adapter", () => {
     const app = createApp({
       providers: [Counter],
     });
-    setCoSystemApp(app);
+    setCoexistApp(app);
 
     const counter = get(moduleStore(Counter));
 
@@ -64,7 +64,7 @@ describe("Svelte adapter", () => {
       providers: [Counter],
     });
     const counter = app.getModule(Counter);
-    setCoSystemApp(app);
+    setCoexistApp(app);
 
     const values: number[] = [];
     const store = selectedModuleStore(Counter, (module) => module.double);
@@ -85,7 +85,7 @@ describe("Svelte adapter", () => {
       providers: [Counter],
     });
     const counter = app.getModule(Counter);
-    setCoSystemApp(app);
+    setCoexistApp(app);
 
     const values: Array<{ readonly parity: number }> = [];
     const store = selectorStore(

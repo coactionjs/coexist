@@ -1,6 +1,6 @@
 # Introduction
 
-CoSystem is a **UI-agnostic application meta-framework** built on top of
+Coexist is a **UI-agnostic application meta-framework** built on top of
 [Coaction](https://www.npmjs.com/package/coaction). It gives you a typed
 application core — dependency injection, object-oriented stateful modules,
 lifecycle, plugins, testing, and worker execution — without binding your
@@ -15,7 +15,7 @@ The value is not "write one UI for every framework." It is:
 > Write business modules once. Run them with React, Vue, Svelte, Solid, Angular,
 > vanilla JS, workers, shared tabs, and tests.
 
-## What CoSystem is
+## What Coexist is
 
 - An **embeddable application runtime** for business logic, dependency
   injection, stateful modules, lifecycle, worker execution, and cross-runtime
@@ -27,9 +27,9 @@ The value is not "write one UI for every framework." It is:
   hooks, Vue composables, Svelte stores/runes, Solid signals, and Angular
   signals.
 
-## What CoSystem is not
+## What Coexist is not
 
-CoSystem is **not** a replacement for Next.js, Nuxt, SvelteKit, Angular, or
+Coexist is **not** a replacement for Next.js, Nuxt, SvelteKit, Angular, or
 Vite. It deliberately does not provide:
 
 - A universal component abstraction or cross-framework template syntax.
@@ -46,7 +46,7 @@ the core.
 
 ## The mental model
 
-A CoSystem app is a graph of **modules** wired by a small **DI container**. Each
+A Coexist app is a graph of **modules** wired by a small **DI container**. Each
 module is a plain class:
 
 ```ts
@@ -91,9 +91,9 @@ The core runtime never imports a UI framework, and it never mounts UI. Coaction
 is a powerful implementation dependency — "powered by Coaction" — not a required
 part of your mental model.
 
-## When should you reach for CoSystem?
+## When should you reach for Coexist?
 
-CoSystem shines when:
+Coexist shines when:
 
 - Your **domain logic is non-trivial** and you want it decoupled from the view.
 - You need the **same logic across multiple frameworks** (a design-system team,

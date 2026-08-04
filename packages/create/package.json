@@ -1,7 +1,7 @@
 {
   "name": "@coexist/create",
   "version": "0.2.0",
-  "description": "Project scaffolding utilities for CoSystem.",
+  "description": "Project scaffolding utilities for Coexist.",
   "license": "MIT",
   "repository": {
     "type": "git",

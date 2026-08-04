@@ -1,11 +1,11 @@
 import { mount } from "svelte";
 
-import { setCoSystemApp } from "@coexist/svelte";
+import { setCoexistApp } from "@coexist/svelte";
 
 import App from "./App.svelte";
-import { cosystem } from "./counter";
+import { coexist } from "./counter";
 
-setCoSystemApp(cosystem);
+setCoexistApp(coexist);
 
 mount(App, {
   target: document.getElementById("app")!,

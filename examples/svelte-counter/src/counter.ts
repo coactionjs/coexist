@@ -23,6 +23,6 @@ defineModule(Counter, {
   state: ["count"],
 });
 
-export const cosystem = createApp({
+export const coexist = createApp({
   providers: [Counter],
 });

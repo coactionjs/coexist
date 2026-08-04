@@ -1,7 +1,7 @@
 {
   "name": "@coexist/react",
   "version": "0.2.0",
-  "description": "React adapter for CoSystem.",
+  "description": "React adapter for Coexist.",
   "license": "MIT",
   "repository": {
     "type": "git",

@@ -4,7 +4,7 @@ import {
   AsyncProviderInSyncResolutionError,
   Action,
   Computed,
-  CosystemError,
+  CoexistError,
   DuplicateProviderError,
   createApp,
   createContainer,
@@ -295,7 +295,7 @@ describe("app runtime", () => {
       providers: [LazyCounter],
     }));
 
-    expect(() => app.getModule(LazyCounter)).toThrow(CosystemError);
+    expect(() => app.getModule(LazyCounter)).toThrow(CoexistError);
 
     const result = await app.load(feature);
     const counter = app.getModule(LazyCounter);
@@ -352,7 +352,7 @@ describe("app runtime", () => {
     await expect(app.load(lazyModule(() => InvalidLazyScope))).rejects.toThrow(
       "must use singleton scope; received transient",
     );
-    expect(() => app.getModule(InvalidLazyScope)).toThrow(CosystemError);
+    expect(() => app.getModule(InvalidLazyScope)).toThrow(CoexistError);
     expect(app.store.getPureState()).toEqual({});
   });
 
@@ -396,7 +396,7 @@ describe("app runtime", () => {
 
     expect(loaderCalls).toBe(1);
     expect(events).toEqual(["init:start"]);
-    expect(() => app.getModule(TransactionalLazyModule)).toThrow(CosystemError);
+    expect(() => app.getModule(TransactionalLazyModule)).toThrow(CoexistError);
     expect(app.store.getPureState()).toEqual({});
 
     releaseInit();
@@ -508,7 +508,7 @@ describe("app runtime", () => {
 
     await expect(app.load(feature)).rejects.toThrow("lazy init boom");
 
-    expect(() => app.getModule(RetriableLazyModule)).toThrow(CosystemError);
+    expect(() => app.getModule(RetriableLazyModule)).toThrow(CoexistError);
     expect(app.store.getPureState()).toEqual({});
     expect(events).toEqual(["init:1", "module:dispose:1", "resource:dispose:1"]);
 
@@ -640,7 +640,7 @@ describe("app runtime", () => {
     expect(storeSnapshots).toEqual([]);
     expect(watchEvents).toEqual([]);
     expect(app.state.version).toBe(version);
-    expect(() => app.getModule(BrokenLazyEffect)).toThrow(CosystemError);
+    expect(() => app.getModule(BrokenLazyEffect)).toThrow(CoexistError);
     expect(app.store.getPureState()).toEqual({});
   });
 
@@ -804,7 +804,7 @@ describe("app runtime", () => {
     await expect(app.load(lazyModule(() => FailingLazyStart))).rejects.toThrow("lazy start boom");
 
     expect(events).toEqual(["init", "start", "stop", "dispose"]);
-    expect(() => app.getModule(FailingLazyStart)).toThrow(CosystemError);
+    expect(() => app.getModule(FailingLazyStart)).toThrow(CoexistError);
     expect(app.store.getPureState()).toEqual({});
   });
 
@@ -920,7 +920,7 @@ describe("app runtime", () => {
 
     expect(events).toEqual(["lazy:start", "lazy:stop", "lazy:dispose"]);
     expect(app.started).toBe(false);
-    expect(() => app.getModule(StagedLazyStart)).toThrow(CosystemError);
+    expect(() => app.getModule(StagedLazyStart)).toThrow(CoexistError);
     await app.dispose();
   });
 
@@ -952,7 +952,7 @@ describe("app runtime", () => {
     });
 
     const loadPromise = app.load(feature).catch((error: unknown) => {
-      events.push(error instanceof CosystemError ? "load:error" : "load:unknown-error");
+      events.push(error instanceof CoexistError ? "load:error" : "load:unknown-error");
     });
 
     await new Promise((resolve) => setTimeout(resolve, 0));
@@ -970,7 +970,7 @@ describe("app runtime", () => {
     await loadPromise;
 
     expect(events).toEqual(["load:start", "disposed", "load:resume", "load:error"]);
-    expect(() => app.getModule(LazyAfterDispose)).toThrow(CosystemError);
+    expect(() => app.getModule(LazyAfterDispose)).toThrow(CoexistError);
   });
 
   it("waits for staged lazy scopes before disposal completes", async () => {
@@ -1110,7 +1110,7 @@ describe("app runtime", () => {
 
     expect(() => {
       counter.count = 10;
-    }).toThrow(CosystemError);
+    }).toThrow(CoexistError);
 
     counter.increase();
 
@@ -1201,7 +1201,7 @@ describe("app runtime", () => {
     expect(module.items).toEqual([4]);
     expect(app.test.getActions()).toMatchObject([
       { method: "mutate", module: "nestedStrictModule" },
-      { error: expect.any(CosystemError), method: "mutateLater" },
+      { error: expect.any(CoexistError), method: "mutateLater" },
       { method: "replaceNestedState", module: "$app" },
     ]);
   });
@@ -1678,12 +1678,12 @@ describe("app runtime", () => {
     });
     const writer = app.getModule(PostAwaitWriter);
 
-    await expect(writer.writeLater()).rejects.toThrow(CosystemError);
+    await expect(writer.writeLater()).rejects.toThrow(CoexistError);
 
     expect(writer.count).toBe(0);
     expect(app.test.getActions()).toMatchObject([
       {
-        error: expect.any(CosystemError),
+        error: expect.any(CoexistError),
         method: "writeLater",
         module: "postAwaitWriter",
       },
@@ -1788,9 +1788,9 @@ describe("app runtime", () => {
     });
     const counter = first.getModule(Counter);
 
-    expect(() => runInAction({}, () => undefined)).toThrow(CosystemError);
+    expect(() => runInAction({}, () => undefined)).toThrow(CoexistError);
     expect(() => second.runInAction(counter, () => undefined)).toThrow(
-      "target belongs to another CoSystem app",
+      "target belongs to another Coexist app",
     );
   });
 
@@ -1831,7 +1831,7 @@ describe("app runtime", () => {
         overrides: [OverrideOnlyModule],
         providers: [],
       }),
-    ).toThrow(/Cannot add OverrideOnlyModule as a new CoSystem module through overrides/);
+    ).toThrow(/Cannot add OverrideOnlyModule as a new Coexist module through overrides/);
   });
 
   it("allows overrides to replace an already discovered module token", () => {
@@ -2219,7 +2219,7 @@ describe("app runtime", () => {
         ],
         providers: [FactoryOverriddenModule],
       }),
-    ).toThrow("FactoryOverriddenModule resolved to a value that is not a CoSystem module.");
+    ).toThrow("FactoryOverriddenModule resolved to a value that is not a Coexist module.");
   });
 
   it("rejects unsafe module names and metadata keys", () => {
@@ -2234,7 +2234,7 @@ describe("app runtime", () => {
       });
 
       expect(() => createApp({ providers: [UnsafeNamedModule] })).toThrow(
-        `CoSystem module name ${unsafeName} is unsafe.`,
+        `Coexist module name ${unsafeName} is unsafe.`,
       );
     }
 
@@ -2528,7 +2528,7 @@ describe("app runtime", () => {
             await Promise.resolve();
 
             await runtimeApp.start().catch((error: unknown) => {
-              events.push(error instanceof CosystemError ? "plugin:start-rejected" : "unknown");
+              events.push(error instanceof CoexistError ? "plugin:start-rejected" : "unknown");
             });
           },
         },
@@ -3561,7 +3561,7 @@ describe("app runtime", () => {
           },
         ],
       }),
-    ).toThrow(/bad cannot register CoSystem modules through plugin providers/);
+    ).toThrow(/bad cannot register Coexist modules through plugin providers/);
   });
 
   it("rejects module classes provided through plugin useClass providers", () => {
@@ -3584,7 +3584,7 @@ describe("app runtime", () => {
           },
         ],
       }),
-    ).toThrow(/bad cannot register CoSystem modules through plugin providers/);
+    ).toThrow(/bad cannot register Coexist modules through plugin providers/);
   });
 
   it("reports plugin observer errors without interrupting actions", () => {
@@ -3933,7 +3933,7 @@ describe("app runtime", () => {
 
     expect(() => {
       app.getModule(Wallet).balance = 0;
-    }).toThrow(CosystemError);
+    }).toThrow(CoexistError);
   });
 
   it("rolls back the whole commit when a nested action throws", () => {
@@ -4294,9 +4294,9 @@ describe("app runtime", () => {
 
     const plainChild = createApp({ parent, providers: [PlainProvider] });
 
-    expect(() => plainChild.getModule(PlainProvider)).toThrow(/not a CoSystem module/);
+    expect(() => plainChild.getModule(PlainProvider)).toThrow(/not a Coexist module/);
     expect(() => grandchild.getModule(Unregistered)).toThrow(/Missing provider/);
-    expect(() => grandchild.getModuleByName("missing")).toThrow(/not a CoSystem module/);
+    expect(() => grandchild.getModuleByName("missing")).toThrow(/not a Coexist module/);
 
     class ChildModule {
       readonly kind = "child";

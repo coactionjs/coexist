@@ -32,7 +32,7 @@ describe("router package", () => {
     ).toBe("/users?id=1#profile");
   });
 
-  it("provides a router through the CoSystem app container", () => {
+  it("provides a router through the Coexist app container", () => {
     const router = createMemoryRouter({
       initialPath: "/",
     });

@@ -184,7 +184,7 @@ await started.dispose();
 }
 
 function createRuntimeConsumerSource() {
-  return `import { CosystemError, defineModule, provide } from "@coexist/core";
+  return `import { CoexistError, defineModule, provide } from "@coexist/core";
 import { testApp } from "@coexist/testing";
 
 class Logger {
@@ -266,7 +266,7 @@ async function verifyInspectorAndOverrides() {
     () => {
       counter.count = 10;
     },
-    CosystemError,
+    CoexistError,
     "strict action mutation",
   );
 

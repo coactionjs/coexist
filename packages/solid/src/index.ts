@@ -9,7 +9,7 @@ import {
 } from "solid-js";
 
 import {
-  CosystemError,
+  CoexistError,
   type App,
   type AsyncMethodProxy,
   type InjectionToken,
@@ -17,7 +17,7 @@ import {
   type WorkerStateSelector,
 } from "@coexist/core";
 
-export interface CoSystemProviderProps {
+export interface CoexistProviderProps {
   readonly app: App;
   readonly children?: JSX.Element;
 }
@@ -34,11 +34,11 @@ export interface UseComputedOptions<T> {
 export type AppSelector<T> = (app: App) => T;
 export type ModuleSelector<TModule, TValue> = (module: TModule, app: App) => TValue;
 
-export const CoSystemContext: Context<App | undefined> = createContext<App>();
+export const CoexistContext: Context<App | undefined> = createContext<App>();
 export const WorkerClientContext: Context<WorkerClient | undefined> = createContext<WorkerClient>();
 
-export function CoSystemProvider(props: CoSystemProviderProps): JSX.Element {
-  return CoSystemContext.Provider({
+export function CoexistProvider(props: CoexistProviderProps): JSX.Element {
+  return CoexistContext.Provider({
     get children() {
       return props.children;
     },
@@ -56,10 +56,10 @@ export function WorkerClientProvider(props: WorkerClientProviderProps): JSX.Elem
 }
 
 export function useApp(): App {
-  const app = useContext(CoSystemContext);
+  const app = useContext(CoexistContext);
 
   if (app === undefined) {
-    throw new CosystemError("Missing Solid CoSystemProvider.");
+    throw new CoexistError("Missing Solid CoexistProvider.");
   }
 
   return app;
@@ -73,7 +73,7 @@ export function useWorkerClient(): WorkerClient {
   const client = useContext(WorkerClientContext);
 
   if (client === undefined) {
-    throw new CosystemError("Missing Solid WorkerClientProvider.");
+    throw new CoexistError("Missing Solid WorkerClientProvider.");
   }
 
   return client;

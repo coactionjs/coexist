@@ -16,13 +16,13 @@ import {
 } from "@coexist/core";
 
 import {
-  injectCoSystemApp,
+  injectCoexistApp,
   injectModule,
   injectSignal,
   injectWorkerClient,
   injectWorkerModule,
   injectWorkerSignal,
-  provideCoSystem,
+  provideCoexist,
   provideWorkerClient,
 } from "./index.js";
 
@@ -46,17 +46,17 @@ defineModule(Counter, {
 });
 
 describe("Angular adapter", () => {
-  it("bridges CoSystem apps through Angular providers", () => {
+  it("bridges Coexist apps through Angular providers", () => {
     const app = createApp({
       providers: [Counter],
     });
     const injector = createEnvironmentInjector(
-      [provideCoSystem(app)],
+      [provideCoexist(app)],
       null as unknown as EnvironmentInjector,
     );
 
     runInInjectionContext(injector, () => {
-      expect(injectCoSystemApp()).toBe(app);
+      expect(injectCoexistApp()).toBe(app);
 
       const counter = injectModule(Counter);
 
@@ -73,7 +73,7 @@ describe("Angular adapter", () => {
       providers: [Counter],
     });
     const injector = createEnvironmentInjector(
-      [provideCoSystem(app)],
+      [provideCoexist(app)],
       null as unknown as EnvironmentInjector,
     );
 
@@ -96,7 +96,7 @@ describe("Angular adapter", () => {
       providers: [Counter],
     });
     const injector = createEnvironmentInjector(
-      [provideCoSystem(app)],
+      [provideCoexist(app)],
       null as unknown as EnvironmentInjector,
     );
 

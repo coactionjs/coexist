@@ -24,7 +24,7 @@
   into a single commit: one state notification and one patch set, rolled back
   as a whole if the outermost action throws.
 - 5f71742: `getModule` and `getModuleByName` now resolve modules registered on a parent
-  app instead of throwing a misleading "not a CoSystem module" error for a
+  app instead of throwing a misleading "not a Coexist module" error for a
   token the child container can already resolve. Unregistered tokens still
   surface `MissingProviderError`.
 - e7c81ad: Add explicit provider auto-disposal ownership, keep external values and aliases unowned by default, let custom disposers replace convention disposal, and make storage destroyOnDispose authoritative.
@@ -42,7 +42,7 @@
   name. Derived names break under minification: state slices, persisted
   snapshots, and worker calls are all addressed by module name.
 - f931e31: Validate complete worker protocol schemas, expose only declared actions, add RPC timeout and AbortSignal controls, and secure ambient postMessage/BroadcastChannel transports with origin, source, targetOrigin, and capability-token options.
-- 38f4014: Reject scoped, resolution, and transient CoSystem modules so dependency injection and the single bound app store slice always share one singleton module instance.
+- 38f4014: Reject scoped, resolution, and transient Coexist modules so dependency injection and the single bound app store slice always share one singleton module instance.
 - 77bddf0: Expose stable app initialization readiness, observe initialization failures internally, reject lifecycle start reentry, and preserve imperative injection across awaited lifecycle work.
 - a02235b: Notify app watchers once per store mutation and isolate synchronous or asynchronous listener failures from committed actions through the watch error phase.
 - 1abd56b: Share in-flight async providers across singleton and resolution scopes, retry failed factories, and keep imperative `inject()` inside the active resolution graph.
@@ -61,14 +61,14 @@
 
 ### Major Changes
 
-- Release CoSystem 0.1 with the app runtime, lightweight DI, module decorators and no-decorator metadata, framework-native UI adapters, worker/shared runtime transports, persistence, router, devtools, testing helpers, examples, and CI/CD publishing support.
+- Release Coexist 0.1 with the app runtime, lightweight DI, module decorators and no-decorator metadata, framework-native UI adapters, worker/shared runtime transports, persistence, router, devtools, testing helpers, examples, and CI/CD publishing support.
 
 ### Minor Changes
 
 - 11db34e: Add BroadcastChannel-style worker transport for shared tab coordination, including routed call results and an in-memory broadcast channel for tests.
 - 2e01e3a: Add explicit action boundaries with `app.runInAction()` and `runInAction(module, callback)` so strict action mode can be preserved across awaited work.
 - 5385bd5: Add `createPostMessageWorkerTransport()` for Web Worker, iframe, and MessagePort-style endpoints.
-- 2f51753: Advance the CoSystem runtime toward the v0.1 application model:
+- 2f51753: Advance the Coexist runtime toward the v0.1 application model:
 
   - add explicit lazy modules with `lazyModule()` and `app.load()`
   - add async container construction through `buildAsync()`
@@ -86,4 +86,4 @@
 ### Patch Changes
 
 - Ensure delegated worker method promises settle only after the client state mirror reaches the worker state version associated with the result.
-- 8d18a9a: Return the bound CoSystem module facade from `app.get()` and `app.getAsync()` for module tokens, even when the provider scope is not singleton.
+- 8d18a9a: Return the bound Coexist module facade from `app.get()` and `app.getAsync()` for module tokens, even when the provider scope is not singleton.

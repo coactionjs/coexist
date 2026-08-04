@@ -1,6 +1,6 @@
 # UI Adapters
 
-CoSystem does not own rendering. There is no `ViewModule`, root component base
+Coexist does not own rendering. There is no `ViewModule`, root component base
 class, or `render()` abstraction. Each UI adapter is a thin layer that:
 
 1. provides the `App` (or a `WorkerClient`) to a component tree, and
@@ -44,7 +44,7 @@ view updates.
 ## React — [`@coexist/react`](../packages/react/README.md)
 
 ```tsx
-import { CoSystemProvider, useModule, useSelector } from "@coexist/react";
+import { CoexistProvider, useModule, useSelector } from "@coexist/react";
 
 function CounterView() {
   const counter = useModule(Counter);
@@ -52,34 +52,34 @@ function CounterView() {
   return <button onClick={() => counter.increase()}>{count}</button>;
 }
 
-<CoSystemProvider app={app}>
+<CoexistProvider app={app}>
   <CounterView />
-</CoSystemProvider>;
+</CoexistProvider>;
 ```
 
-`useApp()` / `useCoSystem()`, `useModule(token)`, `useSelector(selector)` or
+`useApp()` / `useCoexist()`, `useModule(token)`, `useSelector(selector)` or
 `useSelector(token, fn)`.
 
 ## Vue — [`@coexist/vue`](../packages/vue/README.md)
 
 ```ts
-import { cosystemPlugin, useComputed, useModule } from "@coexist/vue";
+import { coexistPlugin, useComputed, useModule } from "@coexist/vue";
 
 const counter = useModule(Counter);
 const count = useComputed((app) => app.getModule(Counter).count); // Readonly<Ref<T>>
 
-createVueApp(Root).use(cosystemPlugin(app)).mount("#app");
+createVueApp(Root).use(coexistPlugin(app)).mount("#app");
 ```
 
-`provideCoSystem(app)` / `cosystemPlugin(app)`, `useModule(token)`,
+`provideCoexist(app)` / `coexistPlugin(app)`, `useModule(token)`,
 `useSelector`/`useComputed` (return `Readonly<Ref<T>>`).
 
 ## Svelte — [`@coexist/svelte`](../packages/svelte/README.md)
 
 ```ts
-import { moduleStore, selectedModuleStore, setCoSystemApp } from "@coexist/svelte";
+import { moduleStore, selectedModuleStore, setCoexistApp } from "@coexist/svelte";
 
-setCoSystemApp(app);
+setCoexistApp(app);
 const counter = moduleStore(Counter);
 const count = selectedModuleStore(Counter, (m) => m.count);
 ```
@@ -95,7 +95,7 @@ Stores work in Svelte 4 and 5. Svelte 5 rune helpers live at
 ## Solid — [`@coexist/solid`](../packages/solid/README.md)
 
 ```tsx
-import { CoSystemProvider, useComputed, useModule } from "@coexist/solid";
+import { CoexistProvider, useComputed, useModule } from "@coexist/solid";
 
 function CounterView() {
   const counter = useModule(Counter);
@@ -111,7 +111,7 @@ function CounterView() {
 ```ts
 import { Component } from "@angular/core";
 import { bootstrapApplication } from "@angular/platform-browser";
-import { injectModule, injectSignal, provideCoSystem } from "@coexist/angular";
+import { injectModule, injectSignal, provideCoexist } from "@coexist/angular";
 
 @Component({ template: `<button (click)="counter.increase()">{{ count() }}</button>` })
 class CounterView {
@@ -119,19 +119,19 @@ class CounterView {
   readonly count = injectSignal(Counter, (m) => m.count); // Signal<T>
 }
 
-bootstrapApplication(CounterView, { providers: [provideCoSystem(app)] });
+bootstrapApplication(CounterView, { providers: [provideCoexist(app)] });
 ```
 
 ## At a glance
 
-| Framework      | Provide the app                         | Module access  | Selected state                | Returns                     |
-| -------------- | --------------------------------------- | -------------- | ----------------------------- | --------------------------- |
-| React          | `<CoSystemProvider app>`                | `useModule`    | `useSelector`                 | raw value                   |
-| Vue            | `cosystemPlugin` / `provideCoSystem`    | `useModule`    | `useSelector` / `useComputed` | `Readonly<Ref<T>>`          |
-| Svelte         | `setCoSystemApp` / `setCoSystemContext` | `moduleStore`  | `selectedModuleStore`         | `Readable<T>`               |
-| Svelte 5 runes | (same)                                  | `moduleRune`   | `selectedModuleRune`          | `{ current, value, get() }` |
-| Solid          | `<CoSystemProvider app>`                | `useModule`    | `useComputed`                 | `Accessor<T>`               |
-| Angular        | `provideCoSystem`                       | `injectModule` | `injectSignal`                | `Signal<T>`                 |
+| Framework      | Provide the app                       | Module access  | Selected state                | Returns                     |
+| -------------- | ------------------------------------- | -------------- | ----------------------------- | --------------------------- |
+| React          | `<CoexistProvider app>`               | `useModule`    | `useSelector`                 | raw value                   |
+| Vue            | `coexistPlugin` / `provideCoexist`    | `useModule`    | `useSelector` / `useComputed` | `Readonly<Ref<T>>`          |
+| Svelte         | `setCoexistApp` / `setCoexistContext` | `moduleStore`  | `selectedModuleStore`         | `Readable<T>`               |
+| Svelte 5 runes | (same)                                | `moduleRune`   | `selectedModuleRune`          | `{ current, value, get() }` |
+| Solid          | `<CoexistProvider app>`               | `useModule`    | `useComputed`                 | `Accessor<T>`               |
+| Angular        | `provideCoexist`                      | `injectModule` | `injectSignal`                | `Signal<T>`                 |
 
 ## Consuming worker-hosted state
 

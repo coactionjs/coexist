@@ -1,6 +1,6 @@
 # Core Concepts
 
-CoSystem has a small vocabulary. Learn these seven terms and the rest of the
+Coexist has a small vocabulary. Learn these seven terms and the rest of the
 framework follows.
 
 | Term         | One-line definition                                                         |
@@ -47,7 +47,7 @@ binding details.
 
 ## The single app store
 
-CoSystem creates **one** Coaction-backed store for the whole app, not one per
+Coexist creates **one** Coaction-backed store for the whole app, not one per
 module. Each module contributes a slice keyed by its `name`:
 
 ```ts

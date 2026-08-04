@@ -364,7 +364,7 @@ function verifyPluginProviderErrors() {
           },
         ],
       }),
-    "bad cannot register CoSystem modules through plugin providers",
+    "bad cannot register Coexist modules through plugin providers",
     "plugin direct module providers are rejected",
   );
 
@@ -394,7 +394,7 @@ function verifyPluginProviderErrors() {
           },
         ],
       }),
-    "bad cannot register CoSystem modules through plugin providers",
+    "bad cannot register Coexist modules through plugin providers",
     "plugin useClass module providers are rejected",
   );
 }

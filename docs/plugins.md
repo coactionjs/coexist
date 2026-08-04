@@ -49,17 +49,17 @@ const app = createApp({
 
 ## When each hook fires
 
-| Hook                      | Fires when                                                                                         |
-| ------------------------- | -------------------------------------------------------------------------------------------------- |
-| `providers`               | Before app providers are registered. Providers are for services/tokens only, not CoSystem modules. |
-| `setup(app, context)`     | During app init (before `onInit`), in registration order; `ready` and `start()` await it.          |
-| `onModuleCreated(event)`  | After each module instance is created and bound.                                                   |
-| `onActionStart(event)`    | When an action begins.                                                                             |
-| `onActionEnd(event)`      | When an action settles (includes `error` on failure).                                              |
-| `onPatch(event)`          | On each store patch. A plugin with `onPatch` enables patches unless `engine.patches` is set.       |
-| `onStateChange(event)`    | On every store change.                                                                             |
-| `onError(error, context)` | When a runtime phase or plugin observer hook throws (`context.phase`).                             |
-| `dispose(context)`        | During `app.dispose()`; may be async. Context disposers run after this hook.                       |
+| Hook                      | Fires when                                                                                        |
+| ------------------------- | ------------------------------------------------------------------------------------------------- |
+| `providers`               | Before app providers are registered. Providers are for services/tokens only, not Coexist modules. |
+| `setup(app, context)`     | During app init (before `onInit`), in registration order; `ready` and `start()` await it.         |
+| `onModuleCreated(event)`  | After each module instance is created and bound.                                                  |
+| `onActionStart(event)`    | When an action begins.                                                                            |
+| `onActionEnd(event)`      | When an action settles (includes `error` on failure).                                             |
+| `onPatch(event)`          | On each store patch. A plugin with `onPatch` enables patches unless `engine.patches` is set.      |
+| `onStateChange(event)`    | On every store change.                                                                            |
+| `onError(error, context)` | When a runtime phase or plugin observer hook throws (`context.phase`).                            |
+| `dispose(context)`        | During `app.dispose()`; may be async. Context disposers run after this hook.                      |
 
 See [Application Lifecycle](./application-lifecycle.md#phase-ordering) for the
 exact ordering of `setup`, `onInit`, and effects.
@@ -234,7 +234,7 @@ Tips:
 - Prefer `context.watch()` and `context.onDispose()` for resources that must be
   cleaned up with the app.
 - Use `providers` only for service/token dependencies. Plugin providers cannot
-  register CoSystem modules. App-level non-`multi` providers replace plugin
+  register Coexist modules. App-level non-`multi` providers replace plugin
   providers for the same token; app-level `multi` providers append to plugin
   `multi` providers.
 - A plugin with `onPatch` enables patches automatically unless

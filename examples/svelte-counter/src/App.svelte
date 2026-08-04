@@ -1,16 +1,16 @@
 <script lang="ts">
   import { moduleStore, selectedModuleStore } from "@coexist/svelte";
 
-  import { Counter, cosystem } from "./counter";
+  import { Counter, coexist } from "./counter";
 
-  const counter = moduleStore(Counter, cosystem);
-  const count = selectedModuleStore(Counter, (module) => module.count, { app: cosystem });
-  const double = selectedModuleStore(Counter, (module) => module.double, { app: cosystem });
+  const counter = moduleStore(Counter, coexist);
+  const count = selectedModuleStore(Counter, (module) => module.count, { app: coexist });
+  const double = selectedModuleStore(Counter, (module) => module.double, { app: coexist });
 </script>
 
 <main class="shell">
   <section class="panel">
-    <span class="eyebrow">Svelte + CoSystem</span>
+    <span class="eyebrow">Svelte + Coexist</span>
     <h1>Counter module</h1>
     <dl class="stats">
       <div>

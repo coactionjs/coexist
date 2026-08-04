@@ -1,7 +1,7 @@
 # @coexist/vue
 
-> Vue 3 bindings for [CoSystem](../../README.md): provide/inject composables that
-> expose a CoSystem app (or a worker-hosted app) as Vue refs.
+> Vue 3 bindings for [Coexist](../../README.md): provide/inject composables that
+> expose a Coexist app (or a worker-hosted app) as Vue refs.
 
 ## Installation
 
@@ -13,12 +13,12 @@ Peer dependency: `vue` `>=3.5 <4`.
 
 ## Quick start
 
-Install the app with the plugin (or call `provideCoSystem(app)` inside a parent
+Install the app with the plugin (or call `provideCoexist(app)` inside a parent
 `setup`), then read modules and selectors with the composables.
 
 ```ts
 import { createApp as createVueApp, defineComponent, h } from "vue";
-import { cosystemPlugin, useComputed, useModule } from "@coexist/vue";
+import { coexistPlugin, useComputed, useModule } from "@coexist/vue";
 
 const CounterView = defineComponent({
   setup() {
@@ -29,26 +29,26 @@ const CounterView = defineComponent({
   },
 });
 
-createVueApp(CounterView).use(cosystemPlugin(app)).mount("#app");
+createVueApp(CounterView).use(coexistPlugin(app)).mount("#app");
 ```
 
 ## Providing the app
 
 | Function                      | Use from                   | Description                               |
 | ----------------------------- | -------------------------- | ----------------------------------------- |
-| `cosystemPlugin(app)`         | `app.use(...)`             | Provides the app for the whole Vue app.   |
-| `provideCoSystem(app)`        | a parent component `setup` | Provides the app to descendants.          |
+| `coexistPlugin(app)`          | `app.use(...)`             | Provides the app for the whole Vue app.   |
+| `provideCoexist(app)`         | a parent component `setup` | Provides the app to descendants.          |
 | `workerClientPlugin(client)`  | `app.use(...)`             | Provides a `WorkerClient`.                |
 | `provideWorkerClient(client)` | a parent `setup`           | Provides a `WorkerClient` to descendants. |
 
 ## Composables
 
-| Composable                   | Returns            | Description                 |
-| ---------------------------- | ------------------ | --------------------------- |
-| `useApp()` / `useCoSystem()` | `App`              | The provided app.           |
-| `useModule(token)`           | `T`                | The bound module facade.    |
-| `useSelector(fn, opts?)`     | `Readonly<Ref<T>>` | Reactive ref for `fn(app)`. |
-| `useComputed(fn, opts?)`     | `Readonly<Ref<T>>` | Alias of `useSelector`.     |
+| Composable                  | Returns            | Description                 |
+| --------------------------- | ------------------ | --------------------------- |
+| `useApp()` / `useCoexist()` | `App`              | The provided app.           |
+| `useModule(token)`          | `T`                | The bound module facade.    |
+| `useSelector(fn, opts?)`    | `Readonly<Ref<T>>` | Reactive ref for `fn(app)`. |
+| `useComputed(fn, opts?)`    | `Readonly<Ref<T>>` | Alias of `useSelector`.     |
 
 ```ts
 const count = useSelector((app) => app.getModule(Counter).count);
@@ -85,11 +85,11 @@ createVueApp(WorkerCounterView).use(workerClientPlugin(client)).mount("#app");
 
 ## Exports
 
-`cosystemPlugin`, `workerClientPlugin`, `provideCoSystem`, `provideWorkerClient`,
-the `CoSystemKey` / `WorkerClientKey` injection keys, `useApp`, `useCoSystem`,
+`coexistPlugin`, `workerClientPlugin`, `provideCoexist`, `provideWorkerClient`,
+the `CoexistKey` / `WorkerClientKey` injection keys, `useApp`, `useCoexist`,
 `useModule`, `useSelector`, `useComputed`, `useWorkerClient`, `useWorkerModule`,
 `useWorkerSelector`, `useWorkerComputed`, and the `UseSelectorOptions` /
-`AppSelector` types. The `use*` composables throw a `CosystemError` when the app
+`AppSelector` types. The `use*` composables throw a `CoexistError` when the app
 or client was never provided.
 
 ## License

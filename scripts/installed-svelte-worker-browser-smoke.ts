@@ -168,7 +168,7 @@ async function writeConsumerProject({ catalog, coreTarball, svelteTarball }) {
       "  <head>",
       '    <meta charset="UTF-8" />',
       '    <meta name="viewport" content="width=device-width, initial-scale=1.0" />',
-      "    <title>CoSystem Svelte worker browser smoke</title>",
+      "    <title>Coexist Svelte worker browser smoke</title>",
       "  </head>",
       "  <body>",
       '    <main aria-label="Svelte worker browser smoke">',

@@ -1,4 +1,4 @@
-import { CosystemError } from "./errors.js";
+import { CoexistError } from "./errors.js";
 import type { ProviderInput } from "./types.js";
 
 export interface LazyModule {
@@ -61,7 +61,7 @@ export function normalizeLazyModuleProviders(input: LazyModuleLoadInput): readon
       } else if (isProviderInput(exports.default)) {
         providers.push(exports.default);
       } else {
-        throw new CosystemError("Lazy module default export must be a provider or provider array.");
+        throw new CoexistError("Lazy module default export must be a provider or provider array.");
       }
     }
 
@@ -70,7 +70,7 @@ export function normalizeLazyModuleProviders(input: LazyModuleLoadInput): readon
     }
   }
 
-  throw new CosystemError(
+  throw new CoexistError(
     "Lazy module loader must return a provider, provider array, or module exports with providers/default.",
   );
 }
@@ -82,7 +82,7 @@ function assertProviderArray(
     return;
   }
 
-  throw new CosystemError("Lazy module provider arrays may only contain provider entries.");
+  throw new CoexistError("Lazy module provider arrays may only contain provider entries.");
 }
 
 function isProviderInput(value: unknown): value is ProviderInput {

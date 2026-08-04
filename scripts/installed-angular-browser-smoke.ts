@@ -186,7 +186,7 @@ async function writeConsumerProject({ angularTarball, catalog, coreTarball }) {
       "  <head>",
       '    <meta charset="UTF-8" />',
       '    <meta name="viewport" content="width=device-width, initial-scale=1.0" />',
-      "    <title>CoSystem Angular browser smoke</title>",
+      "    <title>Coexist Angular browser smoke</title>",
       "  </head>",
       "  <body>",
       '    <main aria-label="Angular browser smoke">',
@@ -209,7 +209,7 @@ import "zone.js";
 import { Component, signal, type ApplicationRef } from "@angular/core";
 import { bootstrapApplication } from "@angular/platform-browser";
 import { createApp, defineModule, type App } from "@coexist/core";
-import { injectCoSystemApp, injectModule, injectSignal, provideCoSystem } from "@coexist/angular";
+import { injectCoexistApp, injectModule, injectSignal, provideCoexist } from "@coexist/angular";
 
 type SmokeSnapshot = {
   readonly count: number;
@@ -288,7 +288,7 @@ window.__cosystemAngularStage = "module-start";
   \`,
 })
 class SmokeRoot {
-  readonly appFromContext = injectCoSystemApp();
+  readonly appFromContext = injectCoexistApp();
   readonly counter = injectModule(BrowserCounter);
   readonly count = injectSignal(BrowserCounter, (module) => module.count);
   readonly double = injectSignal(BrowserCounter, (module) => module.double);
@@ -318,7 +318,7 @@ class SmokeRoot {
 window.__cosystemAngularStage = "before-bootstrap";
 
 void bootstrapApplication(SmokeRoot, {
-  providers: [provideCoSystem(app)],
+  providers: [provideCoexist(app)],
 })
   .then((application) => {
     window.__cosystemAngularStage = "bootstrapped";

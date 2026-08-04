@@ -238,22 +238,22 @@ function createWorkspaceSource(overrides, catalog) {
 }
 
 function createTypeConsumerSource() {
-  return `import { provideCoSystem, injectSignal } from "@coexist/angular";
+  return `import { provideCoexist, injectSignal } from "@coexist/angular";
 import { createApp, defineModule, provide } from "@coexist/core";
-import { createCosystemProject } from "@coexist/create";
+import { createCoexistProject } from "@coexist/create";
 import { createDevtoolsPlugin } from "@coexist/devtools";
-import { CoSystemProvider, useSelector } from "@coexist/react";
+import { CoexistProvider, useSelector } from "@coexist/react";
 import { createMemoryRouter, createRouterPlugin } from "@coexist/router";
-import { CoSystemProvider as SolidCoSystemProvider, useComputed } from "@coexist/solid";
+import { CoexistProvider as SolidCoexistProvider, useComputed } from "@coexist/solid";
 import {
   createLocalSpaceStorage,
   createLocalSpaceStoragePlugin,
   type StorageService,
 } from "@coexist/storage";
 import { moduleRune } from "@coexist/svelte/runes";
-import { moduleStore, setCoSystemApp } from "@coexist/svelte";
+import { moduleStore, setCoexistApp } from "@coexist/svelte";
 import { testApp } from "@coexist/testing";
-import { cosystemPlugin, useComputed as useVueComputed } from "@coexist/vue";
+import { coexistPlugin, useComputed as useVueComputed } from "@coexist/vue";
 
 class Counter {
   count = 0;
@@ -277,18 +277,18 @@ const storage: StorageService = createLocalSpaceStorage();
 void [
   app,
   storage,
-  provideCoSystem,
+  provideCoexist,
   injectSignal,
-  createCosystemProject,
-  CoSystemProvider,
+  createCoexistProject,
+  CoexistProvider,
   useSelector,
-  SolidCoSystemProvider,
+  SolidCoexistProvider,
   useComputed,
   moduleStore,
   moduleRune,
-  setCoSystemApp,
+  setCoexistApp,
   testApp,
-  cosystemPlugin,
+  coexistPlugin,
   useVueComputed,
 ];
 `;
@@ -300,18 +300,18 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 const requiredExports = {
-  "@coexist/angular": ["provideCoSystem", "injectSignal"],
+  "@coexist/angular": ["provideCoexist", "injectSignal"],
   "@coexist/core": ["createApp", "defineModule", "provide"],
-  "@coexist/create": ["createCosystemProject"],
+  "@coexist/create": ["createCoexistProject"],
   "@coexist/devtools": ["createDevtoolsPlugin"],
-  "@coexist/react": ["CoSystemProvider", "useSelector"],
+  "@coexist/react": ["CoexistProvider", "useSelector"],
   "@coexist/router": ["createMemoryRouter", "createRouterPlugin"],
-  "@coexist/solid": ["CoSystemProvider", "useComputed"],
+  "@coexist/solid": ["CoexistProvider", "useComputed"],
   "@coexist/storage": ["createLocalSpaceStorage", "createLocalSpaceStoragePlugin"],
-  "@coexist/svelte": ["moduleStore", "setCoSystemApp"],
+  "@coexist/svelte": ["moduleStore", "setCoexistApp"],
   "@coexist/svelte/runes": ["moduleRune"],
   "@coexist/testing": ["testApp"],
-  "@coexist/vue": ["cosystemPlugin", "useComputed"],
+  "@coexist/vue": ["coexistPlugin", "useComputed"],
 };
 const modules = {};
 
@@ -404,7 +404,7 @@ await storage.destroy();
 const projectDir = await mkdtemp(join(tmpdir(), "cosystem-installed-create-"));
 
 try {
-  const created = await modules["@coexist/create"].createCosystemProject({
+  const created = await modules["@coexist/create"].createCoexistProject({
     name: "installed-create-smoke",
     root: projectDir,
   });

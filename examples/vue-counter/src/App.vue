@@ -11,7 +11,7 @@ const double = useComputed((app) => app.getModule(Counter).double);
 <template>
   <main class="shell">
     <section class="panel">
-      <span class="eyebrow">Vue + CoSystem</span>
+      <span class="eyebrow">Vue + Coexist</span>
       <h1>Counter module</h1>
       <dl class="stats">
         <div>

@@ -1,12 +1,12 @@
 # @coexist/router
 
-> Embeddable router primitives for [CoSystem](../../README.md): a tiny `Router`
+> Embeddable router primitives for [Coexist](../../README.md): a tiny `Router`
 > interface, browser/memory implementations, a `RouterToken`, and a plugin that
 > bridges route changes into the app lifecycle.
 
 This package is intentionally minimal. It does not match routes, render views,
 or own navigation UI — it provides a location source you can inject and observe,
-plus helpers to wire it into a CoSystem app. Pair it with any UI adapter to react
+plus helpers to wire it into a Coexist app. Pair it with any UI adapter to react
 to the current location.
 
 ## Installation
@@ -62,7 +62,7 @@ interface Router {
 
 ### Plugin
 
-`createRouterPlugin(router, options)` returns a CoSystem `Plugin` that subscribes
+`createRouterPlugin(router, options)` returns a Coexist `Plugin` that subscribes
 to the router for the app's lifetime, unsubscribes on dispose, and provides
 `RouterToken` for DI.
 

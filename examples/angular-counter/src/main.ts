@@ -5,7 +5,7 @@ import { Component } from "@angular/core";
 import { bootstrapApplication } from "@angular/platform-browser";
 
 import { createApp, defineModule } from "@coexist/core";
-import { injectModule, injectSignal, provideCoSystem } from "@coexist/angular";
+import { injectModule, injectSignal, provideCoexist } from "@coexist/angular";
 
 class Counter {
   count = 0;
@@ -137,7 +137,7 @@ const app = createApp({
   template: `
     <main class="shell">
       <section class="panel">
-        <span class="eyebrow">Angular + CoSystem</span>
+        <span class="eyebrow">Angular + Coexist</span>
         <h1>Counter module</h1>
         <dl class="stats">
           <div>
@@ -164,5 +164,5 @@ class CounterView {
 }
 
 void bootstrapApplication(CounterView, {
-  providers: [provideCoSystem(app)],
+  providers: [provideCoexist(app)],
 });

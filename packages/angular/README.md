@@ -1,7 +1,7 @@
 # @coexist/angular
 
-> Angular bindings for [CoSystem](../../README.md): an environment provider and
-> `inject*` helpers that expose a CoSystem app (or a worker-hosted app) as
+> Angular bindings for [Coexist](../../README.md): an environment provider and
+> `inject*` helpers that expose a Coexist app (or a worker-hosted app) as
 > Angular signals.
 
 ## Installation
@@ -14,13 +14,13 @@ Peer dependency: `@angular/core` `>=17 <23`.
 
 ## Quick start
 
-Register the app with `provideCoSystem(app)` during bootstrap, then inject the
+Register the app with `provideCoexist(app)` during bootstrap, then inject the
 module and signals inside components.
 
 ```ts
 import { Component } from "@angular/core";
 import { bootstrapApplication } from "@angular/platform-browser";
-import { injectModule, injectSignal, provideCoSystem } from "@coexist/angular";
+import { injectModule, injectSignal, provideCoexist } from "@coexist/angular";
 
 @Component({
   selector: "counter-view",
@@ -32,7 +32,7 @@ class CounterView {
 }
 
 bootstrapApplication(CounterView, {
-  providers: [provideCoSystem(app)],
+  providers: [provideCoexist(app)],
 });
 ```
 
@@ -43,8 +43,8 @@ the template.
 
 | Function                         | Returns                | Description                     |
 | -------------------------------- | ---------------------- | ------------------------------- |
-| `provideCoSystem(app)`           | `EnvironmentProviders` | Register the app for DI.        |
-| `injectCoSystemApp()`            | `App`                  | Inject the app.                 |
+| `provideCoexist(app)`            | `EnvironmentProviders` | Register the app for DI.        |
+| `injectCoexistApp()`             | `App`                  | Inject the app.                 |
 | `injectModule(token)`            | `T`                    | Inject the bound module facade. |
 | `injectSignal(fn, opts?)`        | `Signal<T>`            | Signal for `fn(app)`.           |
 | `injectSignal(token, fn, opts?)` | `Signal<TValue>`       | Signal for `fn(module, app)`.   |
@@ -82,8 +82,8 @@ bootstrapApplication(WorkerCounterView, {
 
 ## Exports
 
-`provideCoSystem`, `provideWorkerClient`, the `COSYSTEM_APP` /
-`COSYSTEM_WORKER_CLIENT` injection tokens, `injectCoSystemApp`, `injectModule`,
+`provideCoexist`, `provideWorkerClient`, the `COEXIST_APP` /
+`COEXIST_WORKER_CLIENT` injection tokens, `injectCoexistApp`, `injectModule`,
 `injectSignal`, `injectWorkerClient`, `injectWorkerModule`, `injectWorkerSignal`,
 and the `InjectSignalOptions`, `AppSelector`, `ModuleSelector` types.
 

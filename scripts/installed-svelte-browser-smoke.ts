@@ -168,7 +168,7 @@ async function writeConsumerProject({ catalog, coreTarball, svelteTarball }) {
       "  <head>",
       '    <meta charset="UTF-8" />',
       '    <meta name="viewport" content="width=device-width, initial-scale=1.0" />',
-      "    <title>CoSystem Svelte browser smoke</title>",
+      "    <title>Coexist Svelte browser smoke</title>",
       "  </head>",
       "  <body>",
       '    <main aria-label="Svelte browser smoke">',
@@ -228,7 +228,7 @@ export const app = createApp({
 function createAppSource() {
   return `<script lang="ts">
   import {
-    getCoSystemApp,
+    getCoexistApp,
     moduleStore,
     selectedModuleStore,
     selectorStore,
@@ -249,7 +249,7 @@ function createAppSource() {
       equals: (value, previous) => value.parity === previous.parity,
     },
   );
-  const provided = String(getCoSystemApp() === app);
+  const provided = String(getCoexistApp() === app);
   let pending = false;
 
   async function increaseAsync(): Promise<void> {
@@ -285,8 +285,8 @@ function createAppSource() {
 
 function createMainSource() {
   return `import { mount, unmount } from "svelte";
-import { clearCoSystemApp, setCoSystemApp } from "@coexist/svelte";
-import type { App as CoSystemApp } from "@coexist/core";
+import { clearCoexistApp, setCoexistApp } from "@coexist/svelte";
+import type { App as CoexistApp } from "@coexist/core";
 
 import App from "./App.svelte";
 import { app, BrowserCounter } from "./counter";
@@ -304,7 +304,7 @@ type SmokeSnapshot = {
 declare global {
   interface Window {
     __cosystemSvelteSmoke?: {
-      readonly app: CoSystemApp;
+      readonly app: CoexistApp;
       dispose(): Promise<void>;
       setByRunInAction(value: number): void;
       snapshot(): SmokeSnapshot;
@@ -318,7 +318,7 @@ if (!(rootElement instanceof HTMLElement)) {
   throw new Error("Missing Svelte root element.");
 }
 
-setCoSystemApp(app);
+setCoexistApp(app);
 
 const component = mount(App, {
   target: rootElement,
@@ -328,7 +328,7 @@ window.__cosystemSvelteSmoke = {
   app,
   async dispose() {
     unmount(component);
-    clearCoSystemApp();
+    clearCoexistApp();
     await app.dispose();
   },
   setByRunInAction(value) {

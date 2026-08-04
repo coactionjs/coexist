@@ -1,7 +1,7 @@
 {
   "name": "@coexist/core",
   "version": "0.2.0",
-  "description": "Core utilities for CoSystem.",
+  "description": "Core utilities for Coexist.",
   "license": "MIT",
   "repository": {
     "type": "git",

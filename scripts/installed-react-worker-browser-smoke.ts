@@ -141,7 +141,7 @@ async function writeConsumerProject({ catalog, coreTarball, reactTarball }) {
       "  <head>",
       '    <meta charset="UTF-8" />',
       '    <meta name="viewport" content="width=device-width, initial-scale=1.0" />',
-      "    <title>CoSystem React worker browser smoke</title>",
+      "    <title>Coexist React worker browser smoke</title>",
       "  </head>",
       "  <body>",
       '    <main aria-label="React worker browser smoke">',

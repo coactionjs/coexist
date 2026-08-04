@@ -12,8 +12,8 @@ import {
 } from "@coexist/core";
 
 import {
-  cosystemPlugin,
-  provideCoSystem,
+  coexistPlugin,
+  provideCoexist,
   provideWorkerClient,
   useApp,
   useComputed,
@@ -61,7 +61,7 @@ describe("Vue adapter", () => {
 
     const Root = defineComponent({
       setup() {
-        provideCoSystem(app);
+        provideCoexist(app);
         return () => h(Consumer);
       },
     });
@@ -98,7 +98,7 @@ describe("Vue adapter", () => {
 
     const Root = defineComponent({
       setup() {
-        provideCoSystem(app);
+        provideCoexist(app);
         return () => h(Consumer);
       },
     });
@@ -128,7 +128,7 @@ describe("Vue adapter", () => {
     });
 
     const vueApp = createSSRApp(Consumer);
-    vueApp.use(cosystemPlugin(app));
+    vueApp.use(coexistPlugin(app));
 
     await expect(renderToString(vueApp)).resolves.toBe("<span>0</span>");
   });

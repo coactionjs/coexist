@@ -11,7 +11,7 @@ import {
 } from "@coexist/core";
 
 import {
-  CoSystemProvider,
+  CoexistProvider,
   WorkerClientProvider,
   useApp,
   useComputed,
@@ -47,7 +47,7 @@ describe("Solid adapter", () => {
     let verified = false;
 
     createRoot((dispose) => {
-      CoSystemProvider({
+      CoexistProvider({
         app,
         get children() {
           const owner = getOwner();
@@ -87,7 +87,7 @@ describe("Solid adapter", () => {
     let verified = false;
 
     createRoot((dispose) => {
-      CoSystemProvider({
+      CoexistProvider({
         app,
         get children() {
           const owner = getOwner();

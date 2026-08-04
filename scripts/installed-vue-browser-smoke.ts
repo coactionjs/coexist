@@ -135,7 +135,7 @@ async function writeConsumerProject(coreTarball, vueTarball, catalog) {
       "  <head>",
       '    <meta charset="UTF-8" />',
       '    <meta name="viewport" content="width=device-width, initial-scale=1.0" />',
-      "    <title>CoSystem Vue browser smoke</title>",
+      "    <title>Coexist Vue browser smoke</title>",
       "  </head>",
       "  <body>",
       '    <main aria-label="Vue browser smoke">',
@@ -152,8 +152,8 @@ async function writeConsumerProject(coreTarball, vueTarball, catalog) {
 }
 
 function createBrowserSource() {
-  return `import { createApp as createCoSystemApp, defineModule, type App } from "@coexist/core";
-import { cosystemPlugin, useApp, useComputed, useModule, useSelector } from "@coexist/vue";
+  return `import { createApp as createCoexistApp, defineModule, type App } from "@coexist/core";
+import { coexistPlugin, useApp, useComputed, useModule, useSelector } from "@coexist/vue";
 import { createApp as createVueApp, defineComponent, h, ref } from "vue";
 
 type SmokeSnapshot = {
@@ -208,7 +208,7 @@ defineModule(BrowserCounter, {
   state: ["count", "phase"],
 });
 
-const app = createCoSystemApp({
+const app = createCoexistApp({
   providers: [BrowserCounter],
 });
 const rootElement = document.querySelector("#root");
@@ -306,7 +306,7 @@ const vueApp = createVueApp(
   }),
 );
 
-vueApp.use(cosystemPlugin(app));
+vueApp.use(coexistPlugin(app));
 vueApp.mount(rootElement);
 
 window.__cosystemVueSmoke = {

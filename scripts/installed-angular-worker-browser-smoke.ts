@@ -186,7 +186,7 @@ async function writeConsumerProject({ angularTarball, catalog, coreTarball }) {
       "  <head>",
       '    <meta charset="UTF-8" />',
       '    <meta name="viewport" content="width=device-width, initial-scale=1.0" />',
-      "    <title>CoSystem Angular worker browser smoke</title>",
+      "    <title>Coexist Angular worker browser smoke</title>",
       "  </head>",
       "  <body>",
       '    <main aria-label="Angular worker browser smoke">',

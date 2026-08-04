@@ -8,7 +8,7 @@ import {
   defineModule,
 } from "@coexist/core";
 
-import { clearCoSystemApp, clearWorkerClient, setCoSystemApp } from "./index.js";
+import { clearCoexistApp, clearWorkerClient, setCoexistApp } from "./index.js";
 import {
   moduleRune,
   selectedModuleRune,
@@ -38,7 +38,7 @@ defineModule(RuneCounter, {
 
 describe("Svelte rune helpers", () => {
   afterEach(() => {
-    clearCoSystemApp();
+    clearCoexistApp();
     clearWorkerClient();
   });
 
@@ -46,7 +46,7 @@ describe("Svelte rune helpers", () => {
     const app = createApp({
       providers: [RuneCounter],
     });
-    setCoSystemApp(app);
+    setCoexistApp(app);
     const counter = moduleRune(RuneCounter);
 
     counter.current.increase(2);

@@ -1,6 +1,6 @@
-# CoSystem Documentation
+# Coexist Documentation
 
-> CoSystem — the meta-framework for coexisting UI frameworks. Write business
+> Coexist — the meta-framework for coexisting UI frameworks. Write business
 > modules once; run them with React, Vue, Svelte, Solid, Angular, vanilla JS,
 > workers, shared tabs, and tests.
 
@@ -10,7 +10,7 @@ table). For runnable demos, see [`examples/`](../examples).
 
 ## Start here
 
-1. [Introduction](./introduction.md) — what CoSystem is, how it is positioned,
+1. [Introduction](./introduction.md) — what Coexist is, how it is positioned,
    and the mental model.
 2. [Getting Started](./getting-started.md) — install, scaffold, and build your
    first app with a UI framework.
@@ -43,5 +43,5 @@ table). For runnable demos, see [`examples/`](../examples).
 - Code samples use `@coexist/core` imports unless a UI adapter is shown.
 - The recurring `Counter` example is the same one used across [`examples/`](../examples),
   so you can map a guide to a runnable project.
-- "The store" always means the single Coaction-backed app store — CoSystem does
+- "The store" always means the single Coaction-backed app store — Coexist does
   not create one store per module.

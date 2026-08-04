@@ -1,7 +1,7 @@
 import { createRoot } from "react-dom/client";
 
 import { createApp, defineModule } from "@coexist/core";
-import { CoSystemProvider, useModule, useSelector } from "@coexist/react";
+import { CoexistProvider, useModule, useSelector } from "@coexist/react";
 
 // oxlint-disable-next-line import/no-unassigned-import -- Vite loads example styles through CSS side effects.
 import "./styles.css";
@@ -41,7 +41,7 @@ function CounterView() {
   return (
     <main className="shell">
       <section className="panel">
-        <span className="eyebrow">React + CoSystem</span>
+        <span className="eyebrow">React + Coexist</span>
         <h1>Counter module</h1>
         <dl className="stats">
           <div>
@@ -67,7 +67,7 @@ function CounterView() {
 }
 
 createRoot(document.getElementById("root")!).render(
-  <CoSystemProvider app={app}>
+  <CoexistProvider app={app}>
     <CounterView />
-  </CoSystemProvider>,
+  </CoexistProvider>,
 );

@@ -8,7 +8,7 @@ import type {
   WorkerStateSelector,
 } from "@coexist/core";
 
-import { getCoSystemApp, getWorkerClient } from "./index.js";
+import { getCoexistApp, getWorkerClient } from "./index.js";
 
 export interface RuneSelectorOptions<T> {
   readonly app?: App;
@@ -28,7 +28,7 @@ export interface WorkerModuleRuneOptions {
   readonly client?: WorkerClient;
 }
 
-export interface CoSystemRune<T> {
+export interface CoexistRune<T> {
   readonly current: T;
   readonly value: T;
   get(): T;
@@ -40,14 +40,14 @@ export type ModuleSelector<TModule, TValue> = (module: TModule, app: App) => TVa
 export function moduleRune<T>(
   token: InjectionToken<T>,
   options: ModuleRuneOptions = {},
-): CoSystemRune<T> {
+): CoexistRune<T> {
   return selectorRune((app) => app.getModule(token), options);
 }
 
 export function workerModuleRune<T extends object>(
   name: string,
   options: WorkerModuleRuneOptions = {},
-): CoSystemRune<AsyncMethodProxy<T>> {
+): CoexistRune<AsyncMethodProxy<T>> {
   const client = options.client ?? getWorkerClient();
   const proxy = client.module<T>(name);
 
@@ -67,8 +67,8 @@ export function workerModuleRune<T extends object>(
 export function selectorRune<T>(
   selector: AppSelector<T>,
   options: RuneSelectorOptions<T> = {},
-): CoSystemRune<T> {
-  const app = options.app ?? getCoSystemApp();
+): CoexistRune<T> {
+  const app = options.app ?? getCoexistApp();
   const equals = options.equals ?? Object.is;
   let current = selector(app);
   const subscribe = createSubscriber((update) =>
@@ -114,7 +114,7 @@ export function selectorRune<T>(
 export function workerSelectorRune<T>(
   selector: WorkerStateSelector<T>,
   options: WorkerRuneSelectorOptions<T> = {},
-): CoSystemRune<T> {
+): CoexistRune<T> {
   const client = options.client ?? getWorkerClient();
   const equals = options.equals ?? Object.is;
   let current = client.select(selector);
@@ -162,6 +162,6 @@ export function selectedModuleRune<TModule, TValue>(
   token: InjectionToken<TModule>,
   selector: ModuleSelector<TModule, TValue>,
   options: RuneSelectorOptions<TValue> = {},
-): CoSystemRune<TValue> {
+): CoexistRune<TValue> {
   return selectorRune((app) => selector(app.getModule(token), app), options);
 }

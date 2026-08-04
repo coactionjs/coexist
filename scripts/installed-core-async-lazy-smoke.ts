@@ -170,7 +170,7 @@ void [app, results, value];
 function createRuntimeConsumerSource() {
   return `import {
   AsyncProviderInSyncResolutionError,
-  CosystemError,
+  CoexistError,
   createApp,
   createContainer,
   defineModule,
@@ -379,7 +379,7 @@ expectEqual(
 );
 expectThrowsInstance(
   () => app.getModule(BrokenLazyEffect),
-  CosystemError,
+  CoexistError,
   "failed lazy module stays hidden",
 );
 
@@ -395,7 +395,7 @@ expectSame(firstAppAsyncValue, secondAppAsyncValue, "app async provider is cache
 expectEqual(appAsyncCalls, 1, "app async provider factory runs once after cache");
 expectThrowsInstance(
   () => app.getModule(LazyCounter),
-  CosystemError,
+  CoexistError,
   "lazy module is unavailable before load",
 );
 

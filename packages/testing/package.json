@@ -1,7 +1,7 @@
 {
   "name": "@coexist/testing",
   "version": "0.2.0",
-  "description": "Testing helpers for CoSystem.",
+  "description": "Testing helpers for Coexist.",
   "license": "MIT",
   "repository": {
     "type": "git",

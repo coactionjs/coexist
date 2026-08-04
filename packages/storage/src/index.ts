@@ -104,7 +104,7 @@ export interface CreateLocalSpaceStorageOptions {
 }
 
 export const StorageToken: InjectionToken<StorageService> =
-  token<StorageService>("CoSystem Storage");
+  token<StorageService>("Coexist Storage");
 
 export interface StoragePluginOptions<TState = unknown> {
   readonly key: string;

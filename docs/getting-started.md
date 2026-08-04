@@ -1,6 +1,6 @@
 # Getting Started
 
-This guide takes you from an empty directory to a running CoSystem app with a UI
+This guide takes you from an empty directory to a running Coexist app with a UI
 framework of your choice.
 
 ## Requirements
@@ -8,7 +8,7 @@ framework of your choice.
 - **Node.js** `>=22.12.0`
 - A package manager (pnpm, npm, or yarn). The examples below use pnpm.
 
-CoSystem ships as **ESM only**. Your project should use `"type": "module"` (or
+Coexist ships as **ESM only**. Your project should use `"type": "module"` (or
 `.mjs`/`.mts` files) and a modern bundler or Node version.
 
 ## Option A — scaffold a project
@@ -111,7 +111,7 @@ subscription helpers — you keep your framework's normal mount API.
 
 ```tsx
 import { createRoot } from "react-dom/client";
-import { CoSystemProvider, useModule, useSelector } from "@coexist/react";
+import { CoexistProvider, useModule, useSelector } from "@coexist/react";
 import { app } from "./app.js";
 import { Counter } from "./counter.js";
 
@@ -123,9 +123,9 @@ function CounterView() {
 }
 
 createRoot(document.getElementById("root")!).render(
-  <CoSystemProvider app={app}>
+  <CoexistProvider app={app}>
     <CounterView />
-  </CoSystemProvider>,
+  </CoexistProvider>,
 );
 ```
 
@@ -133,7 +133,7 @@ createRoot(document.getElementById("root")!).render(
 
 ```ts
 import { createApp as createVueApp, defineComponent, h } from "vue";
-import { cosystemPlugin, useComputed, useModule } from "@coexist/vue";
+import { coexistPlugin, useComputed, useModule } from "@coexist/vue";
 import { app } from "./app.js";
 import { Counter } from "./counter.js";
 
@@ -145,17 +145,17 @@ const CounterView = defineComponent({
   },
 });
 
-createVueApp(CounterView).use(cosystemPlugin(app)).mount("#app");
+createVueApp(CounterView).use(coexistPlugin(app)).mount("#app");
 ```
 
 ### Svelte
 
 ```ts
-import { moduleStore, selectedModuleStore, setCoSystemApp } from "@coexist/svelte";
+import { moduleStore, selectedModuleStore, setCoexistApp } from "@coexist/svelte";
 import { app } from "./app.js";
 import { Counter } from "./counter.js";
 
-setCoSystemApp(app);
+setCoexistApp(app);
 export const counter = moduleStore(Counter);
 export const count = selectedModuleStore(Counter, (m) => m.count);
 ```
@@ -167,7 +167,7 @@ export const count = selectedModuleStore(Counter, (m) => m.count);
 ### Solid
 
 ```tsx
-import { CoSystemProvider, useComputed, useModule } from "@coexist/solid";
+import { CoexistProvider, useComputed, useModule } from "@coexist/solid";
 import { app } from "./app.js";
 import { Counter } from "./counter.js";
 
@@ -177,9 +177,9 @@ function CounterView() {
   return <button onClick={() => counter.increase()}>{count()}</button>;
 }
 
-<CoSystemProvider app={app}>
+<CoexistProvider app={app}>
   <CounterView />
-</CoSystemProvider>;
+</CoexistProvider>;
 ```
 
 ### Angular
@@ -187,7 +187,7 @@ function CounterView() {
 ```ts
 import { Component } from "@angular/core";
 import { bootstrapApplication } from "@angular/platform-browser";
-import { injectModule, injectSignal, provideCoSystem } from "@coexist/angular";
+import { injectModule, injectSignal, provideCoexist } from "@coexist/angular";
 import { app } from "./app.js";
 import { Counter } from "./counter.js";
 
@@ -200,7 +200,7 @@ export class CounterView {
   readonly count = injectSignal(Counter, (m) => m.count);
 }
 
-bootstrapApplication(CounterView, { providers: [provideCoSystem(app)] });
+bootstrapApplication(CounterView, { providers: [provideCoexist(app)] });
 ```
 
 ## Run a working example

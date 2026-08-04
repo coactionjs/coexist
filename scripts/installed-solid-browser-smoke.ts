@@ -135,7 +135,7 @@ async function writeConsumerProject(coreTarball, solidTarball, catalog) {
       "  <head>",
       '    <meta charset="UTF-8" />',
       '    <meta name="viewport" content="width=device-width, initial-scale=1.0" />',
-      "    <title>CoSystem Solid browser smoke</title>",
+      "    <title>Coexist Solid browser smoke</title>",
       "  </head>",
       "  <body>",
       '    <main aria-label="Solid browser smoke">',
@@ -153,7 +153,7 @@ async function writeConsumerProject(coreTarball, solidTarball, catalog) {
 
 function createBrowserSource() {
   return `import { createApp, defineModule, type App } from "@coexist/core";
-import { CoSystemProvider, useApp, useComputed, useModule } from "@coexist/solid";
+import { CoexistProvider, useApp, useComputed, useModule } from "@coexist/solid";
 import { createRenderEffect, createSignal } from "solid-js";
 import { render } from "solid-js/web";
 
@@ -220,7 +220,7 @@ if (!(rootElement instanceof HTMLElement)) {
 
 const disposeSolid = render(
   () =>
-    CoSystemProvider({
+    CoexistProvider({
       app,
       get children() {
         return [CounterView(), ParityView()];
