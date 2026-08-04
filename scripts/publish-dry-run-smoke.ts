@@ -17,7 +17,14 @@ let cleanupPublishDir = false;
 
 try {
   if (await pathExists(publishDir)) {
-    throw new Error("Refusing to run publish dry-run smoke while .publish already exists.");
+    throw new Error(
+      "Refusing to run publish dry-run smoke while .publish already exists.\n" +
+        "A publish run owns that directory and removes it when it finishes, so a " +
+        "leftover copy means an earlier run was interrupted.\n" +
+        "Its tarballs are ignored by *.tgz, so it stays invisible to git status " +
+        "while it keeps failing this check.\n" +
+        `If no publish is in progress, delete it and retry: rm -rf ${publishDir}`,
+    );
   }
 
   cleanupPublishDir = true;
