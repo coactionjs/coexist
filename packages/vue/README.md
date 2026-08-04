@@ -57,6 +57,8 @@ Selectors accept `{ equals }` to control updates and clean up automatically via 
 
 ## Worker-hosted state
 
+`useWorkerSelector` / `useWorkerComputed` read the client snapshot synchronously, so they throw until the host's first snapshot arrives. Await `client.ready` before mounting components that use them; `useWorkerModule` is safe at any time.
+
 ```ts
 import { createApp as createVueApp, defineComponent, h } from "vue";
 import { useWorkerModule, useWorkerSelector, workerClientPlugin } from "@coexist/vue";

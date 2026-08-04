@@ -49,6 +49,8 @@ bootstrapApplication(CounterView, {
 
 ## Worker-hosted state
 
+`injectWorkerSignal` reads the client snapshot synchronously, so it throws until the host's first snapshot arrives. Await `client.ready` before bootstrapping components that use it; `injectWorkerModule` is safe at any time.
+
 ```ts
 import { Component } from "@angular/core";
 import { bootstrapApplication } from "@angular/platform-browser";

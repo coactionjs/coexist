@@ -132,6 +132,26 @@ Every adapter has a parallel set of helpers for state hosted in a Worker (or oth
 
 The module proxy returned by `useWorkerModule`/`injectWorkerModule`/etc. is an `AsyncMethodProxy<T>` — every method returns a `Promise` because the call crosses a thread/transport boundary. See [Worker & Shared Runtime](./worker-runtime.md).
 
+### Await `client.ready` before rendering worker selectors
+
+The worker **selector** helpers read the client's snapshot synchronously, and a `WorkerClient` has no state until the host's first snapshot arrives. `useWorkerSelector`, `useWorkerComputed`, `injectWorkerSignal`, `workerSelectorStore`, and `workerSelectorRune` therefore throw `CoexistError: Worker client state is not ready.` when they run first — in React that surfaces as an error thrown during render.
+
+Await `client.ready` before mounting anything that selects worker state:
+
+```ts
+const client = createWorkerClient({ transport: createPostMessageWorkerTransport(worker) });
+
+await client.ready; // resolves once the initial snapshot arrives
+
+createRoot(document.getElementById("root")!).render(
+  <WorkerClientProvider client={client}>
+    <WorkerCounterView />
+  </WorkerClientProvider>,
+);
+```
+
+If the tree must mount first, render a loading state until `client.ready` settles, and only then render the components that call a worker selector. The module proxy helpers (`useWorkerModule` and friends) have no such constraint — they only queue RPC calls, so they are safe before readiness.
+
 ## Using two frameworks at once
 
 Because the core never imports a UI framework, the _same_ `app` can be rendered by more than one adapter in the same page — useful for incremental migrations and micro-frontends. Mount each framework normally and pass it the shared `app`.

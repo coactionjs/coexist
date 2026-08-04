@@ -47,6 +47,8 @@ const version = useComputed((app) => app.state.version);
 
 ## Worker-hosted state
 
+`useWorkerSelector` / `useWorkerComputed` read the client snapshot synchronously, so they throw until the host's first snapshot arrives. Await `client.ready` before mounting components that use them; `useWorkerModule` is safe at any time.
+
 ```tsx
 import { WorkerClientProvider, useWorkerModule, useWorkerSelector } from "@coexist/solid";
 

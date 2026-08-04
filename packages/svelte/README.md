@@ -57,6 +57,8 @@ Runes expose `.current`, `.value`, and `.get()` (all equivalent). When `app` is 
 
 ## Worker-hosted state
 
+`workerSelectorStore` / `workerSelectorRune` read the client snapshot synchronously, so they throw until the host's first snapshot arrives. Await `client.ready` before creating them; `workerModuleStore` / `workerModuleRune` are safe at any time.
+
 Stores:
 
 ```ts

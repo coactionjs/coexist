@@ -80,6 +80,8 @@ const items = useSelector(Todos, (m) => m.items, {
 
 Wrap the tree in `WorkerClientProvider` and use the worker hooks to consume an app running in a Worker, iframe, or other [transport](../core/README.md#worker--shared-runtime).
 
+`useWorkerSelector` reads the client snapshot synchronously, so it throws during render until the host's first snapshot arrives. Await `client.ready` before mounting components that use it; `useWorkerModule` is safe at any time.
+
 ```tsx
 import { WorkerClientProvider, useWorkerModule, useWorkerSelector } from "@coexist/react";
 
