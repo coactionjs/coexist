@@ -11,10 +11,7 @@
 
 **Facts:** [5 UI frameworks](./docs/ui-adapters.md) · [no base class, no inheritance](./docs/modules.md) · [no `reflect-metadata`](./docs/dependency-injection.md) · [runs in a Web Worker](./docs/worker-runtime.md)
 
-Coexist creates a typed application core powered by [Coaction](https://www.npmjs.com/package/coaction),
-then lets each UI framework render with its own native API. Business modules are
-plain classes with lightweight DI, object-oriented state, actions, computed
-getters, effects, and test-friendly app composition.
+Write your business logic once as plain modules — state, computed, actions, and effects — and let React, Vue, Svelte, Solid, and Angular coexist on one framework-agnostic app core. With lightweight dependency injection and a single observable store powered by [Coaction](https://www.npmjs.com/package/coaction), the same modules can even run in a Web Worker or across tabs — no rewrite required.
 
 ```ts
 import { createApp, defineModule } from "@coexist/core";
