@@ -210,7 +210,12 @@ interface ModuleBinding {
   readonly originalComputed: Map<PropertyKey, () => unknown>;
   readonly originalPropertyDescriptors: Map<PropertyKey, PropertyDescriptor | undefined>;
   readonly computedAccessors: Map<PropertyKey, () => unknown>;
-  readonly reactiveSlice: boolean;
+  /**
+   * Whether the slice is installed in the store and may be read through the
+   * reactive state. A lazy module is detached while it is being staged and
+   * becomes reactive once its slice is committed.
+   */
+  reactiveSlice: boolean;
   runtimeMetadataAttached: boolean;
   activeDraft: Record<PropertyKey, unknown> | undefined;
   actionDepth: number;
@@ -1161,11 +1166,15 @@ class RuntimeApp implements App {
         try {
           stateInstalled = true;
           this.installModuleState(loadedModules, stagedState);
+          // The slice is committed, so reads may go through the reactive state
+          // again. Effects must start reactive or they would track nothing.
+          setReactiveSlices(loadedModules, true);
 
           pendingEffectsBeforeStart = new Set(this.pendingEffects);
           effectStartIndex = this.effectDisposers.length;
           this.startEffects(loadedModules, scopeContainer);
         } catch (error) {
+          setReactiveSlices(loadedModules, false);
           const publicationRollbackErrors: unknown[] = [];
           const rollbackEffectStartIndex = effectStartIndex;
 
@@ -1226,6 +1235,7 @@ class RuntimeApp implements App {
       this.removePendingLazyModule(module);
       return result;
     } catch (error) {
+      setReactiveSlices(loadedModules, false);
       const rollbackErrors: unknown[] = [];
 
       const rollbackEffectStartIndex = effectStartIndex;
@@ -3078,6 +3088,12 @@ function instantiateModules(
   }
 
   return modules;
+}
+
+function setReactiveSlices(modules: readonly ModuleBinding[], reactiveSlice: boolean): void {
+  for (const moduleBinding of modules) {
+    moduleBinding.reactiveSlice = reactiveSlice;
+  }
 }
 
 function toModuleCreatedEvent(moduleBinding: ModuleBinding): ModuleCreatedEvent {

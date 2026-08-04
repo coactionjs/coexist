@@ -1982,6 +1982,56 @@ describe("app runtime", () => {
     expect(calls).toBe(2);
   });
 
+  it("caches computed values and reruns effects for lazily loaded modules", async () => {
+    let calls = 0;
+
+    class LazyReactiveCounter {
+      count = 1;
+      readonly effectRuns: number[] = [];
+
+      get double(): number {
+        calls += 1;
+        return this.count * 2;
+      }
+
+      increase(): void {
+        this.count += 1;
+      }
+
+      recordCount(): void {
+        this.effectRuns.push(this.count);
+      }
+    }
+
+    defineModule(LazyReactiveCounter, {
+      actions: ["increase"],
+      computed: ["double"],
+      effects: ["recordCount"],
+      name: "lazyReactiveCounter",
+      state: ["count"],
+    });
+
+    const app = createApp();
+    await app.load(lazyModule(() => LazyReactiveCounter));
+
+    const counter = app.getModule(LazyReactiveCounter);
+
+    expect(counter.double).toBe(2);
+    expect(counter.double).toBe(2);
+    expect(calls).toBe(1);
+
+    counter.increase();
+
+    expect(counter.double).toBe(4);
+    expect(calls).toBe(2);
+    expect(counter.effectRuns).toEqual([1, 2]);
+
+    counter.increase();
+
+    expect(counter.effectRuns).toEqual([1, 2, 3]);
+    await app.dispose();
+  });
+
   it("reads fresh computed values from the active action draft", () => {
     class DraftComputedCounter {
       count = 1;
