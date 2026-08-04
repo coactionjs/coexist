@@ -1,4 +1,4 @@
-# @cosystem/solid
+# @coexist/solid
 
 > Solid bindings for [CoSystem](../../README.md): a context provider and signals
 > for consuming a CoSystem app (or a worker-hosted app).
@@ -6,7 +6,7 @@
 ## Installation
 
 ```sh
-pnpm add @cosystem/solid @cosystem/core
+pnpm add @coexist/solid @coexist/core
 ```
 
 Peer dependency: `solid-js` `>=1.9 <2`.
@@ -14,7 +14,7 @@ Peer dependency: `solid-js` `>=1.9 <2`.
 ## Quick start
 
 ```tsx
-import { CoSystemProvider, useComputed, useModule } from "@cosystem/solid";
+import { CoSystemProvider, useComputed, useModule } from "@coexist/solid";
 
 function CounterView() {
   const counter = useModule(Counter);
@@ -51,7 +51,7 @@ const version = useComputed((app) => app.state.version);
 ## Worker-hosted state
 
 ```tsx
-import { WorkerClientProvider, useWorkerModule, useWorkerSelector } from "@cosystem/solid";
+import { WorkerClientProvider, useWorkerModule, useWorkerSelector } from "@coexist/solid";
 
 type CounterState = { readonly counter: { readonly count: number } };
 

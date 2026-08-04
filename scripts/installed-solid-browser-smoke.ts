@@ -25,8 +25,8 @@ let server;
 
 try {
   const catalog = await readCatalog();
-  const coreTarball = await packPackage("@cosystem/core");
-  const solidTarball = await packPackage("@cosystem/solid");
+  const coreTarball = await packPackage("@coexist/core");
+  const solidTarball = await packPackage("@coexist/solid");
 
   await writeConsumerProject(coreTarball, solidTarball, catalog);
   await run("pnpm", ["install", "--prefer-offline", "--no-frozen-lockfile"], consumerDir);
@@ -46,7 +46,7 @@ try {
 }
 
 async function packPackage(name) {
-  const packageDir = join(packagesDir, name.slice("@cosystem/".length));
+  const packageDir = join(packagesDir, name.slice("@coexist/".length));
   const destination = join(tarballsDir, name.replaceAll("@", "").replaceAll("/", "__"));
 
   await mkdir(destination, { recursive: true });
@@ -75,8 +75,8 @@ async function writeConsumerProject(coreTarball, solidTarball, catalog) {
           typecheck: "tsc -p tsconfig.json --noEmit",
         },
         dependencies: {
-          "@cosystem/core": `file:${coreTarball}`,
-          "@cosystem/solid": `file:${solidTarball}`,
+          "@coexist/core": `file:${coreTarball}`,
+          "@coexist/solid": `file:${solidTarball}`,
           coaction: readCatalogVersion(catalog, "coaction"),
           "solid-js": readCatalogVersion(catalog, "solid-js"),
         },
@@ -99,8 +99,8 @@ async function writeConsumerProject(coreTarball, solidTarball, catalog) {
       '  "@parcel/watcher": true',
       "  esbuild: true",
       "overrides:",
-      `  "@cosystem/core": ${JSON.stringify(`file:${coreTarball}`)}`,
-      `  "@cosystem/solid": ${JSON.stringify(`file:${solidTarball}`)}`,
+      `  "@coexist/core": ${JSON.stringify(`file:${coreTarball}`)}`,
+      `  "@coexist/solid": ${JSON.stringify(`file:${solidTarball}`)}`,
       `  "coaction": ${JSON.stringify(readCatalogVersion(catalog, "coaction"))}`,
       `  "solid-js": ${JSON.stringify(readCatalogVersion(catalog, "solid-js"))}`,
       `  "typescript": ${JSON.stringify(readCatalogVersion(catalog, "typescript"))}`,
@@ -152,8 +152,8 @@ async function writeConsumerProject(coreTarball, solidTarball, catalog) {
 }
 
 function createBrowserSource() {
-  return `import { createApp, defineModule, type App } from "@cosystem/core";
-import { CoSystemProvider, useApp, useComputed, useModule } from "@cosystem/solid";
+  return `import { createApp, defineModule, type App } from "@coexist/core";
+import { CoSystemProvider, useApp, useComputed, useModule } from "@coexist/solid";
 import { createRenderEffect, createSignal } from "solid-js";
 import { render } from "solid-js/web";
 

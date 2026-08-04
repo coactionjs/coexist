@@ -18,8 +18,8 @@ const tscBin = join(rootDir, "node_modules/.bin/tsc");
 
 try {
   const catalog = await readCatalog();
-  const coreTarball = await packPackage("@cosystem/core");
-  const svelteTarball = await packPackage("@cosystem/svelte");
+  const coreTarball = await packPackage("@coexist/core");
+  const svelteTarball = await packPackage("@coexist/svelte");
 
   await writeConsumerProject({ catalog, coreTarball, svelteTarball });
   await run(
@@ -36,7 +36,7 @@ try {
 }
 
 async function packPackage(name) {
-  const packageDir = join(packagesDir, name.slice("@cosystem/".length));
+  const packageDir = join(packagesDir, name.slice("@coexist/".length));
   const destination = join(tarballsDir, name.replaceAll("@", "").replaceAll("/", "__"));
 
   await mkdir(destination, { recursive: true });
@@ -61,8 +61,8 @@ async function writeConsumerProject({ catalog, coreTarball, svelteTarball }) {
         private: true,
         type: "module",
         dependencies: {
-          "@cosystem/core": `file:${coreTarball}`,
-          "@cosystem/svelte": `file:${svelteTarball}`,
+          "@coexist/core": `file:${coreTarball}`,
+          "@coexist/svelte": `file:${svelteTarball}`,
           coaction: readCatalogVersion(catalog, "coaction"),
           svelte: readCatalogVersion(catalog, "svelte"),
         },
@@ -81,8 +81,8 @@ async function writeConsumerProject({ catalog, coreTarball, svelteTarball }) {
       "minimumReleaseAgeExclude:",
       `  - ${JSON.stringify(`coaction@${readCatalogVersion(catalog, "coaction")}`)}`,
       "overrides:",
-      `  "@cosystem/core": ${JSON.stringify(`file:${coreTarball}`)}`,
-      `  "@cosystem/svelte": ${JSON.stringify(`file:${svelteTarball}`)}`,
+      `  "@coexist/core": ${JSON.stringify(`file:${coreTarball}`)}`,
+      `  "@coexist/svelte": ${JSON.stringify(`file:${svelteTarball}`)}`,
       `  "coaction": ${JSON.stringify(readCatalogVersion(catalog, "coaction"))}`,
       `  "svelte": ${JSON.stringify(readCatalogVersion(catalog, "svelte"))}`,
       `  "typescript": ${JSON.stringify(readCatalogVersion(catalog, "typescript"))}`,
@@ -120,7 +120,7 @@ function createTypeConsumerSource() {
   createWorkerClient,
   defineModule,
   type AsyncMethodProxy,
-} from "@cosystem/core";
+} from "@coexist/core";
 import {
   clearCoSystemApp,
   clearWorkerClient,
@@ -131,14 +131,14 @@ import {
   setWorkerClient,
   workerModuleStore,
   workerSelectorStore,
-} from "@cosystem/svelte";
+} from "@coexist/svelte";
 import {
   moduleRune,
   selectedModuleRune,
   selectorRune,
   workerModuleRune,
   workerSelectorRune,
-} from "@cosystem/svelte/runes";
+} from "@coexist/svelte/runes";
 import type { Readable } from "svelte/store";
 
 class TypeSvelteCounter {
@@ -219,7 +219,7 @@ function createRuntimeConsumerSource() {
   createWorkerApp,
   createWorkerClient,
   defineModule,
-} from "@cosystem/core";
+} from "@coexist/core";
 import {
   clearCoSystemApp,
   clearWorkerClient,
@@ -230,14 +230,14 @@ import {
   setWorkerClient,
   workerModuleStore,
   workerSelectorStore,
-} from "@cosystem/svelte";
+} from "@coexist/svelte";
 import {
   moduleRune,
   selectedModuleRune,
   selectorRune,
   workerModuleRune,
   workerSelectorRune,
-} from "@cosystem/svelte/runes";
+} from "@coexist/svelte/runes";
 import { get } from "svelte/store";
 
 class SvelteCounter {

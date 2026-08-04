@@ -25,8 +25,8 @@ let server;
 
 try {
   const catalog = await readCatalog();
-  const coreTarball = await packPackage("@cosystem/core");
-  const routerTarball = await packPackage("@cosystem/router");
+  const coreTarball = await packPackage("@coexist/core");
+  const routerTarball = await packPackage("@coexist/router");
 
   await writeConsumerProject(coreTarball, routerTarball, catalog);
   await run("pnpm", ["install", "--prefer-offline", "--no-frozen-lockfile"], consumerDir);
@@ -46,7 +46,7 @@ try {
 }
 
 async function packPackage(name) {
-  const packageDir = join(packagesDir, name.slice("@cosystem/".length));
+  const packageDir = join(packagesDir, name.slice("@coexist/".length));
   const destination = join(tarballsDir, name.replaceAll("@", "").replaceAll("/", "__"));
 
   await mkdir(destination, { recursive: true });
@@ -75,8 +75,8 @@ async function writeConsumerProject(coreTarball, routerTarball, catalog) {
           typecheck: "tsc -p tsconfig.json --noEmit",
         },
         dependencies: {
-          "@cosystem/core": `file:${coreTarball}`,
-          "@cosystem/router": `file:${routerTarball}`,
+          "@coexist/core": `file:${coreTarball}`,
+          "@coexist/router": `file:${routerTarball}`,
           coaction: readCatalogVersion(catalog, "coaction"),
         },
         devDependencies: {
@@ -98,8 +98,8 @@ async function writeConsumerProject(coreTarball, routerTarball, catalog) {
       '  "@parcel/watcher": true',
       "  esbuild: true",
       "overrides:",
-      `  "@cosystem/core": ${JSON.stringify(`file:${coreTarball}`)}`,
-      `  "@cosystem/router": ${JSON.stringify(`file:${routerTarball}`)}`,
+      `  "@coexist/core": ${JSON.stringify(`file:${coreTarball}`)}`,
+      `  "@coexist/router": ${JSON.stringify(`file:${routerTarball}`)}`,
       `  "coaction": ${JSON.stringify(readCatalogVersion(catalog, "coaction"))}`,
       `  "typescript": ${JSON.stringify(readCatalogVersion(catalog, "typescript"))}`,
       `  "vite": ${JSON.stringify(readCatalogVersion(catalog, "vite"))}`,
@@ -158,7 +158,7 @@ async function writeConsumerProject(coreTarball, routerTarball, catalog) {
 }
 
 function createBrowserSource() {
-  return `import { createApp } from "@cosystem/core";
+  return `import { createApp } from "@coexist/core";
 import {
   RouterToken,
   createBrowserRouter,
@@ -166,7 +166,7 @@ import {
   formatLocation,
   parseLocation,
   type RouteLocation,
-} from "@cosystem/router";
+} from "@coexist/router";
 
 type SmokeSnapshot = {
   readonly current: string;

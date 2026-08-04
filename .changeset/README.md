@@ -10,4 +10,4 @@ The generated markdown files in this directory should be committed with the code
 2. Merging the generated release PR removes consumed changesets, bumps package versions, and triggers `Publish Packages`.
 3. `Publish Packages` builds and verifies the repo, packs each unpublished workspace package with `pnpm pack`, and publishes the generated tarball with `npm publish` so npm Trusted Publisher OIDC is used.
 
-The npm Trusted Publisher workflow filename must be configured as `publish.yml` for each public `@cosystem/*` package. If an npm Trusted Publisher environment name is configured, add the same `environment` name to the publish job in `.github/workflows/publish.yml`.
+The npm Trusted Publisher workflow filename must be configured as `publish.yml` for each public `@coexist/*` package. If an npm Trusted Publisher environment name is configured, add the same `environment` name to the publish job in `.github/workflows/publish.yml`.

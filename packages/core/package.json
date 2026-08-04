@@ -1,5 +1,5 @@
 {
-  "name": "@cosystem/core",
+  "name": "@coexist/core",
   "version": "0.2.0",
   "description": "Core utilities for CoSystem.",
   "license": "MIT",
@@ -28,15 +28,15 @@
     "build": "tsdown",
     "clean": "rm -rf coverage dist .turbo",
     "dev": "tsdown --watch",
-    "test": "cd ../.. && vitest run --project @cosystem/core",
-    "test:coverage": "cd ../.. && vitest run --coverage --project @cosystem/core",
+    "test": "cd ../.. && vitest run --project @coexist/core",
+    "test:coverage": "cd ../.. && vitest run --coverage --project @coexist/core",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "coaction": "catalog:"
   },
   "devDependencies": {
-    "@cosystem/tsconfig": "workspace:*",
+    "@coexist/tsconfig": "workspace:*",
     "tsdown": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"

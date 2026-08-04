@@ -1,11 +1,11 @@
-import { createApp } from "@cosystem/core";
+import { createApp } from "@coexist/core";
 import {
   RouterToken,
   createBrowserRouter,
   createRouterPlugin,
   provideRouter,
   type RouteLocation,
-} from "@cosystem/router";
+} from "@coexist/router";
 
 // oxlint-disable-next-line import/no-unassigned-import -- Vite loads example styles through CSS side effects.
 import "./styles.css";

@@ -9,13 +9,13 @@ principles behind the design decisions.
 Application code
   │ uses
   ▼
-@cosystem/core ──── createApp(), DI container, modules, single store, lifecycle, plugins,
+@coexist/core ──── createApp(), DI container, modules, single store, lifecycle, plugins,
   │ uses             decorators, metadata, test utilities, worker host/client
   ▼
 coaction ────────── signals, computed caching, mutative updates, patches,
   │ consumed by      data-transport integration, worker/share synchronization
   ▼
-@cosystem/react · @cosystem/vue · @cosystem/svelte · @cosystem/solid · @cosystem/angular
+@coexist/react · @coexist/vue · @coexist/svelte · @coexist/solid · @coexist/angular
 ```
 
 The boundary between the two libraries is intentional:
@@ -34,12 +34,12 @@ app-framework API, docs, examples, release cadence, and brand.
 
 ## Package boundaries
 
-| Layer    | Packages                                     | Rule                                                                                                                       |
-| -------- | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Core     | `@cosystem/core`                             | Depends only on `coaction`. Must **not** import any UI framework. Owns the public app-runtime API.                         |
-| Adapters | `react`, `vue`, `svelte`, `solid`, `angular` | Depend on `@cosystem/core` + their target framework (peer dependency). Expose CoSystem-branded, framework-native bindings. |
-| Plugins  | `router`, `storage`, `devtools`              | Depend on `@cosystem/core`. Implement the `Plugin` contract. Never required by the core.                                   |
-| Tooling  | `create`, `testing`, `tsconfig`              | Scaffolding, test facade, and shared TS config.                                                                            |
+| Layer    | Packages                                     | Rule                                                                                                                      |
+| -------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Core     | `@coexist/core`                              | Depends only on `coaction`. Must **not** import any UI framework. Owns the public app-runtime API.                        |
+| Adapters | `react`, `vue`, `svelte`, `solid`, `angular` | Depend on `@coexist/core` + their target framework (peer dependency). Expose CoSystem-branded, framework-native bindings. |
+| Plugins  | `router`, `storage`, `devtools`              | Depend on `@coexist/core`. Implement the `Plugin` contract. Never required by the core.                                   |
+| Tooling  | `create`, `testing`, `tsconfig`              | Scaffolding, test facade, and shared TS config.                                                                           |
 
 Two hard constraints:
 

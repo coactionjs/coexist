@@ -20,33 +20,33 @@ import {
   type AsyncMethodProxy,
   type WorkerClient,
   type WorkerAppHost,
-} from "@cosystem/core";
+} from "@coexist/core";
 import {
   WorkerClientProvider as ReactWorkerClientProvider,
   useWorkerModule as useReactWorkerModule,
   useWorkerSelector as useReactWorkerSelector,
-} from "@cosystem/react";
+} from "@coexist/react";
 import {
   WorkerClientProvider as SolidWorkerClientProvider,
   useWorkerModule as useSolidWorkerModule,
   useWorkerSelector as useSolidWorkerSelector,
-} from "@cosystem/solid";
+} from "@coexist/solid";
 import {
   clearWorkerClient,
   setWorkerClient,
   workerModuleStore as svelteWorkerModuleStore,
   workerSelectorStore as svelteWorkerSelectorStore,
-} from "@cosystem/svelte";
+} from "@coexist/svelte";
 import {
   injectWorkerModule as injectAngularWorkerModule,
   injectWorkerSignal as injectAngularWorkerSignal,
   provideWorkerClient as provideAngularWorkerClient,
-} from "@cosystem/angular";
+} from "@coexist/angular";
 import {
   provideWorkerClient as provideVueWorkerClient,
   useWorkerModule as useVueWorkerModule,
   useWorkerSelector as useVueWorkerSelector,
-} from "@cosystem/vue";
+} from "@coexist/vue";
 
 class SharedWorkerCounter {
   count = 0;

@@ -4,4 +4,4 @@ export {
   type ManualTestAppOptions,
   type TestApp,
   type TestAppOptions,
-} from "@cosystem/core";
+} from "@coexist/core";

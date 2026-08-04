@@ -5,7 +5,7 @@ import {
   type Plugin,
   type ProviderInput,
   type Token,
-} from "@cosystem/core";
+} from "@coexist/core";
 
 export interface RouteLocation {
   readonly path: string;

@@ -25,8 +25,8 @@ let server;
 
 try {
   const catalog = await readCatalog();
-  const angularTarball = await packPackage("@cosystem/angular");
-  const coreTarball = await packPackage("@cosystem/core");
+  const angularTarball = await packPackage("@coexist/angular");
+  const coreTarball = await packPackage("@coexist/core");
 
   await writeConsumerProject({ angularTarball, catalog, coreTarball });
   await run("pnpm", ["install", "--prefer-offline", "--no-frozen-lockfile"], consumerDir);
@@ -46,7 +46,7 @@ try {
 }
 
 async function packPackage(name) {
-  const packageDir = join(packagesDir, name.slice("@cosystem/".length));
+  const packageDir = join(packagesDir, name.slice("@coexist/".length));
   const destination = join(tarballsDir, name.replaceAll("@", "").replaceAll("/", "__"));
 
   await mkdir(destination, { recursive: true });
@@ -79,8 +79,8 @@ async function writeConsumerProject({ angularTarball, catalog, coreTarball }) {
           "@angular/compiler": readCatalogVersion(catalog, "@angular/compiler"),
           "@angular/core": readCatalogVersion(catalog, "@angular/core"),
           "@angular/platform-browser": readCatalogVersion(catalog, "@angular/platform-browser"),
-          "@cosystem/angular": `file:${angularTarball}`,
-          "@cosystem/core": `file:${coreTarball}`,
+          "@coexist/angular": `file:${angularTarball}`,
+          "@coexist/core": `file:${coreTarball}`,
           coaction: readCatalogVersion(catalog, "coaction"),
           rxjs: readCatalogVersion(catalog, "rxjs"),
           "zone.js": readCatalogVersion(catalog, "zone.js"),
@@ -120,8 +120,8 @@ async function writeConsumerProject({ angularTarball, catalog, coreTarball }) {
       `  "@angular/compiler-cli": ${JSON.stringify(readCatalogVersion(catalog, "@angular/compiler-cli"))}`,
       `  "@angular/core": ${JSON.stringify(readCatalogVersion(catalog, "@angular/core"))}`,
       `  "@angular/platform-browser": ${JSON.stringify(readCatalogVersion(catalog, "@angular/platform-browser"))}`,
-      `  "@cosystem/angular": ${JSON.stringify(`file:${angularTarball}`)}`,
-      `  "@cosystem/core": ${JSON.stringify(`file:${coreTarball}`)}`,
+      `  "@coexist/angular": ${JSON.stringify(`file:${angularTarball}`)}`,
+      `  "@coexist/core": ${JSON.stringify(`file:${coreTarball}`)}`,
       `  "@types/node": ${JSON.stringify(readCatalogVersion(catalog, "@types/node"))}`,
       `  "coaction": ${JSON.stringify(readCatalogVersion(catalog, "coaction"))}`,
       `  "rxjs": ${JSON.stringify(readCatalogVersion(catalog, "rxjs"))}`,
@@ -208,8 +208,8 @@ import "zone.js";
 
 import { Component, signal, type ApplicationRef } from "@angular/core";
 import { bootstrapApplication } from "@angular/platform-browser";
-import { createApp, defineModule, type App } from "@cosystem/core";
-import { injectCoSystemApp, injectModule, injectSignal, provideCoSystem } from "@cosystem/angular";
+import { createApp, defineModule, type App } from "@coexist/core";
+import { injectCoSystemApp, injectModule, injectSignal, provideCoSystem } from "@coexist/angular";
 
 type SmokeSnapshot = {
   readonly count: number;

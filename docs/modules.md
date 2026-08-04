@@ -12,7 +12,7 @@ metadata. Pick whichever fits your build setup and taste.
 ### With decorators
 
 ```ts
-import { Action, Computed, Effect, Module, State } from "@cosystem/core";
+import { Action, Computed, Effect, Module, State } from "@coexist/core";
 
 @Module({ name: "counter", deps: [Logger] })
 class Counter {
@@ -52,7 +52,7 @@ no-decorator form.
 is the most portable option and supports **plain fields** as state:
 
 ```ts
-import { defineModule } from "@cosystem/core";
+import { defineModule } from "@coexist/core";
 
 class Counter {
   count = 0;
@@ -182,7 +182,7 @@ State writes after an `await` need a fresh action boundary in strict mode. Wrap
 them in `runInAction(this, ...)`:
 
 ```ts
-import { runInAction } from "@cosystem/core";
+import { runInAction } from "@coexist/core";
 
 class Counter {
   @State accessor count = 0;

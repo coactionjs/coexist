@@ -1,5 +1,5 @@
 {
-  "name": "@cosystem/example-js-decorator",
+  "name": "@coexist/example-js-decorator",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -10,7 +10,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@cosystem/core": "workspace:*"
+    "@coexist/core": "workspace:*"
   },
   "devDependencies": {
     "typescript": "catalog:",

@@ -1,4 +1,4 @@
-# @cosystem/vue
+# @coexist/vue
 
 > Vue 3 bindings for [CoSystem](../../README.md): provide/inject composables that
 > expose a CoSystem app (or a worker-hosted app) as Vue refs.
@@ -6,7 +6,7 @@
 ## Installation
 
 ```sh
-pnpm add @cosystem/vue @cosystem/core
+pnpm add @coexist/vue @coexist/core
 ```
 
 Peer dependency: `vue` `>=3.5 <4`.
@@ -18,7 +18,7 @@ Install the app with the plugin (or call `provideCoSystem(app)` inside a parent
 
 ```ts
 import { createApp as createVueApp, defineComponent, h } from "vue";
-import { cosystemPlugin, useComputed, useModule } from "@cosystem/vue";
+import { cosystemPlugin, useComputed, useModule } from "@coexist/vue";
 
 const CounterView = defineComponent({
   setup() {
@@ -62,7 +62,7 @@ Selectors accept `{ equals }` to control updates and clean up automatically via
 
 ```ts
 import { createApp as createVueApp, defineComponent, h } from "vue";
-import { useWorkerModule, useWorkerSelector, workerClientPlugin } from "@cosystem/vue";
+import { useWorkerModule, useWorkerSelector, workerClientPlugin } from "@coexist/vue";
 
 type CounterState = { readonly counter: { readonly count: number } };
 

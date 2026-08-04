@@ -19,7 +19,7 @@ A module is just a class. Nothing extends a base class; nothing is decorated by
 the framework at runtime beyond metadata you opt into.
 
 ```ts
-import { defineModule } from "@cosystem/core";
+import { defineModule } from "@coexist/core";
 
 class Counter {
   count = 0;
@@ -194,7 +194,7 @@ Lifecycle, options, lazy modules, and scopes are covered in
 ## Putting it together
 
 ```ts
-import { createApp, defineModule, provide } from "@cosystem/core";
+import { createApp, defineModule, provide } from "@coexist/core";
 
 abstract class Logger {
   abstract info(message: string): void;

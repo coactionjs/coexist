@@ -45,7 +45,7 @@ function createPackageJson(name: string, packageManager: string): object {
       start: "tsx src/main.ts",
     },
     dependencies: {
-      "@cosystem/core": "latest",
+      "@coexist/core": "latest",
     },
     devDependencies: {
       tsx: "latest",
@@ -69,7 +69,7 @@ function createTsConfig(): object {
 }
 
 function createMainSource(): string {
-  return `import { createApp, defineModule } from "@cosystem/core";
+  return `import { createApp, defineModule } from "@coexist/core";
 
 class Counter {
   count = 0;

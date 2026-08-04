@@ -1,5 +1,5 @@
 {
-  "name": "@cosystem/create",
+  "name": "@coexist/create",
   "version": "0.2.0",
   "description": "Project scaffolding utilities for CoSystem.",
   "license": "MIT",
@@ -9,7 +9,7 @@
     "directory": "packages/create"
   },
   "bin": {
-    "create-cosystem": "./dist/cli.mjs"
+    "create-coexist": "./dist/cli.mjs"
   },
   "files": [
     "dist"
@@ -31,12 +31,12 @@
     "build": "tsdown",
     "clean": "rm -rf coverage dist .turbo",
     "dev": "tsdown --watch",
-    "test": "cd ../.. && vitest run --project @cosystem/create",
-    "test:coverage": "cd ../.. && vitest run --coverage --project @cosystem/create",
+    "test": "cd ../.. && vitest run --project @coexist/create",
+    "test:coverage": "cd ../.. && vitest run --coverage --project @coexist/create",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {
-    "@cosystem/tsconfig": "workspace:*",
+    "@coexist/tsconfig": "workspace:*",
     "@types/node": "catalog:",
     "tsdown": "catalog:",
     "typescript": "catalog:",

@@ -1,5 +1,5 @@
 {
-  "name": "@cosystem/react",
+  "name": "@coexist/react",
   "version": "0.2.0",
   "description": "React adapter for CoSystem.",
   "license": "MIT",
@@ -28,15 +28,15 @@
     "build": "tsdown",
     "clean": "rm -rf coverage dist .turbo",
     "dev": "tsdown --watch",
-    "test": "cd ../.. && vitest run --project @cosystem/react",
-    "test:coverage": "cd ../.. && vitest run --coverage --project @cosystem/react",
+    "test": "cd ../.. && vitest run --project @coexist/react",
+    "test:coverage": "cd ../.. && vitest run --coverage --project @coexist/react",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@cosystem/core": "workspace:*"
+    "@coexist/core": "workspace:*"
   },
   "devDependencies": {
-    "@cosystem/tsconfig": "workspace:*",
+    "@coexist/tsconfig": "workspace:*",
     "@types/react": "catalog:",
     "@types/react-test-renderer": "catalog:",
     "react": "catalog:",

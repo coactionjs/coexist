@@ -17,12 +17,12 @@ const tarballsDir = join(tempDir, "tarballs");
 const consumerDir = join(tempDir, "consumer");
 const tscBin = join(rootDir, "node_modules/.bin/tsc");
 const packageNames = [
-  "@cosystem/angular",
-  "@cosystem/core",
-  "@cosystem/react",
-  "@cosystem/solid",
-  "@cosystem/svelte",
-  "@cosystem/vue",
+  "@coexist/angular",
+  "@coexist/core",
+  "@coexist/react",
+  "@coexist/solid",
+  "@coexist/svelte",
+  "@coexist/vue",
 ];
 
 try {
@@ -48,7 +48,7 @@ try {
 }
 
 async function packPackage(name) {
-  const packageDir = join(packagesDir, name.slice("@cosystem/".length));
+  const packageDir = join(packagesDir, name.slice("@coexist/".length));
   const destination = join(tarballsDir, name.replaceAll("@", "").replaceAll("/", "__"));
 
   await mkdir(destination, { recursive: true });
@@ -163,32 +163,32 @@ function createTypeConsumerSource() {
   defineModule,
   type AsyncMethodProxy,
   type WorkerClient,
-} from "@cosystem/core";
+} from "@coexist/core";
 import {
   injectWorkerModule as injectAngularWorkerModule,
   injectWorkerSignal as injectAngularWorkerSignal,
   provideWorkerClient as provideAngularWorkerClient,
-} from "@cosystem/angular";
+} from "@coexist/angular";
 import {
   WorkerClientProvider as ReactWorkerClientProvider,
   useWorkerModule as useReactWorkerModule,
   useWorkerSelector as useReactWorkerSelector,
-} from "@cosystem/react";
+} from "@coexist/react";
 import {
   WorkerClientProvider as SolidWorkerClientProvider,
   useWorkerModule as useSolidWorkerModule,
   useWorkerSelector as useSolidWorkerSelector,
-} from "@cosystem/solid";
+} from "@coexist/solid";
 import {
   setWorkerClient,
   workerModuleStore as svelteWorkerModuleStore,
   workerSelectorStore as svelteWorkerSelectorStore,
-} from "@cosystem/svelte";
+} from "@coexist/svelte";
 import {
   provideWorkerClient as provideVueWorkerClient,
   useWorkerModule as useVueWorkerModule,
   useWorkerSelector as useVueWorkerSelector,
-} from "@cosystem/vue";
+} from "@coexist/vue";
 import type { Signal } from "@angular/core";
 import type { Accessor } from "solid-js";
 import type { Readable } from "svelte/store";
@@ -273,33 +273,33 @@ import {
   createWorkerApp,
   createWorkerClient,
   defineModule,
-} from "@cosystem/core";
+} from "@coexist/core";
 import {
   injectWorkerModule as injectAngularWorkerModule,
   injectWorkerSignal as injectAngularWorkerSignal,
   provideWorkerClient as provideAngularWorkerClient,
-} from "@cosystem/angular";
+} from "@coexist/angular";
 import {
   WorkerClientProvider as ReactWorkerClientProvider,
   useWorkerModule as useReactWorkerModule,
   useWorkerSelector as useReactWorkerSelector,
-} from "@cosystem/react";
+} from "@coexist/react";
 import {
   WorkerClientProvider as SolidWorkerClientProvider,
   useWorkerModule as useSolidWorkerModule,
   useWorkerSelector as useSolidWorkerSelector,
-} from "@cosystem/solid";
+} from "@coexist/solid";
 import {
   clearWorkerClient,
   setWorkerClient,
   workerModuleStore as svelteWorkerModuleStore,
   workerSelectorStore as svelteWorkerSelectorStore,
-} from "@cosystem/svelte";
+} from "@coexist/svelte";
 import {
   provideWorkerClient as provideVueWorkerClient,
   useWorkerModule as useVueWorkerModule,
   useWorkerSelector as useVueWorkerSelector,
-} from "@cosystem/vue";
+} from "@coexist/vue";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 

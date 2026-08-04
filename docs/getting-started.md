@@ -13,11 +13,11 @@ CoSystem ships as **ESM only**. Your project should use `"type": "module"` (or
 
 ## Option A — scaffold a project
 
-The fastest way to start is the `create-cosystem` CLI. It generates a minimal
-`@cosystem/core` project with a `defineModule()` counter:
+The fastest way to start is the `create-coexist` CLI. It generates a minimal
+`@coexist/core` project with a `defineModule()` counter:
 
 ```sh
-pnpm dlx @cosystem/create my-app
+pnpm dlx @coexist/create my-app
 cd my-app
 pnpm install
 pnpm start
@@ -33,15 +33,15 @@ my-app/
     └── main.ts      # a counter module wired into createApp()
 ```
 
-See [`@cosystem/create`](../packages/create/README.md) for the programmatic API.
+See [`@coexist/create`](../packages/create/README.md) for the programmatic API.
 
 ## Option B — add to an existing project
 
 Install the core package and (optionally) a UI adapter:
 
 ```sh
-pnpm add @cosystem/core
-pnpm add @cosystem/react   # or @cosystem/vue, @cosystem/svelte, @cosystem/solid, @cosystem/angular
+pnpm add @coexist/core
+pnpm add @coexist/react   # or @coexist/vue, @coexist/svelte, @coexist/solid, @coexist/angular
 ```
 
 ## Your first module
@@ -52,7 +52,7 @@ everywhere, so we start there:
 
 ```ts
 // src/counter.ts
-import { defineModule } from "@cosystem/core";
+import { defineModule } from "@coexist/core";
 
 export class Counter {
   count = 0;
@@ -86,7 +86,7 @@ defineModule(Counter, {
 
 ```ts
 // src/app.ts
-import { createApp } from "@cosystem/core";
+import { createApp } from "@coexist/core";
 import { Counter } from "./counter.js";
 
 export const app = createApp({
@@ -111,7 +111,7 @@ subscription helpers — you keep your framework's normal mount API.
 
 ```tsx
 import { createRoot } from "react-dom/client";
-import { CoSystemProvider, useModule, useSelector } from "@cosystem/react";
+import { CoSystemProvider, useModule, useSelector } from "@coexist/react";
 import { app } from "./app.js";
 import { Counter } from "./counter.js";
 
@@ -133,7 +133,7 @@ createRoot(document.getElementById("root")!).render(
 
 ```ts
 import { createApp as createVueApp, defineComponent, h } from "vue";
-import { cosystemPlugin, useComputed, useModule } from "@cosystem/vue";
+import { cosystemPlugin, useComputed, useModule } from "@coexist/vue";
 import { app } from "./app.js";
 import { Counter } from "./counter.js";
 
@@ -151,7 +151,7 @@ createVueApp(CounterView).use(cosystemPlugin(app)).mount("#app");
 ### Svelte
 
 ```ts
-import { moduleStore, selectedModuleStore, setCoSystemApp } from "@cosystem/svelte";
+import { moduleStore, selectedModuleStore, setCoSystemApp } from "@coexist/svelte";
 import { app } from "./app.js";
 import { Counter } from "./counter.js";
 
@@ -167,7 +167,7 @@ export const count = selectedModuleStore(Counter, (m) => m.count);
 ### Solid
 
 ```tsx
-import { CoSystemProvider, useComputed, useModule } from "@cosystem/solid";
+import { CoSystemProvider, useComputed, useModule } from "@coexist/solid";
 import { app } from "./app.js";
 import { Counter } from "./counter.js";
 
@@ -187,7 +187,7 @@ function CounterView() {
 ```ts
 import { Component } from "@angular/core";
 import { bootstrapApplication } from "@angular/platform-browser";
-import { injectModule, injectSignal, provideCoSystem } from "@cosystem/angular";
+import { injectModule, injectSignal, provideCoSystem } from "@coexist/angular";
 import { app } from "./app.js";
 import { Counter } from "./counter.js";
 
@@ -209,7 +209,7 @@ Every framework above has a runnable demo in [`examples/`](../examples):
 
 ```sh
 pnpm install
-pnpm --filter @cosystem/example-react-counter dev
+pnpm --filter @coexist/example-react-counter dev
 ```
 
 ## Where to go next

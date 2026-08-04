@@ -19,14 +19,14 @@ const appDir = join(workspaceDir, appName);
 
 try {
   const catalog = await readCatalog();
-  const createTarball = await packPackage("@cosystem/create");
-  const coreTarball = await packPackage("@cosystem/core");
+  const createTarball = await packPackage("@coexist/create");
+  const coreTarball = await packPackage("@coexist/core");
 
   await mkdir(workspaceDir, { recursive: true });
 
   const createResult = await run(
     "pnpm",
-    ["dlx", "--package", `file:${createTarball}`, "create-cosystem", appName],
+    ["dlx", "--package", `file:${createTarball}`, "create-coexist", appName],
     workspaceDir,
   );
   const createdPath = createResult.stdout.trim().replace("Created CoSystem project at ", "");
@@ -37,7 +37,7 @@ try {
 
   if (reportedAppDir !== expectedAppDir) {
     throw new Error(
-      `pnpm dlx create-cosystem reported unexpected app path:\n${createResult.stdout}`,
+      `pnpm dlx create-coexist reported unexpected app path:\n${createResult.stdout}`,
     );
   }
 
@@ -51,13 +51,13 @@ try {
     throw new Error(`pnpm dlx generated app printed unexpected output:\n${startResult.stdout}`);
   }
 
-  console.log("Verified pnpm dlx create-cosystem scaffold build and runtime.");
+  console.log("Verified pnpm dlx create-coexist scaffold build and runtime.");
 } finally {
   await rm(tempDir, { force: true, recursive: true });
 }
 
 async function packPackage(name) {
-  const packageDir = join(packagesDir, name.slice("@cosystem/".length));
+  const packageDir = join(packagesDir, name.slice("@coexist/".length));
   const destination = join(tarballsDir, name.replaceAll("@", "").replaceAll("/", "__"));
 
   await mkdir(destination, { recursive: true });
@@ -82,7 +82,7 @@ async function writeGeneratedAppOverrides(coreTarball, catalog) {
       "allowBuilds:",
       "  esbuild: true",
       "overrides:",
-      `  "@cosystem/core": ${JSON.stringify(`file:${coreTarball}`)}`,
+      `  "@coexist/core": ${JSON.stringify(`file:${coreTarball}`)}`,
       `  "tsx": ${JSON.stringify(readCatalogVersion(catalog, "tsx"))}`,
       `  "typescript": ${JSON.stringify(readCatalogVersion(catalog, "typescript"))}`,
       "",

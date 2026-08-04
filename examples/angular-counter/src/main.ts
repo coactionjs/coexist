@@ -4,8 +4,8 @@ import "zone.js";
 import { Component } from "@angular/core";
 import { bootstrapApplication } from "@angular/platform-browser";
 
-import { createApp, defineModule } from "@cosystem/core";
-import { injectModule, injectSignal, provideCoSystem } from "@cosystem/angular";
+import { createApp, defineModule } from "@coexist/core";
+import { injectModule, injectSignal, provideCoSystem } from "@coexist/angular";
 
 class Counter {
   count = 0;

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useComputed, useModule } from "@cosystem/vue";
+import { useComputed, useModule } from "@coexist/vue";
 
 import { Counter } from "./counter";
 

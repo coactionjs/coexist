@@ -3,7 +3,7 @@ import {
   createWorkerApp,
   defineModule,
   type PostMessageEndpoint,
-} from "@cosystem/core";
+} from "@coexist/core";
 
 class Counter {
   count = 0;

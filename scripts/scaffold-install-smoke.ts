@@ -19,8 +19,8 @@ const appDir = join(cliConsumerDir, appName);
 
 try {
   const catalog = await readCatalog();
-  const createTarball = await packPackage("@cosystem/create");
-  const coreTarball = await packPackage("@cosystem/core");
+  const createTarball = await packPackage("@coexist/create");
+  const coreTarball = await packPackage("@coexist/core");
 
   await writeCliConsumer(createTarball, catalog);
   await run(
@@ -29,7 +29,7 @@ try {
     cliConsumerDir,
   );
 
-  const createResult = await run("pnpm", ["exec", "create-cosystem", appName], cliConsumerDir);
+  const createResult = await run("pnpm", ["exec", "create-coexist", appName], cliConsumerDir);
   const createdPath = createResult.stdout.trim().replace("Created CoSystem project at ", "");
   const [expectedAppDir, reportedAppDir] = await Promise.all([
     realpath(appDir),
@@ -37,7 +37,7 @@ try {
   ]);
 
   if (reportedAppDir !== expectedAppDir) {
-    throw new Error(`create-cosystem reported unexpected app path:\n${createResult.stdout}`);
+    throw new Error(`create-coexist reported unexpected app path:\n${createResult.stdout}`);
   }
 
   await writeGeneratedAppOverrides(coreTarball, catalog);
@@ -50,13 +50,13 @@ try {
     throw new Error(`Generated app printed unexpected output:\n${startResult.stdout}`);
   }
 
-  console.log("Verified installed create-cosystem scaffold build and runtime.");
+  console.log("Verified installed create-coexist scaffold build and runtime.");
 } finally {
   await rm(tempDir, { force: true, recursive: true });
 }
 
 async function packPackage(name) {
-  const packageDir = join(packagesDir, name.slice("@cosystem/".length));
+  const packageDir = join(packagesDir, name.slice("@coexist/".length));
   const destination = join(tarballsDir, name.replaceAll("@", "").replaceAll("/", "__"));
 
   await mkdir(destination, { recursive: true });
@@ -81,7 +81,7 @@ async function writeCliConsumer(createTarball, catalog) {
         private: true,
         type: "module",
         dependencies: {
-          "@cosystem/create": `file:${createTarball}`,
+          "@coexist/create": `file:${createTarball}`,
         },
       },
       null,
@@ -109,7 +109,7 @@ async function writeGeneratedAppOverrides(coreTarball, catalog) {
       "allowBuilds:",
       "  esbuild: true",
       "overrides:",
-      `  "@cosystem/core": ${JSON.stringify(`file:${coreTarball}`)}`,
+      `  "@coexist/core": ${JSON.stringify(`file:${coreTarball}`)}`,
       `  "tsx": ${JSON.stringify(readCatalogVersion(catalog, "tsx"))}`,
       `  "typescript": ${JSON.stringify(readCatalogVersion(catalog, "typescript"))}`,
       "",

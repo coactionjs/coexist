@@ -1,5 +1,5 @@
 {
-  "name": "@cosystem/devtools",
+  "name": "@coexist/devtools",
   "version": "0.2.0",
   "description": "Dev inspection plugin for CoSystem.",
   "license": "MIT",
@@ -28,15 +28,15 @@
     "build": "tsdown",
     "clean": "rm -rf coverage dist .turbo",
     "dev": "tsdown --watch",
-    "test": "cd ../.. && vitest run --project @cosystem/devtools",
-    "test:coverage": "cd ../.. && vitest run --coverage --project @cosystem/devtools",
+    "test": "cd ../.. && vitest run --project @coexist/devtools",
+    "test:coverage": "cd ../.. && vitest run --coverage --project @coexist/devtools",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@cosystem/core": "workspace:*"
+    "@coexist/core": "workspace:*"
   },
   "devDependencies": {
-    "@cosystem/tsconfig": "workspace:*",
+    "@coexist/tsconfig": "workspace:*",
     "tsdown": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"

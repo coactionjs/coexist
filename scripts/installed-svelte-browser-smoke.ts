@@ -25,8 +25,8 @@ let server;
 
 try {
   const catalog = await readCatalog();
-  const coreTarball = await packPackage("@cosystem/core");
-  const svelteTarball = await packPackage("@cosystem/svelte");
+  const coreTarball = await packPackage("@coexist/core");
+  const svelteTarball = await packPackage("@coexist/svelte");
 
   await writeConsumerProject({ catalog, coreTarball, svelteTarball });
   await run("pnpm", ["install", "--prefer-offline", "--no-frozen-lockfile"], consumerDir);
@@ -46,7 +46,7 @@ try {
 }
 
 async function packPackage(name) {
-  const packageDir = join(packagesDir, name.slice("@cosystem/".length));
+  const packageDir = join(packagesDir, name.slice("@coexist/".length));
   const destination = join(tarballsDir, name.replaceAll("@", "").replaceAll("/", "__"));
 
   await mkdir(destination, { recursive: true });
@@ -75,8 +75,8 @@ async function writeConsumerProject({ catalog, coreTarball, svelteTarball }) {
           typecheck: "svelte-check --tsconfig ./tsconfig.json",
         },
         dependencies: {
-          "@cosystem/core": `file:${coreTarball}`,
-          "@cosystem/svelte": `file:${svelteTarball}`,
+          "@coexist/core": `file:${coreTarball}`,
+          "@coexist/svelte": `file:${svelteTarball}`,
           coaction: readCatalogVersion(catalog, "coaction"),
           svelte: readCatalogVersion(catalog, "svelte"),
         },
@@ -104,8 +104,8 @@ async function writeConsumerProject({ catalog, coreTarball, svelteTarball }) {
       '  "@parcel/watcher": true',
       "  esbuild: true",
       "overrides:",
-      `  "@cosystem/core": ${JSON.stringify(`file:${coreTarball}`)}`,
-      `  "@cosystem/svelte": ${JSON.stringify(`file:${svelteTarball}`)}`,
+      `  "@coexist/core": ${JSON.stringify(`file:${coreTarball}`)}`,
+      `  "@coexist/svelte": ${JSON.stringify(`file:${svelteTarball}`)}`,
       `  "@sveltejs/vite-plugin-svelte": ${JSON.stringify(readCatalogVersion(catalog, "@sveltejs/vite-plugin-svelte"))}`,
       `  "coaction": ${JSON.stringify(readCatalogVersion(catalog, "coaction"))}`,
       `  "svelte": ${JSON.stringify(readCatalogVersion(catalog, "svelte"))}`,
@@ -187,7 +187,7 @@ async function writeConsumerProject({ catalog, coreTarball, svelteTarball }) {
 }
 
 function createCounterSource() {
-  return `import { createApp, defineModule } from "@cosystem/core";
+  return `import { createApp, defineModule } from "@coexist/core";
 
 export class BrowserCounter {
   count = 0;
@@ -232,7 +232,7 @@ function createAppSource() {
     moduleStore,
     selectedModuleStore,
     selectorStore,
-  } from "@cosystem/svelte";
+  } from "@coexist/svelte";
 
   import { app, BrowserCounter } from "./counter";
 
@@ -285,8 +285,8 @@ function createAppSource() {
 
 function createMainSource() {
   return `import { mount, unmount } from "svelte";
-import { clearCoSystemApp, setCoSystemApp } from "@cosystem/svelte";
-import type { App as CoSystemApp } from "@cosystem/core";
+import { clearCoSystemApp, setCoSystemApp } from "@coexist/svelte";
+import type { App as CoSystemApp } from "@coexist/core";
 
 import App from "./App.svelte";
 import { app, BrowserCounter } from "./counter";

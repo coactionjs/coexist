@@ -1,4 +1,4 @@
-# @cosystem/core
+# @coexist/core
 
 ## 0.2.0
 
@@ -34,8 +34,8 @@
   before the triggering mutation returns, and unbounded cascades abort after
   1000 mutations with a clear error.
 - 95d00bb: Reject lifecycle-control and readiness reentry from app-managed async work instead of allowing setup, hooks, effects, or teardown callbacks to deadlock the app.
-- 0751a50: Remove the unused `rxjs` peer dependency from `@cosystem/angular`.
-  `@cosystem/core` now builds with a neutral platform target and uses the same
+- 0751a50: Remove the unused `rxjs` peer dependency from `@coexist/angular`.
+  `@coexist/core` now builds with a neutral platform target and uses the same
   `.js`/`.d.ts` output convention as the other browser-and-server packages.
 - 027171e: `createApp` now requires every module to declare an explicit `name` in its
   `@Module()`/`defineModule` metadata instead of deriving one from the class

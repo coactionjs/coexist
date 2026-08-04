@@ -134,22 +134,22 @@ re-thrown after teardown has been attempted.
 ### Logger — [`createLoggerPlugin`](../packages/core/README.md#logger-plugin)
 
 Logs module creation, action completion/failure, and runtime errors. Ships in
-`@cosystem/core`.
+`@coexist/core`.
 
 ```ts
-import { createLoggerPlugin } from "@cosystem/core";
+import { createLoggerPlugin } from "@coexist/core";
 
 createApp({ plugins: [createLoggerPlugin()], providers: [Counter] });
 // pass { logger } to route messages somewhere other than console
 ```
 
-### Storage — [`@cosystem/storage`](../packages/storage/README.md)
+### Storage — [`@coexist/storage`](../packages/storage/README.md)
 
 Hydrates state on startup, persists changes through localspace drivers, and
 exposes a cross-framework storage service through `StorageToken`.
 
 ```ts
-import { StorageToken, createLocalSpaceStoragePlugin } from "@cosystem/storage";
+import { StorageToken, createLocalSpaceStoragePlugin } from "@coexist/storage";
 
 type CounterAppState = {
   readonly counter: {
@@ -172,12 +172,12 @@ await app.start(); // waits for hydration
 await app.get(StorageToken).set("draft", { title: "Hello" });
 ```
 
-### Router — [`@cosystem/router`](../packages/router/README.md)
+### Router — [`@coexist/router`](../packages/router/README.md)
 
 Bridges a `Router` into the app lifecycle and exposes it via `RouterToken`.
 
 ```ts
-import { RouterToken, createBrowserRouter, createRouterPlugin } from "@cosystem/router";
+import { RouterToken, createBrowserRouter, createRouterPlugin } from "@coexist/router";
 
 const router = createBrowserRouter();
 const app = createApp({
@@ -187,12 +187,12 @@ const app = createApp({
 app.get(RouterToken).navigate("/settings");
 ```
 
-### Devtools — [`@cosystem/devtools`](../packages/devtools/README.md)
+### Devtools — [`@coexist/devtools`](../packages/devtools/README.md)
 
 Records a timeline of setup, module, action, patch, state, and error events.
 
 ```ts
-import { createDevtoolsPlugin } from "@cosystem/devtools";
+import { createDevtoolsPlugin } from "@coexist/devtools";
 
 const devtools = createDevtoolsPlugin();
 const app = createApp({ plugins: [devtools], providers: [Counter] });
@@ -205,7 +205,7 @@ A plugin is just an object. Keep state in a closure and return the hooks you
 need:
 
 ```ts
-import type { Plugin } from "@cosystem/core";
+import type { Plugin } from "@coexist/core";
 
 export function createTimingPlugin(): Plugin {
   const durations: number[] = [];

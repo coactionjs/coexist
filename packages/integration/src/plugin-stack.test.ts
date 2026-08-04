@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { createApp, defineModule, type App } from "@cosystem/core";
-import { createDevtoolsPlugin } from "@cosystem/devtools";
-import { createMemoryRouter, createRouterPlugin } from "@cosystem/router";
+import { createApp, defineModule, type App } from "@coexist/core";
+import { createDevtoolsPlugin } from "@coexist/devtools";
+import { createMemoryRouter, createRouterPlugin } from "@coexist/router";
 import {
   createLocalSpaceStorage,
   createLocalSpaceStoragePlugin,
   type StorageService,
-} from "@cosystem/storage";
+} from "@coexist/storage";
 
 interface ShellState {
   readonly shell: {

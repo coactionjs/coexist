@@ -7,7 +7,7 @@ modules, and scopes.
 ## `createApp(options)`
 
 ```ts
-import { createApp, createLoggerPlugin, provide } from "@cosystem/core";
+import { createApp, createLoggerPlugin, provide } from "@coexist/core";
 
 const app = createApp({
   providers: [Counter, provide(Logger, { useValue: console })],
@@ -145,7 +145,7 @@ splitting or feature gating — **without mutating the root provider graph**. Ea
 lazy module is loaded into its own child scope.
 
 ```ts
-import { createApp, defineModule, lazyModule } from "@cosystem/core";
+import { createApp, defineModule, lazyModule } from "@coexist/core";
 
 class AdminCounter {
   count = 0;

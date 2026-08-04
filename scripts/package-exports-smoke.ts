@@ -27,7 +27,7 @@ try {
   const packages = await readPublicPackages();
   const specifiers = [];
 
-  await mkdir(join(tempDir, "node_modules", "@cosystem"), { recursive: true });
+  await mkdir(join(tempDir, "node_modules", "@coexist"), { recursive: true });
 
   for (const pkg of packages) {
     await symlinkPackage(pkg);
@@ -120,7 +120,7 @@ function readExportTarget(pkg, subpath, target, condition) {
 }
 
 async function symlinkPackage(pkg) {
-  const scopeDir = join(tempDir, "node_modules", "@cosystem");
+  const scopeDir = join(tempDir, "node_modules", "@coexist");
   const packageName = pkg.packageJson.name.split("/").at(-1);
 
   await symlink(pkg.dir, join(scopeDir, packageName), "dir");

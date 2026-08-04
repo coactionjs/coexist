@@ -17,7 +17,7 @@ plain classes with lightweight DI, object-oriented state, actions, computed
 getters, effects, and test-friendly app composition.
 
 ```ts
-import { createApp, defineModule } from "@cosystem/core";
+import { createApp, defineModule } from "@coexist/core";
 
 class Counter {
   count = 0;
@@ -131,46 +131,46 @@ ergonomics — and it is honest about where simpler tools win.
 
 ## Packages
 
-Every app depends on [`@cosystem/core`](./packages/core). Pick a UI adapter for
+Every app depends on [`@coexist/core`](./packages/core). Pick a UI adapter for
 your framework and add plugins as needed. Each package has its own README with a
 full API reference.
 
 ### Core
 
-| Package                             | Description                                                                            |
-| ----------------------------------- | -------------------------------------------------------------------------------------- |
-| [`@cosystem/core`](./packages/core) | DI container, module metadata, app runtime, decorators, worker runtime, and `testApp`. |
+| Package                            | Description                                                                            |
+| ---------------------------------- | -------------------------------------------------------------------------------------- |
+| [`@coexist/core`](./packages/core) | DI container, module metadata, app runtime, decorators, worker runtime, and `testApp`. |
 
 ### UI adapters
 
-| Package                                   | Description                                           |
-| ----------------------------------------- | ----------------------------------------------------- |
-| [`@cosystem/react`](./packages/react)     | React context and hooks (`useModule`, `useSelector`). |
-| [`@cosystem/vue`](./packages/vue)         | Vue provide/inject composables and a plugin.          |
-| [`@cosystem/svelte`](./packages/svelte)   | Svelte readable stores (4+) and rune helpers (5).     |
-| [`@cosystem/solid`](./packages/solid)     | Solid context and signal helpers.                     |
-| [`@cosystem/angular`](./packages/angular) | Angular environment provider and `inject*` signals.   |
+| Package                                  | Description                                           |
+| ---------------------------------------- | ----------------------------------------------------- |
+| [`@coexist/react`](./packages/react)     | React context and hooks (`useModule`, `useSelector`). |
+| [`@coexist/vue`](./packages/vue)         | Vue provide/inject composables and a plugin.          |
+| [`@coexist/svelte`](./packages/svelte)   | Svelte readable stores (4+) and rune helpers (5).     |
+| [`@coexist/solid`](./packages/solid)     | Solid context and signal helpers.                     |
+| [`@coexist/angular`](./packages/angular) | Angular environment provider and `inject*` signals.   |
 
 ### Plugins
 
-| Package                                     | Description                                                          |
-| ------------------------------------------- | -------------------------------------------------------------------- |
-| [`@cosystem/router`](./packages/router)     | Embeddable router primitives, `RouterToken`, and a lifecycle plugin. |
-| [`@cosystem/storage`](./packages/storage)   | Persistence plugin for hydrating and saving app state.               |
-| [`@cosystem/devtools`](./packages/devtools) | Timeline inspection plugin for development tooling.                  |
+| Package                                    | Description                                                          |
+| ------------------------------------------ | -------------------------------------------------------------------- |
+| [`@coexist/router`](./packages/router)     | Embeddable router primitives, `RouterToken`, and a lifecycle plugin. |
+| [`@coexist/storage`](./packages/storage)   | Persistence plugin for hydrating and saving app state.               |
+| [`@coexist/devtools`](./packages/devtools) | Timeline inspection plugin for development tooling.                  |
 
 ### Tooling
 
-| Package                                     | Description                                         |
-| ------------------------------------------- | --------------------------------------------------- |
-| [`@cosystem/create`](./packages/create)     | Project scaffolding with the `create-cosystem` CLI. |
-| [`@cosystem/testing`](./packages/testing)   | Testing helper facade for `testApp`.                |
-| [`@cosystem/tsconfig`](./packages/tsconfig) | Shared TypeScript configuration (internal).         |
+| Package                                    | Description                                        |
+| ------------------------------------------ | -------------------------------------------------- |
+| [`@coexist/create`](./packages/create)     | Project scaffolding with the `create-coexist` CLI. |
+| [`@coexist/testing`](./packages/testing)   | Testing helper facade for `testApp`.               |
+| [`@coexist/tsconfig`](./packages/tsconfig) | Shared TypeScript configuration (internal).        |
 
 ## Create A Project
 
 ```sh
-pnpm dlx @cosystem/create my-app
+pnpm dlx @coexist/create my-app
 cd my-app
 pnpm install
 pnpm start
@@ -179,7 +179,7 @@ pnpm start
 ## Core API
 
 ```ts
-import { createApp, defineModule, provide } from "@cosystem/core";
+import { createApp, defineModule, provide } from "@coexist/core";
 
 abstract class Logger {
   abstract info(message: string): void;
@@ -233,7 +233,7 @@ import {
   provide,
   runInAction,
   State,
-} from "@cosystem/core";
+} from "@coexist/core";
 
 @Module({
   deps: [Logger],
@@ -335,7 +335,7 @@ Lazy modules are explicit. They do not mutate the root provider graph or expose
 `app.provide()`:
 
 ```ts
-import { createApp, defineModule, lazyModule } from "@cosystem/core";
+import { createApp, defineModule, lazyModule } from "@coexist/core";
 
 class AdminCounter {
   count = 0;
@@ -390,7 +390,7 @@ React:
 
 ```tsx
 import { createRoot } from "react-dom/client";
-import { CoSystemProvider, useModule, useSelector } from "@cosystem/react";
+import { CoSystemProvider, useModule, useSelector } from "@coexist/react";
 
 function CounterView() {
   const counter = useModule(Counter);
@@ -409,7 +409,7 @@ createRoot(document.getElementById("root")!).render(
 React can also consume worker-hosted state through `WorkerClientProvider`:
 
 ```tsx
-import { WorkerClientProvider, useWorkerModule, useWorkerSelector } from "@cosystem/react";
+import { WorkerClientProvider, useWorkerModule, useWorkerSelector } from "@coexist/react";
 
 type CounterState = {
   readonly counter: {
@@ -429,7 +429,7 @@ Vue:
 
 ```ts
 import { createApp as createVueApp, defineComponent, h } from "vue";
-import { cosystemPlugin, useComputed, useModule } from "@cosystem/vue";
+import { cosystemPlugin, useComputed, useModule } from "@coexist/vue";
 
 const CounterView = defineComponent({
   setup() {
@@ -447,7 +447,7 @@ Vue can consume worker-hosted modules through the same provide/inject model:
 
 ```ts
 import { createApp as createVueApp, defineComponent, h } from "vue";
-import { workerClientPlugin, useWorkerModule, useWorkerSelector } from "@cosystem/vue";
+import { workerClientPlugin, useWorkerModule, useWorkerSelector } from "@coexist/vue";
 
 type CounterState = {
   readonly counter: {
@@ -470,7 +470,7 @@ createVueApp(WorkerCounterView).use(workerClientPlugin(client)).mount("#app");
 Svelte:
 
 ```ts
-import { moduleStore, selectedModuleStore, setCoSystemApp } from "@cosystem/svelte";
+import { moduleStore, selectedModuleStore, setCoSystemApp } from "@coexist/svelte";
 
 setCoSystemApp(app);
 
@@ -481,7 +481,7 @@ const count = selectedModuleStore(Counter, (module) => module.count);
 Svelte can also consume worker-hosted modules as readable stores:
 
 ```ts
-import { setWorkerClient, workerModuleStore, workerSelectorStore } from "@cosystem/svelte";
+import { setWorkerClient, workerModuleStore, workerSelectorStore } from "@coexist/svelte";
 
 type CounterState = {
   readonly counter: {
@@ -499,7 +499,7 @@ Svelte 5 rune-friendly helpers are available from a separate subpath so the
 main Svelte 4 store contract stays unchanged:
 
 ```ts
-import { moduleRune, selectedModuleRune } from "@cosystem/svelte/runes";
+import { moduleRune, selectedModuleRune } from "@coexist/svelte/runes";
 
 const counter = moduleRune(Counter, { app });
 const count = selectedModuleRune(Counter, (module) => module.count, { app });
@@ -508,7 +508,7 @@ const count = selectedModuleRune(Counter, (module) => module.count, { app });
 Worker-hosted state has matching Svelte 5 rune helpers:
 
 ```ts
-import { workerModuleRune, workerSelectorRune } from "@cosystem/svelte/runes";
+import { workerModuleRune, workerSelectorRune } from "@coexist/svelte/runes";
 
 const counter = workerModuleRune<Counter>("counter", { client });
 const count = workerSelectorRune((state) => (state as CounterState).counter.count, { client });
@@ -517,7 +517,7 @@ const count = workerSelectorRune((state) => (state as CounterState).counter.coun
 Solid:
 
 ```tsx
-import { CoSystemProvider, useComputed, useModule } from "@cosystem/solid";
+import { CoSystemProvider, useComputed, useModule } from "@coexist/solid";
 
 function CounterView() {
   const counter = useModule(Counter);
@@ -534,7 +534,7 @@ function CounterView() {
 Solid can render worker-hosted state through a worker client provider:
 
 ```tsx
-import { WorkerClientProvider, useWorkerModule, useWorkerSelector } from "@cosystem/solid";
+import { WorkerClientProvider, useWorkerModule, useWorkerSelector } from "@coexist/solid";
 
 type CounterState = {
   readonly counter: {
@@ -559,7 +559,7 @@ Angular:
 ```ts
 import { Component } from "@angular/core";
 import { bootstrapApplication } from "@angular/platform-browser";
-import { injectModule, injectSignal, provideCoSystem } from "@cosystem/angular";
+import { injectModule, injectSignal, provideCoSystem } from "@coexist/angular";
 
 @Component({
   selector: "counter-view",
@@ -580,7 +580,7 @@ Angular can inject worker-hosted modules and expose state as Angular signals:
 ```ts
 import { Component } from "@angular/core";
 import { bootstrapApplication } from "@angular/platform-browser";
-import { injectWorkerModule, injectWorkerSignal, provideWorkerClient } from "@cosystem/angular";
+import { injectWorkerModule, injectWorkerSignal, provideWorkerClient } from "@coexist/angular";
 
 type CounterState = {
   readonly counter: {
@@ -605,7 +605,7 @@ bootstrapApplication(WorkerCounterView, {
 ## Testing
 
 ```ts
-import { provide, testApp } from "@cosystem/core";
+import { provide, testApp } from "@coexist/core";
 
 const app = testApp({
   providers: [Counter, provide(Logger, { useValue: console })],
@@ -637,7 +637,7 @@ More focused examples live in [`examples/`](./examples).
 
 ## Worker Prototype
 
-`@cosystem/core` includes a small worker-hosting prototype:
+`@coexist/core` includes a small worker-hosting prototype:
 
 ```ts
 import {
@@ -648,7 +648,7 @@ import {
   createPostMessageWorkerTransport,
   createWorkerApp,
   createWorkerClient,
-} from "@cosystem/core";
+} from "@coexist/core";
 
 const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
 
@@ -782,7 +782,7 @@ methods can be enabled explicitly per module with
 ## Logger Plugin
 
 ```ts
-import { createLoggerPlugin } from "@cosystem/core";
+import { createLoggerPlugin } from "@coexist/core";
 
 const app = createApp({
   plugins: [createLoggerPlugin()],
@@ -793,7 +793,7 @@ const app = createApp({
 ## Devtools
 
 ```ts
-import { createDevtoolsPlugin } from "@cosystem/devtools";
+import { createDevtoolsPlugin } from "@coexist/devtools";
 
 const devtools = createDevtoolsPlugin();
 
@@ -815,7 +815,7 @@ unsubscribe();
 ## Storage
 
 ```ts
-import { StorageToken, createLocalSpaceStoragePlugin, syncPlugin } from "@cosystem/storage";
+import { StorageToken, createLocalSpaceStoragePlugin, syncPlugin } from "@coexist/storage";
 
 type CounterAppState = {
   readonly counter: {
@@ -861,7 +861,7 @@ import {
   createBrowserRouter,
   createMemoryRouter,
   createRouterPlugin,
-} from "@cosystem/router";
+} from "@coexist/router";
 
 const router =
   typeof window === "undefined" ? createMemoryRouter({ initialPath: "/" }) : createBrowserRouter();
@@ -921,7 +921,7 @@ pnpm run commit
 packages/
   angular/    # Angular adapter
   core/       # CoSystem core runtime (DI, app, decorators, worker)
-  create/     # create-cosystem scaffolding CLI
+  create/     # create-coexist scaffolding CLI
   devtools/   # timeline inspection plugin
   react/      # React adapter
   router/     # router primitives and plugin

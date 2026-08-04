@@ -13,7 +13,7 @@ users get signals.
 
 ## The adapter contract
 
-`@cosystem/core` exposes a framework-neutral reactive runtime — `getModule()` and
+`@coexist/core` exposes a framework-neutral reactive runtime — `getModule()` and
 `watch()` — rather than a selector-first external-store API. Why selectors still
 appear in adapters:
 
@@ -41,10 +41,10 @@ app.watch(read, listener, opts); // subscribe to a derived value
 Selectors accept an `{ equals }` option (default `Object.is`) to control when the
 view updates.
 
-## React — [`@cosystem/react`](../packages/react/README.md)
+## React — [`@coexist/react`](../packages/react/README.md)
 
 ```tsx
-import { CoSystemProvider, useModule, useSelector } from "@cosystem/react";
+import { CoSystemProvider, useModule, useSelector } from "@coexist/react";
 
 function CounterView() {
   const counter = useModule(Counter);
@@ -60,10 +60,10 @@ function CounterView() {
 `useApp()` / `useCoSystem()`, `useModule(token)`, `useSelector(selector)` or
 `useSelector(token, fn)`.
 
-## Vue — [`@cosystem/vue`](../packages/vue/README.md)
+## Vue — [`@coexist/vue`](../packages/vue/README.md)
 
 ```ts
-import { cosystemPlugin, useComputed, useModule } from "@cosystem/vue";
+import { cosystemPlugin, useComputed, useModule } from "@coexist/vue";
 
 const counter = useModule(Counter);
 const count = useComputed((app) => app.getModule(Counter).count); // Readonly<Ref<T>>
@@ -74,10 +74,10 @@ createVueApp(Root).use(cosystemPlugin(app)).mount("#app");
 `provideCoSystem(app)` / `cosystemPlugin(app)`, `useModule(token)`,
 `useSelector`/`useComputed` (return `Readonly<Ref<T>>`).
 
-## Svelte — [`@cosystem/svelte`](../packages/svelte/README.md)
+## Svelte — [`@coexist/svelte`](../packages/svelte/README.md)
 
 ```ts
-import { moduleStore, selectedModuleStore, setCoSystemApp } from "@cosystem/svelte";
+import { moduleStore, selectedModuleStore, setCoSystemApp } from "@coexist/svelte";
 
 setCoSystemApp(app);
 const counter = moduleStore(Counter);
@@ -89,13 +89,13 @@ const count = selectedModuleStore(Counter, (m) => m.count);
 ```
 
 Stores work in Svelte 4 and 5. Svelte 5 rune helpers live at
-`@cosystem/svelte/runes` (`moduleRune`, `selectedModuleRune`) and expose
+`@coexist/svelte/runes` (`moduleRune`, `selectedModuleRune`) and expose
 `.current` / `.value` / `.get()`.
 
-## Solid — [`@cosystem/solid`](../packages/solid/README.md)
+## Solid — [`@coexist/solid`](../packages/solid/README.md)
 
 ```tsx
-import { CoSystemProvider, useComputed, useModule } from "@cosystem/solid";
+import { CoSystemProvider, useComputed, useModule } from "@coexist/solid";
 
 function CounterView() {
   const counter = useModule(Counter);
@@ -106,12 +106,12 @@ function CounterView() {
 
 `useComputed` returns a Solid `Accessor<T>` — call it (`count()`).
 
-## Angular — [`@cosystem/angular`](../packages/angular/README.md)
+## Angular — [`@coexist/angular`](../packages/angular/README.md)
 
 ```ts
 import { Component } from "@angular/core";
 import { bootstrapApplication } from "@angular/platform-browser";
-import { injectModule, injectSignal, provideCoSystem } from "@cosystem/angular";
+import { injectModule, injectSignal, provideCoSystem } from "@coexist/angular";
 
 @Component({ template: `<button (click)="counter.increase()">{{ count() }}</button>` })
 class CounterView {

@@ -1,4 +1,4 @@
-# @cosystem/tsconfig
+# @coexist/tsconfig
 
 ## 0.1.0
 

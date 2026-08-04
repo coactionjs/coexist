@@ -25,8 +25,8 @@ let server;
 
 try {
   const catalog = await readCatalog();
-  const coreTarball = await packPackage("@cosystem/core");
-  const devtoolsTarball = await packPackage("@cosystem/devtools");
+  const coreTarball = await packPackage("@coexist/core");
+  const devtoolsTarball = await packPackage("@coexist/devtools");
 
   await writeConsumerProject(coreTarball, devtoolsTarball, catalog);
   await run("pnpm", ["install", "--prefer-offline", "--no-frozen-lockfile"], consumerDir);
@@ -46,7 +46,7 @@ try {
 }
 
 async function packPackage(name) {
-  const packageDir = join(packagesDir, name.slice("@cosystem/".length));
+  const packageDir = join(packagesDir, name.slice("@coexist/".length));
   const destination = join(tarballsDir, name.replaceAll("@", "").replaceAll("/", "__"));
 
   await mkdir(destination, { recursive: true });
@@ -75,8 +75,8 @@ async function writeConsumerProject(coreTarball, devtoolsTarball, catalog) {
           typecheck: "tsc -p tsconfig.json --noEmit",
         },
         dependencies: {
-          "@cosystem/core": `file:${coreTarball}`,
-          "@cosystem/devtools": `file:${devtoolsTarball}`,
+          "@coexist/core": `file:${coreTarball}`,
+          "@coexist/devtools": `file:${devtoolsTarball}`,
           coaction: readCatalogVersion(catalog, "coaction"),
         },
         devDependencies: {
@@ -98,8 +98,8 @@ async function writeConsumerProject(coreTarball, devtoolsTarball, catalog) {
       '  "@parcel/watcher": true',
       "  esbuild: true",
       "overrides:",
-      `  "@cosystem/core": ${JSON.stringify(`file:${coreTarball}`)}`,
-      `  "@cosystem/devtools": ${JSON.stringify(`file:${devtoolsTarball}`)}`,
+      `  "@coexist/core": ${JSON.stringify(`file:${coreTarball}`)}`,
+      `  "@coexist/devtools": ${JSON.stringify(`file:${devtoolsTarball}`)}`,
       `  "coaction": ${JSON.stringify(readCatalogVersion(catalog, "coaction"))}`,
       `  "typescript": ${JSON.stringify(readCatalogVersion(catalog, "typescript"))}`,
       `  "vite": ${JSON.stringify(readCatalogVersion(catalog, "vite"))}`,
@@ -163,8 +163,8 @@ async function writeConsumerProject(coreTarball, devtoolsTarball, catalog) {
 }
 
 function createBrowserSource() {
-  return `import { createApp, defineModule } from "@cosystem/core";
-import { createDevtoolsPlugin } from "@cosystem/devtools";
+  return `import { createApp, defineModule } from "@coexist/core";
+import { createDevtoolsPlugin } from "@coexist/devtools";
 
 type AppState = {
   readonly devtoolsBrowserCounter?: {

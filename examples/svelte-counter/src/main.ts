@@ -1,6 +1,6 @@
 import { mount } from "svelte";
 
-import { setCoSystemApp } from "@cosystem/svelte";
+import { setCoSystemApp } from "@coexist/svelte";
 
 import App from "./App.svelte";
 import { cosystem } from "./counter";

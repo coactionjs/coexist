@@ -93,7 +93,7 @@ function getLocalDependencyNames(packageJson) {
     }
 
     for (const name of Object.keys(dependencies)) {
-      if (name.startsWith("@cosystem/")) {
+      if (name.startsWith("@coexist/")) {
         dependencyNames.add(name);
       }
     }

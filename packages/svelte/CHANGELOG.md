@@ -1,4 +1,4 @@
-# @cosystem/svelte
+# @coexist/svelte
 
 ## 0.2.0
 
@@ -34,7 +34,7 @@
 - Updated dependencies [e3c3fff]
 - Updated dependencies [f9c4c3c]
 - Updated dependencies [71e762e]
-  - @cosystem/core@0.2.0
+  - @coexist/core@0.2.0
 
 ## 0.1.0
 
@@ -44,7 +44,7 @@
 
 ### Minor Changes
 
-- 8864bec: Add the `@cosystem/svelte/runes` subpath with Svelte 5 friendly `moduleRune`, `selectorRune`, and `selectedModuleRune` helpers.
+- 8864bec: Add the `@coexist/svelte/runes` subpath with Svelte 5 friendly `moduleRune`, `selectorRune`, and `selectedModuleRune` helpers.
 - 696306b: Add Svelte store and rune helpers for worker-hosted modules with `setWorkerClient`, `workerModuleStore`, `workerSelectorStore`, `workerModuleRune`, and `workerSelectorRune`.
 
 ### Patch Changes
@@ -59,4 +59,4 @@
 - Updated dependencies [794566f]
 - Updated dependencies [77cd9a9]
 - Updated dependencies [80f25e8]
-  - @cosystem/core@0.1.0
+  - @coexist/core@0.1.0

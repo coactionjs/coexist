@@ -27,19 +27,19 @@ let server;
 try {
   const catalog = await readCatalog();
   const rootPackageJson = JSON.parse(await readFile(rootPackagePath, "utf8"));
-  const coreTarball = await packPackage("@cosystem/core");
+  const coreTarball = await packPackage("@coexist/core");
 
   await writeInstalledWorkerExample(coreTarball, catalog, rootPackageJson);
   await run("pnpm", ["install", "--prefer-offline", "--no-frozen-lockfile"], tempDir);
-  await run("pnpm", ["--filter", "@cosystem/example-worker-counter", "run", "typecheck"], tempDir);
-  await run("pnpm", ["--filter", "@cosystem/example-worker-counter", "run", "build"], tempDir);
+  await run("pnpm", ["--filter", "@coexist/example-worker-counter", "run", "typecheck"], tempDir);
+  await run("pnpm", ["--filter", "@coexist/example-worker-counter", "run", "build"], tempDir);
 
   server = await createStaticServer(join(exampleDir, "dist"));
   browser = await launchBrowser();
 
   await runWorkerSmoke(browser, server.url);
 
-  console.log("Verified installed @cosystem/core Web Worker runtime.");
+  console.log("Verified installed @coexist/core Web Worker runtime.");
 } finally {
   await browser?.close();
   await server?.close();
@@ -47,7 +47,7 @@ try {
 }
 
 async function packPackage(name) {
-  const packageDir = join(packagesDir, name.slice("@cosystem/".length));
+  const packageDir = join(packagesDir, name.slice("@coexist/".length));
   const destination = join(tarballsDir, name.replaceAll("@", "").replaceAll("/", "__"));
 
   await mkdir(destination, { recursive: true });
@@ -85,7 +85,7 @@ async function writeInstalledWorkerExample(coreTarball, catalog, rootPackageJson
         ...packageJson,
         dependencies: {
           ...rewriteDependencyField(packageJson.dependencies, catalog),
-          "@cosystem/core": `file:${coreTarball}`,
+          "@coexist/core": `file:${coreTarball}`,
         },
         devDependencies: rewriteDependencyField(packageJson.devDependencies, catalog),
       },
@@ -118,7 +118,7 @@ async function writeInstalledWorkerExample(coreTarball, catalog, rootPackageJson
       '  "@parcel/watcher": true',
       "  esbuild: true",
       "overrides:",
-      `  "@cosystem/core": ${JSON.stringify(`file:${coreTarball}`)}`,
+      `  "@coexist/core": ${JSON.stringify(`file:${coreTarball}`)}`,
       `  "coaction": ${JSON.stringify(readCatalogVersion(catalog, "coaction"))}`,
       `  "typescript": ${JSON.stringify(readCatalogVersion(catalog, "typescript"))}`,
       `  "vite": ${JSON.stringify(readCatalogVersion(catalog, "vite"))}`,

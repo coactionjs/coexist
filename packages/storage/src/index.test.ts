@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { createApp, defineModule } from "@cosystem/core";
+import { createApp, defineModule } from "@coexist/core";
 
 import {
   StorageToken,

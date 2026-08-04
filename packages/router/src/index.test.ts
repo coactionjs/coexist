@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createApp } from "@cosystem/core";
+import { createApp } from "@coexist/core";
 
 import {
   RouterToken,

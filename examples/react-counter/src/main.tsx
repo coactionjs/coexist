@@ -1,7 +1,7 @@
 import { createRoot } from "react-dom/client";
 
-import { createApp, defineModule } from "@cosystem/core";
-import { CoSystemProvider, useModule, useSelector } from "@cosystem/react";
+import { createApp, defineModule } from "@coexist/core";
+import { CoSystemProvider, useModule, useSelector } from "@coexist/react";
 
 // oxlint-disable-next-line import/no-unassigned-import -- Vite loads example styles through CSS side effects.
 import "./styles.css";

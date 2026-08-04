@@ -18,8 +18,8 @@ const tscBin = join(rootDir, "node_modules/.bin/tsc");
 
 try {
   const catalog = await readCatalog();
-  const coreTarball = await packPackage("@cosystem/core");
-  const testingTarball = await packPackage("@cosystem/testing");
+  const coreTarball = await packPackage("@coexist/core");
+  const testingTarball = await packPackage("@coexist/testing");
 
   await writeConsumerProject(coreTarball, testingTarball, catalog);
   await run(
@@ -36,7 +36,7 @@ try {
 }
 
 async function packPackage(name) {
-  const packageDir = join(packagesDir, name.slice("@cosystem/".length));
+  const packageDir = join(packagesDir, name.slice("@coexist/".length));
   const destination = join(tarballsDir, name.replaceAll("@", "").replaceAll("/", "__"));
 
   await mkdir(destination, { recursive: true });
@@ -61,8 +61,8 @@ async function writeConsumerProject(coreTarball, testingTarball, catalog) {
         private: true,
         type: "module",
         dependencies: {
-          "@cosystem/core": `file:${coreTarball}`,
-          "@cosystem/testing": `file:${testingTarball}`,
+          "@coexist/core": `file:${coreTarball}`,
+          "@coexist/testing": `file:${testingTarball}`,
           coaction: readCatalogVersion(catalog, "coaction"),
         },
         devDependencies: {
@@ -80,8 +80,8 @@ async function writeConsumerProject(coreTarball, testingTarball, catalog) {
       "minimumReleaseAgeExclude:",
       `  - ${JSON.stringify(`coaction@${readCatalogVersion(catalog, "coaction")}`)}`,
       "overrides:",
-      `  "@cosystem/core": ${JSON.stringify(`file:${coreTarball}`)}`,
-      `  "@cosystem/testing": ${JSON.stringify(`file:${testingTarball}`)}`,
+      `  "@coexist/core": ${JSON.stringify(`file:${coreTarball}`)}`,
+      `  "@coexist/testing": ${JSON.stringify(`file:${testingTarball}`)}`,
       `  "coaction": ${JSON.stringify(readCatalogVersion(catalog, "coaction"))}`,
       `  "typescript": ${JSON.stringify(readCatalogVersion(catalog, "typescript"))}`,
       "",
@@ -111,8 +111,8 @@ async function writeConsumerProject(coreTarball, testingTarball, catalog) {
 }
 
 function createTypeConsumerSource() {
-  return `import { defineModule, provide, type App, type TestApp } from "@cosystem/core";
-import { testApp, type AutoStartedTestAppOptions } from "@cosystem/testing";
+  return `import { defineModule, provide, type App, type TestApp } from "@coexist/core";
+import { testApp, type AutoStartedTestAppOptions } from "@coexist/testing";
 
 abstract class TypeLogger {
   abstract info(message: string): void;
@@ -184,8 +184,8 @@ await started.dispose();
 }
 
 function createRuntimeConsumerSource() {
-  return `import { CosystemError, defineModule, provide } from "@cosystem/core";
-import { testApp } from "@cosystem/testing";
+  return `import { CosystemError, defineModule, provide } from "@coexist/core";
+import { testApp } from "@coexist/testing";
 
 class Logger {
   info(_message) {}

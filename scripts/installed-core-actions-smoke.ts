@@ -18,7 +18,7 @@ const tscBin = join(rootDir, "node_modules/.bin/tsc");
 
 try {
   const catalog = await readCatalog();
-  const coreTarball = await packPackage("@cosystem/core");
+  const coreTarball = await packPackage("@coexist/core");
 
   await writeConsumerProject(coreTarball, catalog);
   await run(
@@ -35,7 +35,7 @@ try {
 }
 
 async function packPackage(name) {
-  const packageDir = join(packagesDir, name.slice("@cosystem/".length));
+  const packageDir = join(packagesDir, name.slice("@coexist/".length));
   const destination = join(tarballsDir, name.replaceAll("@", "").replaceAll("/", "__"));
 
   await mkdir(destination, { recursive: true });
@@ -60,7 +60,7 @@ async function writeConsumerProject(coreTarball, catalog) {
         private: true,
         type: "module",
         dependencies: {
-          "@cosystem/core": `file:${coreTarball}`,
+          "@coexist/core": `file:${coreTarball}`,
           coaction: readCatalogVersion(catalog, "coaction"),
         },
         devDependencies: {
@@ -78,7 +78,7 @@ async function writeConsumerProject(coreTarball, catalog) {
       "minimumReleaseAgeExclude:",
       `  - ${JSON.stringify(`coaction@${readCatalogVersion(catalog, "coaction")}`)}`,
       "overrides:",
-      `  "@cosystem/core": ${JSON.stringify(`file:${coreTarball}`)}`,
+      `  "@coexist/core": ${JSON.stringify(`file:${coreTarball}`)}`,
       `  "coaction": ${JSON.stringify(readCatalogVersion(catalog, "coaction"))}`,
       `  "typescript": ${JSON.stringify(readCatalogVersion(catalog, "typescript"))}`,
       "",
@@ -116,7 +116,7 @@ function createTypeConsumerSource() {
   type ActionEvent,
   type ErrorContext,
   type Plugin,
-} from "@cosystem/core";
+} from "@coexist/core";
 
 class TypeActionCounter {
   count = 0;
@@ -186,7 +186,7 @@ function createRuntimeConsumerSource() {
   createApp,
   defineModule,
   runInAction,
-} from "@cosystem/core";
+} from "@coexist/core";
 
 class ActionCounter {
   constructor() {

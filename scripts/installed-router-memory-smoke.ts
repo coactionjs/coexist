@@ -18,8 +18,8 @@ const tscBin = join(rootDir, "node_modules/.bin/tsc");
 
 try {
   const catalog = await readCatalog();
-  const coreTarball = await packPackage("@cosystem/core");
-  const routerTarball = await packPackage("@cosystem/router");
+  const coreTarball = await packPackage("@coexist/core");
+  const routerTarball = await packPackage("@coexist/router");
 
   await writeConsumerProject({ catalog, coreTarball, routerTarball });
   await run(
@@ -36,7 +36,7 @@ try {
 }
 
 async function packPackage(name) {
-  const packageDir = join(packagesDir, name.slice("@cosystem/".length));
+  const packageDir = join(packagesDir, name.slice("@coexist/".length));
   const destination = join(tarballsDir, name.replaceAll("@", "").replaceAll("/", "__"));
 
   await mkdir(destination, { recursive: true });
@@ -61,8 +61,8 @@ async function writeConsumerProject({ catalog, coreTarball, routerTarball }) {
         private: true,
         type: "module",
         dependencies: {
-          "@cosystem/core": `file:${coreTarball}`,
-          "@cosystem/router": `file:${routerTarball}`,
+          "@coexist/core": `file:${coreTarball}`,
+          "@coexist/router": `file:${routerTarball}`,
           coaction: readCatalogVersion(catalog, "coaction"),
         },
         devDependencies: {
@@ -80,8 +80,8 @@ async function writeConsumerProject({ catalog, coreTarball, routerTarball }) {
       "minimumReleaseAgeExclude:",
       `  - ${JSON.stringify(`coaction@${readCatalogVersion(catalog, "coaction")}`)}`,
       "overrides:",
-      `  "@cosystem/core": ${JSON.stringify(`file:${coreTarball}`)}`,
-      `  "@cosystem/router": ${JSON.stringify(`file:${routerTarball}`)}`,
+      `  "@coexist/core": ${JSON.stringify(`file:${coreTarball}`)}`,
+      `  "@coexist/router": ${JSON.stringify(`file:${routerTarball}`)}`,
       `  "coaction": ${JSON.stringify(readCatalogVersion(catalog, "coaction"))}`,
       `  "typescript": ${JSON.stringify(readCatalogVersion(catalog, "typescript"))}`,
       "",
@@ -111,7 +111,7 @@ async function writeConsumerProject({ catalog, coreTarball, routerTarball }) {
 }
 
 function createTypeConsumerSource() {
-  return `import { createApp, type App } from "@cosystem/core";
+  return `import { createApp, type App } from "@coexist/core";
 import {
   RouterToken,
   createMemoryRouter,
@@ -121,7 +121,7 @@ import {
   provideRouter,
   type RouteLocation,
   type Router,
-} from "@cosystem/router";
+} from "@coexist/router";
 
 const router: Router = createMemoryRouter({
   initialPath: "/initial?tab=type#top",
@@ -140,7 +140,7 @@ void [app, formatted, router.current];
 }
 
 function createRuntimeConsumerSource() {
-  return `import { createApp } from "@cosystem/core";
+  return `import { createApp } from "@coexist/core";
 import {
   RouterToken,
   createMemoryRouter,
@@ -148,7 +148,7 @@ import {
   formatLocation,
   parseLocation,
   provideRouter,
-} from "@cosystem/router";
+} from "@coexist/router";
 
 await verifyMemoryRouter();
 await verifyPluginLifecycleAndProviders();

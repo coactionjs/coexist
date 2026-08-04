@@ -20,21 +20,21 @@ const tarballsDir = join(tempDir, "tarballs");
 try {
   const catalog = await readCatalog();
   const rootPackageJson = JSON.parse(await readFile(rootPackagePath, "utf8"));
-  const coreTarball = await packPackage("@cosystem/core");
-  const testingTarball = await packPackage("@cosystem/testing");
+  const coreTarball = await packPackage("@coexist/core");
+  const testingTarball = await packPackage("@coexist/testing");
 
   await writeInstalledTestingExample(coreTarball, testingTarball, catalog, rootPackageJson);
   await run("pnpm", ["install", "--prefer-offline", "--no-frozen-lockfile"], tempDir);
-  await run("pnpm", ["--filter", "@cosystem/example-testing", "run", "typecheck"], tempDir);
-  await run("pnpm", ["--filter", "@cosystem/example-testing", "run", "test"], tempDir);
+  await run("pnpm", ["--filter", "@coexist/example-testing", "run", "typecheck"], tempDir);
+  await run("pnpm", ["--filter", "@coexist/example-testing", "run", "test"], tempDir);
 
-  console.log("Verified installed @cosystem/testing example test suite.");
+  console.log("Verified installed @coexist/testing example test suite.");
 } finally {
   await rm(tempDir, { force: true, recursive: true });
 }
 
 async function packPackage(name) {
-  const packageDir = join(packagesDir, name.slice("@cosystem/".length));
+  const packageDir = join(packagesDir, name.slice("@coexist/".length));
   const destination = join(tarballsDir, name.replaceAll("@", "").replaceAll("/", "__"));
 
   await mkdir(destination, { recursive: true });
@@ -72,8 +72,8 @@ async function writeInstalledTestingExample(coreTarball, testingTarball, catalog
         ...packageJson,
         dependencies: {
           ...rewriteDependencyField(packageJson.dependencies, catalog),
-          "@cosystem/core": `file:${coreTarball}`,
-          "@cosystem/testing": `file:${testingTarball}`,
+          "@coexist/core": `file:${coreTarball}`,
+          "@coexist/testing": `file:${testingTarball}`,
         },
         devDependencies: rewriteDependencyField(packageJson.devDependencies, catalog),
       },
@@ -106,8 +106,8 @@ async function writeInstalledTestingExample(coreTarball, testingTarball, catalog
       '  "@parcel/watcher": true',
       "  esbuild: true",
       "overrides:",
-      `  "@cosystem/core": ${JSON.stringify(`file:${coreTarball}`)}`,
-      `  "@cosystem/testing": ${JSON.stringify(`file:${testingTarball}`)}`,
+      `  "@coexist/core": ${JSON.stringify(`file:${coreTarball}`)}`,
+      `  "@coexist/testing": ${JSON.stringify(`file:${testingTarball}`)}`,
       `  "coaction": ${JSON.stringify(readCatalogVersion(catalog, "coaction"))}`,
       `  "typescript": ${JSON.stringify(readCatalogVersion(catalog, "typescript"))}`,
       `  "vite": ${JSON.stringify(readCatalogVersion(catalog, "vite"))}`,

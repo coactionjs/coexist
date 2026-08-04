@@ -1,5 +1,5 @@
 {
-  "name": "@cosystem/example-svelte-counter",
+  "name": "@coexist/example-svelte-counter",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -10,8 +10,8 @@
     "typecheck": "svelte-check --tsconfig ./tsconfig.json"
   },
   "dependencies": {
-    "@cosystem/core": "workspace:*",
-    "@cosystem/svelte": "workspace:*",
+    "@coexist/core": "workspace:*",
+    "@coexist/svelte": "workspace:*",
     "svelte": "catalog:"
   },
   "devDependencies": {

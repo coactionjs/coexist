@@ -59,8 +59,8 @@ pnpm run check        # format:check + lint + typecheck + test + build (what CI 
 Target a single package or example with pnpm filters:
 
 ```sh
-pnpm --filter @cosystem/core test
-pnpm --filter @cosystem/example-react-counter dev
+pnpm --filter @coexist/core test
+pnpm --filter @coexist/example-react-counter dev
 ```
 
 Before opening a pull request, make sure `pnpm run check` passes — it mirrors the
@@ -70,7 +70,7 @@ CI `verify` job.
 
 Tests live next to the source as `*.test.ts` files and run through Vitest
 workspace projects (one per package). Add or update tests for any behavior change.
-For app-level tests, prefer [`@cosystem/testing`](./packages/testing)'s `testApp`,
+For app-level tests, prefer [`@coexist/testing`](./packages/testing)'s `testApp`,
 which provides provider overrides and action/state/patch inspection.
 
 ## Commit conventions

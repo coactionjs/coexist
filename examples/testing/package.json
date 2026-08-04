@@ -1,5 +1,5 @@
 {
-  "name": "@cosystem/example-testing",
+  "name": "@coexist/example-testing",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -9,8 +9,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@cosystem/core": "workspace:*",
-    "@cosystem/testing": "workspace:*"
+    "@coexist/core": "workspace:*",
+    "@coexist/testing": "workspace:*"
   },
   "devDependencies": {
     "typescript": "catalog:",

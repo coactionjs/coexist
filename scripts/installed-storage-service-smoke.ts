@@ -18,8 +18,8 @@ const tscBin = join(rootDir, "node_modules/.bin/tsc");
 
 try {
   const catalog = await readCatalog();
-  const coreTarball = await packPackage("@cosystem/core");
-  const storageTarball = await packPackage("@cosystem/storage");
+  const coreTarball = await packPackage("@coexist/core");
+  const storageTarball = await packPackage("@coexist/storage");
 
   await writeConsumerProject({ catalog, coreTarball, storageTarball });
   await run(
@@ -36,7 +36,7 @@ try {
 }
 
 async function packPackage(name) {
-  const packageDir = join(packagesDir, name.slice("@cosystem/".length));
+  const packageDir = join(packagesDir, name.slice("@coexist/".length));
   const destination = join(tarballsDir, name.replaceAll("@", "").replaceAll("/", "__"));
 
   await mkdir(destination, { recursive: true });
@@ -61,8 +61,8 @@ async function writeConsumerProject({ catalog, coreTarball, storageTarball }) {
         private: true,
         type: "module",
         dependencies: {
-          "@cosystem/core": `file:${coreTarball}`,
-          "@cosystem/storage": `file:${storageTarball}`,
+          "@coexist/core": `file:${coreTarball}`,
+          "@coexist/storage": `file:${storageTarball}`,
           coaction: readCatalogVersion(catalog, "coaction"),
           localspace: readCatalogVersion(catalog, "localspace"),
         },
@@ -81,8 +81,8 @@ async function writeConsumerProject({ catalog, coreTarball, storageTarball }) {
       "minimumReleaseAgeExclude:",
       `  - ${JSON.stringify(`coaction@${readCatalogVersion(catalog, "coaction")}`)}`,
       "overrides:",
-      `  "@cosystem/core": ${JSON.stringify(`file:${coreTarball}`)}`,
-      `  "@cosystem/storage": ${JSON.stringify(`file:${storageTarball}`)}`,
+      `  "@coexist/core": ${JSON.stringify(`file:${coreTarball}`)}`,
+      `  "@coexist/storage": ${JSON.stringify(`file:${storageTarball}`)}`,
       `  "coaction": ${JSON.stringify(readCatalogVersion(catalog, "coaction"))}`,
       `  "localspace": ${JSON.stringify(readCatalogVersion(catalog, "localspace"))}`,
       `  "typescript": ${JSON.stringify(readCatalogVersion(catalog, "typescript"))}`,
@@ -113,7 +113,7 @@ async function writeConsumerProject({ catalog, coreTarball, storageTarball }) {
 }
 
 function createTypeConsumerSource() {
-  return `import { createApp } from "@cosystem/core";
+  return `import { createApp } from "@coexist/core";
 import {
   StorageToken,
   createLocalSpaceStorage,
@@ -121,7 +121,7 @@ import {
   type LocalSpacePlugin,
   type StorageService,
   type StorageTransactionScope,
-} from "@cosystem/storage";
+} from "@coexist/storage";
 
 const storage: StorageService = createLocalSpaceStorage({
   options: {
@@ -162,12 +162,12 @@ void [app.get(StorageToken), transactionResult, storage.getPerformanceStats()];
 }
 
 function createRuntimeConsumerSource() {
-  return `import { createApp } from "@cosystem/core";
+  return `import { createApp } from "@coexist/core";
 import {
   StorageToken,
   createLocalSpaceStorage,
   createLocalSpaceStoragePlugin,
-} from "@cosystem/storage";
+} from "@coexist/storage";
 
 const storageName = "cosystem-storage-service-smoke";
 const storage = createLocalSpaceStorage({

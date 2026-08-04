@@ -2,7 +2,7 @@ import {
   createPostMessageWorkerTransport,
   createWorkerClient,
   type AsyncMethodProxy,
-} from "@cosystem/core";
+} from "@coexist/core";
 
 // oxlint-disable-next-line import/no-unassigned-import -- Vite loads example styles through CSS side effects.
 import "./styles.css";

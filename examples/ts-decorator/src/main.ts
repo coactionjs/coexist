@@ -6,7 +6,7 @@ import {
   createApp,
   getModuleMetadata,
   provide,
-} from "@cosystem/core";
+} from "@coexist/core";
 
 // oxlint-disable-next-line import/no-unassigned-import -- Vite loads example styles through CSS side effects.
 import "./styles.css";

@@ -25,10 +25,10 @@ let server;
 
 try {
   const catalog = await readCatalog();
-  const coreTarball = await packPackage("@cosystem/core");
-  const devtoolsTarball = await packPackage("@cosystem/devtools");
-  const routerTarball = await packPackage("@cosystem/router");
-  const storageTarball = await packPackage("@cosystem/storage");
+  const coreTarball = await packPackage("@coexist/core");
+  const devtoolsTarball = await packPackage("@coexist/devtools");
+  const routerTarball = await packPackage("@coexist/router");
+  const storageTarball = await packPackage("@coexist/storage");
 
   await writeConsumerProject({
     catalog,
@@ -54,7 +54,7 @@ try {
 }
 
 async function packPackage(name) {
-  const packageDir = join(packagesDir, name.slice("@cosystem/".length));
+  const packageDir = join(packagesDir, name.slice("@coexist/".length));
   const destination = join(tarballsDir, name.replaceAll("@", "").replaceAll("/", "__"));
 
   await mkdir(destination, { recursive: true });
@@ -89,10 +89,10 @@ async function writeConsumerProject({
           typecheck: "tsc -p tsconfig.json --noEmit",
         },
         dependencies: {
-          "@cosystem/core": `file:${coreTarball}`,
-          "@cosystem/devtools": `file:${devtoolsTarball}`,
-          "@cosystem/router": `file:${routerTarball}`,
-          "@cosystem/storage": `file:${storageTarball}`,
+          "@coexist/core": `file:${coreTarball}`,
+          "@coexist/devtools": `file:${devtoolsTarball}`,
+          "@coexist/router": `file:${routerTarball}`,
+          "@coexist/storage": `file:${storageTarball}`,
           coaction: readCatalogVersion(catalog, "coaction"),
           localspace: readCatalogVersion(catalog, "localspace"),
         },
@@ -115,10 +115,10 @@ async function writeConsumerProject({
       '  "@parcel/watcher": true',
       "  esbuild: true",
       "overrides:",
-      `  "@cosystem/core": ${JSON.stringify(`file:${coreTarball}`)}`,
-      `  "@cosystem/devtools": ${JSON.stringify(`file:${devtoolsTarball}`)}`,
-      `  "@cosystem/router": ${JSON.stringify(`file:${routerTarball}`)}`,
-      `  "@cosystem/storage": ${JSON.stringify(`file:${storageTarball}`)}`,
+      `  "@coexist/core": ${JSON.stringify(`file:${coreTarball}`)}`,
+      `  "@coexist/devtools": ${JSON.stringify(`file:${devtoolsTarball}`)}`,
+      `  "@coexist/router": ${JSON.stringify(`file:${routerTarball}`)}`,
+      `  "@coexist/storage": ${JSON.stringify(`file:${storageTarball}`)}`,
       `  "coaction": ${JSON.stringify(readCatalogVersion(catalog, "coaction"))}`,
       `  "localspace": ${JSON.stringify(readCatalogVersion(catalog, "localspace"))}`,
       `  "typescript": ${JSON.stringify(readCatalogVersion(catalog, "typescript"))}`,
@@ -183,19 +183,19 @@ async function writeConsumerProject({
 }
 
 function createBrowserSource() {
-  return `import { createApp, defineModule } from "@cosystem/core";
-import { createDevtoolsPlugin } from "@cosystem/devtools";
+  return `import { createApp, defineModule } from "@coexist/core";
+import { createDevtoolsPlugin } from "@coexist/devtools";
 import {
   RouterToken,
   createBrowserRouter,
   createRouterPlugin,
   formatLocation,
-} from "@cosystem/router";
+} from "@coexist/router";
 import {
   StorageToken,
   createLocalSpaceStoragePlugin,
   localStorageDriver,
-} from "@cosystem/storage";
+} from "@coexist/storage";
 
 type ShellState = {
   readonly shell?: {

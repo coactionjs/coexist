@@ -14,7 +14,7 @@ import {
   type InjectionToken as CoSystemToken,
   type WorkerClient,
   type WorkerStateSelector,
-} from "@cosystem/core";
+} from "@coexist/core";
 
 export interface InjectSignalOptions<T> {
   readonly equals?: (value: T, previous: T) => boolean;

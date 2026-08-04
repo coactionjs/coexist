@@ -25,7 +25,7 @@ let server;
 
 try {
   const catalog = await readCatalog();
-  const coreTarball = await packPackage("@cosystem/core");
+  const coreTarball = await packPackage("@coexist/core");
 
   await writeConsumerProject(coreTarball, catalog);
   await run("pnpm", ["install", "--prefer-offline", "--no-frozen-lockfile"], consumerDir);
@@ -45,7 +45,7 @@ try {
 }
 
 async function packPackage(name) {
-  const packageDir = join(packagesDir, name.slice("@cosystem/".length));
+  const packageDir = join(packagesDir, name.slice("@coexist/".length));
   const destination = join(tarballsDir, name.replaceAll("@", "").replaceAll("/", "__"));
 
   await mkdir(destination, { recursive: true });
@@ -74,7 +74,7 @@ async function writeConsumerProject(coreTarball, catalog) {
           typecheck: "tsc -p tsconfig.json --noEmit",
         },
         dependencies: {
-          "@cosystem/core": `file:${coreTarball}`,
+          "@coexist/core": `file:${coreTarball}`,
           coaction: readCatalogVersion(catalog, "coaction"),
         },
         devDependencies: {
@@ -96,7 +96,7 @@ async function writeConsumerProject(coreTarball, catalog) {
       '  "@parcel/watcher": true',
       "  esbuild: true",
       "overrides:",
-      `  "@cosystem/core": ${JSON.stringify(`file:${coreTarball}`)}`,
+      `  "@coexist/core": ${JSON.stringify(`file:${coreTarball}`)}`,
       `  "coaction": ${JSON.stringify(readCatalogVersion(catalog, "coaction"))}`,
       `  "typescript": ${JSON.stringify(readCatalogVersion(catalog, "typescript"))}`,
       `  "vite": ${JSON.stringify(readCatalogVersion(catalog, "vite"))}`,
@@ -165,7 +165,7 @@ function createBrowserSource() {
   type AsyncMethodProxy,
   type WorkerAppHost,
   type WorkerClient,
-} from "@cosystem/core";
+} from "@coexist/core";
 
 interface BroadcastCounterApi {
   increase(step?: number): number;

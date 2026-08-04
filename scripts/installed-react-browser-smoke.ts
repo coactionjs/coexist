@@ -25,8 +25,8 @@ let server;
 
 try {
   const catalog = await readCatalog();
-  const coreTarball = await packPackage("@cosystem/core");
-  const reactTarball = await packPackage("@cosystem/react");
+  const coreTarball = await packPackage("@coexist/core");
+  const reactTarball = await packPackage("@coexist/react");
 
   await writeConsumerProject(coreTarball, reactTarball, catalog);
   await run("pnpm", ["install", "--prefer-offline", "--no-frozen-lockfile"], consumerDir);
@@ -46,7 +46,7 @@ try {
 }
 
 async function packPackage(name) {
-  const packageDir = join(packagesDir, name.slice("@cosystem/".length));
+  const packageDir = join(packagesDir, name.slice("@coexist/".length));
   const destination = join(tarballsDir, name.replaceAll("@", "").replaceAll("/", "__"));
 
   await mkdir(destination, { recursive: true });
@@ -75,8 +75,8 @@ async function writeConsumerProject(coreTarball, reactTarball, catalog) {
           typecheck: "tsc -p tsconfig.json --noEmit",
         },
         dependencies: {
-          "@cosystem/core": `file:${coreTarball}`,
-          "@cosystem/react": `file:${reactTarball}`,
+          "@coexist/core": `file:${coreTarball}`,
+          "@coexist/react": `file:${reactTarball}`,
           coaction: readCatalogVersion(catalog, "coaction"),
           react: readCatalogVersion(catalog, "react"),
           "react-dom": readCatalogVersion(catalog, "react-dom"),
@@ -102,8 +102,8 @@ async function writeConsumerProject(coreTarball, reactTarball, catalog) {
       '  "@parcel/watcher": true',
       "  esbuild: true",
       "overrides:",
-      `  "@cosystem/core": ${JSON.stringify(`file:${coreTarball}`)}`,
-      `  "@cosystem/react": ${JSON.stringify(`file:${reactTarball}`)}`,
+      `  "@coexist/core": ${JSON.stringify(`file:${coreTarball}`)}`,
+      `  "@coexist/react": ${JSON.stringify(`file:${reactTarball}`)}`,
       `  "@types/react": ${JSON.stringify(readCatalogVersion(catalog, "@types/react"))}`,
       `  "@types/react-dom": ${JSON.stringify(readCatalogVersion(catalog, "@types/react-dom"))}`,
       `  "coaction": ${JSON.stringify(readCatalogVersion(catalog, "coaction"))}`,
@@ -160,8 +160,8 @@ async function writeConsumerProject(coreTarball, reactTarball, catalog) {
 function createBrowserSource() {
   return `import { createElement, useRef, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { createApp, defineModule, type App } from "@cosystem/core";
-import { CoSystemProvider, useApp, useModule, useSelector } from "@cosystem/react";
+import { createApp, defineModule, type App } from "@coexist/core";
+import { CoSystemProvider, useApp, useModule, useSelector } from "@coexist/react";
 
 type SmokeSnapshot = {
   readonly count: number;

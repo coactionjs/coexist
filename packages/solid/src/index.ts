@@ -15,7 +15,7 @@ import {
   type InjectionToken,
   type WorkerClient,
   type WorkerStateSelector,
-} from "@cosystem/core";
+} from "@coexist/core";
 
 export interface CoSystemProviderProps {
   readonly app: App;

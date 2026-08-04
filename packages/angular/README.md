@@ -1,4 +1,4 @@
-# @cosystem/angular
+# @coexist/angular
 
 > Angular bindings for [CoSystem](../../README.md): an environment provider and
 > `inject*` helpers that expose a CoSystem app (or a worker-hosted app) as
@@ -7,7 +7,7 @@
 ## Installation
 
 ```sh
-pnpm add @cosystem/angular @cosystem/core
+pnpm add @coexist/angular @coexist/core
 ```
 
 Peer dependency: `@angular/core` `>=17 <23`.
@@ -20,7 +20,7 @@ module and signals inside components.
 ```ts
 import { Component } from "@angular/core";
 import { bootstrapApplication } from "@angular/platform-browser";
-import { injectModule, injectSignal, provideCoSystem } from "@cosystem/angular";
+import { injectModule, injectSignal, provideCoSystem } from "@coexist/angular";
 
 @Component({
   selector: "counter-view",
@@ -57,7 +57,7 @@ automatically through `DestroyRef`. It must run in an injection context.
 ```ts
 import { Component } from "@angular/core";
 import { bootstrapApplication } from "@angular/platform-browser";
-import { injectWorkerModule, injectWorkerSignal, provideWorkerClient } from "@cosystem/angular";
+import { injectWorkerModule, injectWorkerSignal, provideWorkerClient } from "@coexist/angular";
 
 type CounterState = { readonly counter: { readonly count: number } };
 

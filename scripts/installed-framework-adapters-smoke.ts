@@ -17,12 +17,12 @@ const tarballsDir = join(tempDir, "tarballs");
 const consumerDir = join(tempDir, "consumer");
 const tscBin = join(rootDir, "node_modules/.bin/tsc");
 const packageNames = [
-  "@cosystem/angular",
-  "@cosystem/core",
-  "@cosystem/react",
-  "@cosystem/solid",
-  "@cosystem/svelte",
-  "@cosystem/vue",
+  "@coexist/angular",
+  "@coexist/core",
+  "@coexist/react",
+  "@coexist/solid",
+  "@coexist/svelte",
+  "@coexist/vue",
 ];
 
 try {
@@ -48,7 +48,7 @@ try {
 }
 
 async function packPackage(name) {
-  const packageDir = join(packagesDir, name.slice("@cosystem/".length));
+  const packageDir = join(packagesDir, name.slice("@coexist/".length));
   const destination = join(tarballsDir, name.replaceAll("@", "").replaceAll("/", "__"));
 
   await mkdir(destination, { recursive: true });
@@ -156,32 +156,32 @@ function sortObject(value) {
 }
 
 function createTypeConsumerSource() {
-  return `import { createApp, defineModule, type App } from "@cosystem/core";
+  return `import { createApp, defineModule, type App } from "@coexist/core";
 import {
   injectModule as injectAngularModule,
   injectSignal as injectAngularSignal,
   provideCoSystem as provideAngularCoSystem,
-} from "@cosystem/angular";
+} from "@coexist/angular";
 import {
   CoSystemProvider as ReactCoSystemProvider,
   useModule as useReactModule,
   useSelector as useReactSelector,
-} from "@cosystem/react";
+} from "@coexist/react";
 import {
   CoSystemProvider as SolidCoSystemProvider,
   useComputed as useSolidComputed,
   useModule as useSolidModule,
-} from "@cosystem/solid";
+} from "@coexist/solid";
 import {
   moduleStore as svelteModuleStore,
   selectedModuleStore as selectedSvelteModuleStore,
   setCoSystemApp,
-} from "@cosystem/svelte";
+} from "@coexist/svelte";
 import {
   provideCoSystem as provideVueCoSystem,
   useComputed as useVueComputed,
   useModule as useVueModule,
-} from "@cosystem/vue";
+} from "@coexist/vue";
 import type { Signal } from "@angular/core";
 import type { Accessor } from "solid-js";
 import type { Readable } from "svelte/store";
@@ -263,33 +263,33 @@ import { act, create } from "react-test-renderer";
 import { createRoot, getOwner, runWithOwner } from "solid-js";
 import { get } from "svelte/store";
 import { createSSRApp, defineComponent, h } from "vue";
-import { createApp, defineModule } from "@cosystem/core";
+import { createApp, defineModule } from "@coexist/core";
 import {
   injectModule as injectAngularModule,
   injectSignal as injectAngularSignal,
   provideCoSystem as provideAngularCoSystem,
-} from "@cosystem/angular";
+} from "@coexist/angular";
 import {
   CoSystemProvider as ReactCoSystemProvider,
   useModule as useReactModule,
   useSelector as useReactSelector,
-} from "@cosystem/react";
+} from "@coexist/react";
 import {
   CoSystemProvider as SolidCoSystemProvider,
   useComputed as useSolidComputed,
   useModule as useSolidModule,
-} from "@cosystem/solid";
+} from "@coexist/solid";
 import {
   clearCoSystemApp,
   moduleStore as svelteModuleStore,
   selectedModuleStore as selectedSvelteModuleStore,
   setCoSystemApp,
-} from "@cosystem/svelte";
+} from "@coexist/svelte";
 import {
   provideCoSystem as provideVueCoSystem,
   useComputed as useVueComputed,
   useModule as useVueModule,
-} from "@cosystem/vue";
+} from "@coexist/vue";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 

@@ -6,7 +6,7 @@ import type {
   InjectionToken,
   WorkerClient,
   WorkerStateSelector,
-} from "@cosystem/core";
+} from "@coexist/core";
 
 import { getCoSystemApp, getWorkerClient } from "./index.js";
 

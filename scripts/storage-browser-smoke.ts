@@ -24,8 +24,8 @@ let server;
 
 try {
   const catalog = await readCatalog();
-  const coreTarball = await packPackage("@cosystem/core");
-  const storageTarball = await packPackage("@cosystem/storage");
+  const coreTarball = await packPackage("@coexist/core");
+  const storageTarball = await packPackage("@coexist/storage");
 
   await writeConsumerProject(coreTarball, storageTarball, catalog);
   await run("pnpm", ["install", "--prefer-offline", "--no-frozen-lockfile"], consumerDir);
@@ -45,7 +45,7 @@ try {
 }
 
 async function packPackage(name) {
-  const packageDir = join(packagesDir, name.slice("@cosystem/".length));
+  const packageDir = join(packagesDir, name.slice("@coexist/".length));
   const destination = join(tarballsDir, name.replaceAll("@", "").replaceAll("/", "__"));
 
   await mkdir(destination, { recursive: true });
@@ -74,8 +74,8 @@ async function writeConsumerProject(coreTarball, storageTarball, catalog) {
           typecheck: "tsc -p tsconfig.json --noEmit",
         },
         dependencies: {
-          "@cosystem/core": `file:${coreTarball}`,
-          "@cosystem/storage": `file:${storageTarball}`,
+          "@coexist/core": `file:${coreTarball}`,
+          "@coexist/storage": `file:${storageTarball}`,
           coaction: readCatalogVersion(catalog, "coaction"),
           localspace: readCatalogVersion(catalog, "localspace"),
         },
@@ -98,8 +98,8 @@ async function writeConsumerProject(coreTarball, storageTarball, catalog) {
       '  "@parcel/watcher": true',
       "  esbuild: true",
       "overrides:",
-      `  "@cosystem/core": ${JSON.stringify(`file:${coreTarball}`)}`,
-      `  "@cosystem/storage": ${JSON.stringify(`file:${storageTarball}`)}`,
+      `  "@coexist/core": ${JSON.stringify(`file:${coreTarball}`)}`,
+      `  "@coexist/storage": ${JSON.stringify(`file:${storageTarball}`)}`,
       `  "coaction": ${JSON.stringify(readCatalogVersion(catalog, "coaction"))}`,
       `  "localspace": ${JSON.stringify(readCatalogVersion(catalog, "localspace"))}`,
       `  "typescript": ${JSON.stringify(readCatalogVersion(catalog, "typescript"))}`,
@@ -159,12 +159,12 @@ async function writeConsumerProject(coreTarball, storageTarball, catalog) {
 }
 
 function createBrowserSource() {
-  return `import { createApp, defineModule } from "@cosystem/core";
+  return `import { createApp, defineModule } from "@coexist/core";
 import {
   createLocalSpaceStoragePlugin,
   localStorageDriver,
   type LocalSpaceStoragePlugin,
-} from "@cosystem/storage";
+} from "@coexist/storage";
 
 type AppState = {
   readonly storageBrowserCounter?: {

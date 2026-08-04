@@ -1,4 +1,4 @@
-# @cosystem/router
+# @coexist/router
 
 > Embeddable router primitives for [CoSystem](../../README.md): a tiny `Router`
 > interface, browser/memory implementations, a `RouterToken`, and a plugin that
@@ -12,7 +12,7 @@ to the current location.
 ## Installation
 
 ```sh
-pnpm add @cosystem/router @cosystem/core
+pnpm add @coexist/router @coexist/core
 ```
 
 ## Quick start
@@ -23,8 +23,8 @@ import {
   createBrowserRouter,
   createMemoryRouter,
   createRouterPlugin,
-} from "@cosystem/router";
-import { createApp } from "@cosystem/core";
+} from "@coexist/router";
+import { createApp } from "@coexist/core";
 
 const router =
   typeof window === "undefined" ? createMemoryRouter({ initialPath: "/" }) : createBrowserRouter();

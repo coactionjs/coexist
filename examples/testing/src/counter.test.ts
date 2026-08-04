@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { defineModule, provide } from "@cosystem/core";
-import { testApp, type TestApp } from "@cosystem/testing";
+import { defineModule, provide } from "@coexist/core";
+import { testApp, type TestApp } from "@coexist/testing";
 
 abstract class Logger {
   abstract info(message: string): void;

@@ -1,4 +1,4 @@
-# @cosystem/integration
+# @coexist/integration
 
 ## 0.1.0
 
@@ -33,12 +33,12 @@
 - Updated dependencies [e3c3fff]
 - Updated dependencies [f9c4c3c]
 - Updated dependencies [71e762e]
-  - @cosystem/core@0.2.0
-  - @cosystem/router@0.2.0
-  - @cosystem/storage@0.2.0
-  - @cosystem/angular@0.2.0
-  - @cosystem/devtools@0.2.0
-  - @cosystem/react@0.2.0
-  - @cosystem/solid@0.2.0
-  - @cosystem/svelte@0.2.0
-  - @cosystem/vue@0.2.0
+  - @coexist/core@0.2.0
+  - @coexist/router@0.2.0
+  - @coexist/storage@0.2.0
+  - @coexist/angular@0.2.0
+  - @coexist/devtools@0.2.0
+  - @coexist/react@0.2.0
+  - @coexist/solid@0.2.0
+  - @coexist/svelte@0.2.0
+  - @coexist/vue@0.2.0

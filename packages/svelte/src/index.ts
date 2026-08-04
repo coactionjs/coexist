@@ -8,7 +8,7 @@ import {
   type InjectionToken,
   type WorkerClient,
   type WorkerStateSelector,
-} from "@cosystem/core";
+} from "@coexist/core";
 
 export interface SelectorStoreOptions<T> {
   readonly equals?: (value: T, previous: T) => boolean;

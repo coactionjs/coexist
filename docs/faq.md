@@ -66,20 +66,20 @@ unchanged; only where it runs differs. Method calls become async. Each adapter h
 
 ## How do I persist state?
 
-Add the [`@cosystem/storage`](../packages/storage/README.md) plugin. It hydrates on
+Add the [`@coexist/storage`](../packages/storage/README.md) plugin. It hydrates on
 startup (awaited by `start()`) and persists changes to any sync/async backend,
 with `partialize`/`merge`/`shouldPersist` hooks. See [Plugins](./plugins.md).
 
 ## Is there a router?
 
-[`@cosystem/router`](../packages/router/README.md) provides minimal router
+[`@coexist/router`](../packages/router/README.md) provides minimal router
 primitives (browser/memory routers), a `RouterToken` you can inject, and a plugin
 that bridges navigation into the app lifecycle. It does **not** match routes or
 render views — pair it with your UI. See [Plugins](./plugins.md).
 
 ## How do I debug what the app is doing?
 
-Use [`@cosystem/devtools`](../packages/devtools/README.md) to record a timeline of
+Use [`@coexist/devtools`](../packages/devtools/README.md) to record a timeline of
 setup, module creation, actions, patches, state changes, and errors, and subscribe
 to it. The [`createLoggerPlugin`](../packages/core/README.md#logger-plugin) prints
 actions and errors. In tests, the `testApp` inspector exposes recorded actions,
@@ -97,7 +97,7 @@ by each framework's own tooling, not by CoSystem.
 CoSystem is ESM-only and targets modern runtimes. For decorators you need a
 toolchain supporting TC39 decorators and the `accessor` keyword; otherwise use
 `defineModule()`. The repo's shared config is
-[`@cosystem/tsconfig`](../packages/tsconfig/README.md).
+[`@coexist/tsconfig`](../packages/tsconfig/README.md).
 
 ## Where do I report issues or contribute?
 

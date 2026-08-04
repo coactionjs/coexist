@@ -1,4 +1,4 @@
-# @cosystem/devtools
+# @coexist/devtools
 
 > Timeline inspection plugin for [CoSystem](../../README.md): records a
 > chronological log of app setup, module creation, actions, patches, state
@@ -10,14 +10,14 @@ read the timeline. Build your own UI on top, or pipe it into logging.
 ## Installation
 
 ```sh
-pnpm add -D @cosystem/devtools
+pnpm add -D @coexist/devtools
 ```
 
 ## Quick start
 
 ```ts
-import { createApp } from "@cosystem/core";
-import { createDevtoolsPlugin } from "@cosystem/devtools";
+import { createApp } from "@coexist/core";
+import { createDevtoolsPlugin } from "@coexist/devtools";
 
 const devtools = createDevtoolsPlugin();
 

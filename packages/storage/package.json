@@ -1,5 +1,5 @@
 {
-  "name": "@cosystem/storage",
+  "name": "@coexist/storage",
   "version": "0.2.0",
   "description": "Persistence plugin for CoSystem.",
   "license": "MIT",
@@ -28,16 +28,16 @@
     "build": "tsdown",
     "clean": "rm -rf coverage dist .turbo",
     "dev": "tsdown --watch",
-    "test": "cd ../.. && vitest run --project @cosystem/storage",
-    "test:coverage": "cd ../.. && vitest run --coverage --project @cosystem/storage",
+    "test": "cd ../.. && vitest run --project @coexist/storage",
+    "test:coverage": "cd ../.. && vitest run --coverage --project @coexist/storage",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@cosystem/core": "workspace:*",
+    "@coexist/core": "workspace:*",
     "localspace": "catalog:"
   },
   "devDependencies": {
-    "@cosystem/tsconfig": "workspace:*",
+    "@coexist/tsconfig": "workspace:*",
     "tsdown": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"

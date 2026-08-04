@@ -1,17 +1,17 @@
-# @cosystem/svelte
+# @coexist/svelte
 
 > Svelte bindings for [CoSystem](../../README.md): readable stores (Svelte 4+)
 > and rune-friendly helpers (Svelte 5) for consuming a CoSystem app or a
 > worker-hosted app.
 
 The package root exports the store-based API, which works in Svelte 4 and 5. A
-separate `@cosystem/svelte/runes` subpath exports Svelte 5 rune helpers, so the
+separate `@coexist/svelte/runes` subpath exports Svelte 5 rune helpers, so the
 main store contract stays unchanged for Svelte 4 users.
 
 ## Installation
 
 ```sh
-pnpm add @cosystem/svelte @cosystem/core
+pnpm add @coexist/svelte @coexist/core
 ```
 
 Peer dependency: `svelte` `>=4 || >=5`.
@@ -22,7 +22,7 @@ Register the app once (globally, or per component tree via context), then create
 readable stores and use the `$store` auto-subscription syntax.
 
 ```ts
-import { moduleStore, selectedModuleStore, setCoSystemApp } from "@cosystem/svelte";
+import { moduleStore, selectedModuleStore, setCoSystemApp } from "@coexist/svelte";
 
 setCoSystemApp(app); // or setCoSystemContext(app) inside a component
 
@@ -49,7 +49,7 @@ Selector stores accept `{ equals, app }`; `getCoSystemApp()` throws a
 ## Runes (Svelte 5)
 
 ```ts
-import { moduleRune, selectedModuleRune } from "@cosystem/svelte/runes";
+import { moduleRune, selectedModuleRune } from "@coexist/svelte/runes";
 
 const counter = moduleRune(Counter, { app });
 const count = selectedModuleRune(Counter, (module) => module.count, { app });
@@ -68,7 +68,7 @@ omitted they fall back to `getCoSystemApp()`. `selectorRune`, `moduleRune`, and
 Stores:
 
 ```ts
-import { setWorkerClient, workerModuleStore, workerSelectorStore } from "@cosystem/svelte";
+import { setWorkerClient, workerModuleStore, workerSelectorStore } from "@coexist/svelte";
 
 type CounterState = { readonly counter: { readonly count: number } };
 
@@ -81,7 +81,7 @@ const count = workerSelectorStore((state) => (state as CounterState).counter.cou
 Runes:
 
 ```ts
-import { workerModuleRune, workerSelectorRune } from "@cosystem/svelte/runes";
+import { workerModuleRune, workerSelectorRune } from "@coexist/svelte/runes";
 
 const counter = workerModuleRune<Counter>("counter", { client });
 const count = workerSelectorRune((state) => (state as CounterState).counter.count, { client });

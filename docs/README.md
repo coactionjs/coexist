@@ -40,7 +40,7 @@ table). For runnable demos, see [`examples/`](../examples).
 
 ## Conventions in these docs
 
-- Code samples use `@cosystem/core` imports unless a UI adapter is shown.
+- Code samples use `@coexist/core` imports unless a UI adapter is shown.
 - The recurring `Counter` example is the same one used across [`examples/`](../examples),
   so you can map a guide to a runnable project.
 - "The store" always means the single Coaction-backed app store — CoSystem does

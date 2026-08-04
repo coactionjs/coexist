@@ -46,7 +46,7 @@ export default defineConfig({
         extends: true,
         test: {
           include: ["src/**/*.test.ts"],
-          name: "@cosystem/angular",
+          name: "@coexist/angular",
           root: "./packages/angular",
         },
       },
@@ -54,7 +54,7 @@ export default defineConfig({
         extends: true,
         test: {
           include: ["src/**/*.test.ts"],
-          name: "@cosystem/core",
+          name: "@coexist/core",
           root: "./packages/core",
         },
       },
@@ -62,7 +62,7 @@ export default defineConfig({
         extends: true,
         test: {
           include: ["src/**/*.test.ts"],
-          name: "@cosystem/create",
+          name: "@coexist/create",
           root: "./packages/create",
         },
       },
@@ -70,7 +70,7 @@ export default defineConfig({
         extends: true,
         test: {
           include: ["src/**/*.test.ts"],
-          name: "@cosystem/devtools",
+          name: "@coexist/devtools",
           root: "./packages/devtools",
         },
       },
@@ -78,7 +78,7 @@ export default defineConfig({
         extends: true,
         test: {
           include: ["src/**/*.test.ts"],
-          name: "@cosystem/integration",
+          name: "@coexist/integration",
           root: "./packages/integration",
         },
       },
@@ -86,7 +86,7 @@ export default defineConfig({
         extends: true,
         test: {
           include: ["src/**/*.test.ts"],
-          name: "@cosystem/react",
+          name: "@coexist/react",
           root: "./packages/react",
         },
       },
@@ -94,7 +94,7 @@ export default defineConfig({
         extends: true,
         test: {
           include: ["src/**/*.test.ts"],
-          name: "@cosystem/router",
+          name: "@coexist/router",
           root: "./packages/router",
         },
       },
@@ -102,7 +102,7 @@ export default defineConfig({
         extends: true,
         test: {
           include: ["src/**/*.test.ts"],
-          name: "@cosystem/solid",
+          name: "@coexist/solid",
           root: "./packages/solid",
         },
       },
@@ -110,7 +110,7 @@ export default defineConfig({
         extends: true,
         test: {
           include: ["src/**/*.test.ts"],
-          name: "@cosystem/storage",
+          name: "@coexist/storage",
           root: "./packages/storage",
         },
       },
@@ -118,7 +118,7 @@ export default defineConfig({
         extends: true,
         test: {
           include: ["src/**/*.test.ts"],
-          name: "@cosystem/svelte",
+          name: "@coexist/svelte",
           root: "./packages/svelte",
         },
       },
@@ -126,7 +126,7 @@ export default defineConfig({
         extends: true,
         test: {
           include: ["src/**/*.test.ts"],
-          name: "@cosystem/testing",
+          name: "@coexist/testing",
           root: "./packages/testing",
         },
       },
@@ -134,7 +134,7 @@ export default defineConfig({
         extends: true,
         test: {
           include: ["src/**/*.test.ts"],
-          name: "@cosystem/example-testing",
+          name: "@coexist/example-testing",
           root: "./examples/testing",
         },
       },
@@ -142,7 +142,7 @@ export default defineConfig({
         extends: true,
         test: {
           include: ["src/**/*.test.ts"],
-          name: "@cosystem/vue",
+          name: "@coexist/vue",
           root: "./packages/vue",
         },
       },

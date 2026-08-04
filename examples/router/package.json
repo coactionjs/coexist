@@ -1,5 +1,5 @@
 {
-  "name": "@cosystem/example-router",
+  "name": "@coexist/example-router",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -10,8 +10,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@cosystem/core": "workspace:*",
-    "@cosystem/router": "workspace:*"
+    "@coexist/core": "workspace:*",
+    "@coexist/router": "workspace:*"
   },
   "devDependencies": {
     "typescript": "catalog:",

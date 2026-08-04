@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { createApp } from "@cosystem/core";
+import { createApp } from "@coexist/core";
 
 import { clearCoSystemApp, getCoSystemApp, setCoSystemApp, setCoSystemContext } from "./index.js";
 

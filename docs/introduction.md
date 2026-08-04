@@ -78,13 +78,13 @@ Worker — the business logic never changes.
 Application code
   │ uses
   ▼
-@cosystem/core ──────────────── createApp(), DI, modules, store, lifecycle, plugins
+@coexist/core ──────────────── createApp(), DI, modules, store, lifecycle, plugins
   │ uses
   ▼
 coaction ────────────────────── signals, computed caching, mutative updates, transport/worker sync
   │ consumed by
   ▼
-@cosystem/react · @cosystem/vue · @cosystem/svelte · @cosystem/solid · @cosystem/angular
+@coexist/react · @coexist/vue · @coexist/svelte · @coexist/solid · @coexist/angular
 ```
 
 The core runtime never imports a UI framework, and it never mounts UI. Coaction

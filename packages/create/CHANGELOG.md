@@ -1,4 +1,4 @@
-# @cosystem/create
+# @coexist/create
 
 ## 0.1.0
 

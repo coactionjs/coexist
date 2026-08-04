@@ -6,7 +6,7 @@ import type {
   PatchEvent,
   Plugin,
   StateChangeEvent,
-} from "@cosystem/core";
+} from "@coexist/core";
 
 export type DevtoolsTimelineEvent =
   | {

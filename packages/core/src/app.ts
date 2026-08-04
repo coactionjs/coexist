@@ -262,7 +262,7 @@ interface DetachedDraftContext {
   readonly drafts: Map<ModuleBinding, Record<PropertyKey, unknown>>;
 }
 
-const runtimeModuleMetadataKey = Symbol.for("@cosystem/core/runtimeModule");
+const runtimeModuleMetadataKey = Symbol.for("@coexist/core/runtimeModule");
 const appContainerMap = new WeakMap<App, Container>();
 const appRuntimeMap = new WeakMap<App, RuntimeApp>();
 const appManagedExecutionContext = createRuntimeAsyncContext<AppManagedExecution>();

@@ -25,8 +25,8 @@ let server;
 
 try {
   const catalog = await readCatalog();
-  const coreTarball = await packPackage("@cosystem/core");
-  const vueTarball = await packPackage("@cosystem/vue");
+  const coreTarball = await packPackage("@coexist/core");
+  const vueTarball = await packPackage("@coexist/vue");
 
   await writeConsumerProject(coreTarball, vueTarball, catalog);
   await run("pnpm", ["install", "--prefer-offline", "--no-frozen-lockfile"], consumerDir);
@@ -46,7 +46,7 @@ try {
 }
 
 async function packPackage(name) {
-  const packageDir = join(packagesDir, name.slice("@cosystem/".length));
+  const packageDir = join(packagesDir, name.slice("@coexist/".length));
   const destination = join(tarballsDir, name.replaceAll("@", "").replaceAll("/", "__"));
 
   await mkdir(destination, { recursive: true });
@@ -75,8 +75,8 @@ async function writeConsumerProject(coreTarball, vueTarball, catalog) {
           typecheck: "tsc -p tsconfig.json --noEmit",
         },
         dependencies: {
-          "@cosystem/core": `file:${coreTarball}`,
-          "@cosystem/vue": `file:${vueTarball}`,
+          "@coexist/core": `file:${coreTarball}`,
+          "@coexist/vue": `file:${vueTarball}`,
           coaction: readCatalogVersion(catalog, "coaction"),
           vue: readCatalogVersion(catalog, "vue"),
         },
@@ -99,8 +99,8 @@ async function writeConsumerProject(coreTarball, vueTarball, catalog) {
       '  "@parcel/watcher": true',
       "  esbuild: true",
       "overrides:",
-      `  "@cosystem/core": ${JSON.stringify(`file:${coreTarball}`)}`,
-      `  "@cosystem/vue": ${JSON.stringify(`file:${vueTarball}`)}`,
+      `  "@coexist/core": ${JSON.stringify(`file:${coreTarball}`)}`,
+      `  "@coexist/vue": ${JSON.stringify(`file:${vueTarball}`)}`,
       `  "coaction": ${JSON.stringify(readCatalogVersion(catalog, "coaction"))}`,
       `  "typescript": ${JSON.stringify(readCatalogVersion(catalog, "typescript"))}`,
       `  "vite": ${JSON.stringify(readCatalogVersion(catalog, "vite"))}`,
@@ -152,8 +152,8 @@ async function writeConsumerProject(coreTarball, vueTarball, catalog) {
 }
 
 function createBrowserSource() {
-  return `import { createApp as createCoSystemApp, defineModule, type App } from "@cosystem/core";
-import { cosystemPlugin, useApp, useComputed, useModule, useSelector } from "@cosystem/vue";
+  return `import { createApp as createCoSystemApp, defineModule, type App } from "@coexist/core";
+import { cosystemPlugin, useApp, useComputed, useModule, useSelector } from "@coexist/vue";
 import { createApp as createVueApp, defineComponent, h, ref } from "vue";
 
 type SmokeSnapshot = {

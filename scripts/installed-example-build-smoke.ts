@@ -403,7 +403,7 @@ async function assertExampleBuild(example) {
     await assertNonEmptyFile(example, join(distDir, reference));
   }
 
-  if (example.name === "@cosystem/example-worker-counter") {
+  if (example.name === "@coexist/example-worker-counter") {
     assertHasMatchingFile(
       example,
       distFiles,
@@ -411,7 +411,7 @@ async function assertExampleBuild(example) {
     );
   }
 
-  if (example.name === "@cosystem/example-lazy-module") {
+  if (example.name === "@coexist/example-lazy-module") {
     assertHasMatchingFile(
       example,
       distFiles,

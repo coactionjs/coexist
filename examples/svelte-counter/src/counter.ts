@@ -1,4 +1,4 @@
-import { createApp, defineModule } from "@cosystem/core";
+import { createApp, defineModule } from "@coexist/core";
 
 export class Counter {
   count = 0;

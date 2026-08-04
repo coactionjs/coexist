@@ -124,7 +124,7 @@ of the action's transaction. Writes **after an `await`** are no longer inside th
 original boundary, so in strict mode they need a fresh one. Use `runInAction`:
 
 ```ts
-import { runInAction } from "@cosystem/core";
+import { runInAction } from "@coexist/core";
 
 class Counter {
   @State accessor count = 0;

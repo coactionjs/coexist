@@ -1,24 +1,24 @@
-# @cosystem/testing
+# @coexist/testing
 
 > Testing helper facade for [CoSystem](../../README.md). Re-exports `testApp`
-> and its types from [`@cosystem/core`](../core) under a dedicated, intention-
+> and its types from [`@coexist/core`](../core) under a dedicated, intention-
 > revealing import for test files.
 
-Importing `testApp` from `@cosystem/testing` keeps test setup separate from
-production imports. The behavior is identical to `@cosystem/core`'s `testApp`.
+Importing `testApp` from `@coexist/testing` keeps test setup separate from
+production imports. The behavior is identical to `@coexist/core`'s `testApp`.
 
 ## Installation
 
 ```sh
-pnpm add -D @cosystem/testing
+pnpm add -D @coexist/testing
 ```
 
 ## Usage
 
 ```ts
 import { afterEach, describe, expect, it } from "vitest";
-import { defineModule, provide } from "@cosystem/core";
-import { testApp, type TestApp } from "@cosystem/testing";
+import { defineModule, provide } from "@coexist/core";
+import { testApp, type TestApp } from "@coexist/testing";
 
 abstract class Logger {
   abstract info(message: string): void;

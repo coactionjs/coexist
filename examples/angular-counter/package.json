@@ -1,5 +1,5 @@
 {
-  "name": "@cosystem/example-angular-counter",
+  "name": "@coexist/example-angular-counter",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -14,8 +14,8 @@
     "@angular/compiler": "catalog:",
     "@angular/core": "catalog:",
     "@angular/platform-browser": "catalog:",
-    "@cosystem/angular": "workspace:*",
-    "@cosystem/core": "workspace:*",
+    "@coexist/angular": "workspace:*",
+    "@coexist/core": "workspace:*",
     "rxjs": "catalog:",
     "zone.js": "catalog:"
   },

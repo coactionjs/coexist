@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createApp, defineModule } from "@cosystem/core";
+import { createApp, defineModule } from "@coexist/core";
 
 import { createDevtoolsPlugin } from "./index.js";
 

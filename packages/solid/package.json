@@ -1,5 +1,5 @@
 {
-  "name": "@cosystem/solid",
+  "name": "@coexist/solid",
   "version": "0.2.0",
   "description": "Solid adapter for CoSystem.",
   "license": "MIT",
@@ -28,15 +28,15 @@
     "build": "tsdown",
     "clean": "rm -rf coverage dist .turbo",
     "dev": "tsdown --watch",
-    "test": "cd ../.. && vitest run --project @cosystem/solid",
-    "test:coverage": "cd ../.. && vitest run --coverage --project @cosystem/solid",
+    "test": "cd ../.. && vitest run --project @coexist/solid",
+    "test:coverage": "cd ../.. && vitest run --coverage --project @coexist/solid",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@cosystem/core": "workspace:*"
+    "@coexist/core": "workspace:*"
   },
   "devDependencies": {
-    "@cosystem/tsconfig": "workspace:*",
+    "@coexist/tsconfig": "workspace:*",
     "solid-js": "catalog:",
     "tsdown": "catalog:",
     "typescript": "catalog:",

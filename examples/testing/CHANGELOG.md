@@ -1,4 +1,4 @@
-# @cosystem/example-testing
+# @coexist/example-testing
 
 ## 0.1.0
 
@@ -30,5 +30,5 @@
 - Updated dependencies [e3c3fff]
 - Updated dependencies [f9c4c3c]
 - Updated dependencies [71e762e]
-  - @cosystem/core@0.2.0
-  - @cosystem/testing@0.2.0
+  - @coexist/core@0.2.0
+  - @coexist/testing@0.2.0

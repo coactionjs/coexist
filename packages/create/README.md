@@ -1,8 +1,8 @@
-# @cosystem/create
+# @coexist/create
 
 > Project scaffolding for [CoSystem](../../README.md). Ships the
-> `create-cosystem` CLI and a programmatic `createCosystemProject()` API that
-> generate a minimal `@cosystem/core` starter.
+> `create-coexist` CLI and a programmatic `createCosystemProject()` API that
+> generate a minimal `@coexist/core` starter.
 
 ## Usage
 
@@ -10,9 +10,9 @@ Scaffold a new project with your package manager's `create`/`dlx` command — no
 global install required:
 
 ```sh
-pnpm dlx @cosystem/create my-app
-# npm exec @cosystem/create -- my-app
-# yarn dlx @cosystem/create my-app
+pnpm dlx @coexist/create my-app
+# npm exec @coexist/create -- my-app
+# yarn dlx @coexist/create my-app
 
 cd my-app
 pnpm install
@@ -33,7 +33,7 @@ my-app/
 `src/main.ts` is a runnable starting point:
 
 ```ts
-import { createApp, defineModule } from "@cosystem/core";
+import { createApp, defineModule } from "@coexist/core";
 
 class Counter {
   count = 0;
@@ -52,7 +52,7 @@ console.log(app.store.getPureState());
 ## Programmatic API
 
 ```ts
-import { createCosystemProject } from "@cosystem/create";
+import { createCosystemProject } from "@coexist/create";
 
 const result = await createCosystemProject({
   root: "/abs/path/to/my-app",
@@ -73,7 +73,7 @@ Returns `{ root, files }`.
 
 ## Exports
 
-CLI bin `create-cosystem`; module exports `createCosystemProject` and the
+CLI bin `create-coexist`; module exports `createCosystemProject` and the
 `CreateCosystemProjectOptions`, `CreatedCosystemProject` types.
 
 ## License

@@ -28,7 +28,7 @@ type InjectionToken<T> = Token<T> | ClassToken<T> | string | symbol;
 - **A string or symbol** — handy for ad-hoc or cross-boundary keys.
 
 ```ts
-import { token } from "@cosystem/core";
+import { token } from "@coexist/core";
 
 interface Logger {
   info(message: string): void;
@@ -52,7 +52,7 @@ of:
    factory, or existing provider.
 
 ```ts
-import { createApp, provide, token } from "@cosystem/core";
+import { createApp, provide, token } from "@coexist/core";
 
 const Config = token<{ apiUrl: string }>("Config");
 
@@ -166,7 +166,7 @@ Register several providers under one token with `multi: true`, then read them
 all with `getAll()` (or `{ many: true }` in `deps`):
 
 ```ts
-import { createApp, provide, token, type Plugin } from "@cosystem/core";
+import { createApp, provide, token, type Plugin } from "@coexist/core";
 
 const PluginToken = token<Plugin>("Plugin");
 
@@ -202,7 +202,7 @@ Inside a factory or during provider construction you can resolve dependencies
 imperatively with `inject(token)`:
 
 ```ts
-import { inject, provide } from "@cosystem/core";
+import { inject, provide } from "@coexist/core";
 
 provide(Service, {
   useFactory: () => new Service(inject(Logger)),
@@ -318,4 +318,4 @@ All extend `CosystemError`:
 
 - [Modules](./modules.md) — how `@Module` providers bind to the store.
 - [Application Lifecycle](./application-lifecycle.md) — scopes and lazy modules.
-- [`@cosystem/core` reference](../packages/core/README.md) — the full export list.
+- [`@coexist/core` reference](../packages/core/README.md) — the full export list.

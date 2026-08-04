@@ -1,5 +1,5 @@
 {
-  "name": "@cosystem/example-react-counter",
+  "name": "@coexist/example-react-counter",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -10,8 +10,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@cosystem/core": "workspace:*",
-    "@cosystem/react": "workspace:*",
+    "@coexist/core": "workspace:*",
+    "@coexist/react": "workspace:*",
     "react": "catalog:",
     "react-dom": "catalog:"
   },

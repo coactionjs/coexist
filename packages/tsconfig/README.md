@@ -1,4 +1,4 @@
-# @cosystem/tsconfig
+# @coexist/tsconfig
 
 > Shared TypeScript configuration for the [CoSystem](../../README.md) monorepo.
 
@@ -20,7 +20,7 @@ Add the package as a dev dependency in a workspace package and extend a preset:
 ```jsonc
 // packages/<name>/tsconfig.json
 {
-  "extends": "@cosystem/tsconfig/library.json",
+  "extends": "@coexist/tsconfig/library.json",
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
@@ -32,7 +32,7 @@ Add the package as a dev dependency in a workspace package and extend a preset:
 ```jsonc
 // devDependencies
 {
-  "@cosystem/tsconfig": "workspace:*",
+  "@coexist/tsconfig": "workspace:*",
 }
 ```
 

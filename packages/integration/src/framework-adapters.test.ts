@@ -12,33 +12,33 @@ import { get, type Unsubscriber } from "svelte/store";
 import { createSSRApp, defineComponent, h, type Ref } from "vue";
 import { describe, expect, it } from "vitest";
 
-import { createApp, defineModule } from "@cosystem/core";
+import { createApp, defineModule } from "@coexist/core";
 import {
   CoSystemProvider as ReactCoSystemProvider,
   useModule as useReactModule,
   useSelector as useReactSelector,
-} from "@cosystem/react";
+} from "@coexist/react";
 import {
   CoSystemProvider as SolidCoSystemProvider,
   useComputed as useSolidComputed,
   useModule as useSolidModule,
-} from "@cosystem/solid";
+} from "@coexist/solid";
 import {
   clearCoSystemApp,
   moduleStore as svelteModuleStore,
   selectedModuleStore as selectedSvelteModuleStore,
   setCoSystemApp,
-} from "@cosystem/svelte";
+} from "@coexist/svelte";
 import {
   injectModule as injectAngularModule,
   injectSignal as injectAngularSignal,
   provideCoSystem as provideAngularCoSystem,
-} from "@cosystem/angular";
+} from "@coexist/angular";
 import {
   provideCoSystem as provideVueCoSystem,
   useComputed as useVueComputed,
   useModule as useVueModule,
-} from "@cosystem/vue";
+} from "@coexist/vue";
 
 class SharedCounter {
   count = 0;

@@ -137,7 +137,7 @@ async function writeConsumerProject(packages, tarballByName, catalog) {
     overrides[pkg.packageJson.name] = tarballSpec;
 
     for (const [name, range] of getRuntimeDependencyEntries(pkg.packageJson)) {
-      if (name.startsWith("@cosystem/")) {
+      if (name.startsWith("@coexist/")) {
         continue;
       }
 
@@ -238,22 +238,22 @@ function createWorkspaceSource(overrides, catalog) {
 }
 
 function createTypeConsumerSource() {
-  return `import { provideCoSystem, injectSignal } from "@cosystem/angular";
-import { createApp, defineModule, provide } from "@cosystem/core";
-import { createCosystemProject } from "@cosystem/create";
-import { createDevtoolsPlugin } from "@cosystem/devtools";
-import { CoSystemProvider, useSelector } from "@cosystem/react";
-import { createMemoryRouter, createRouterPlugin } from "@cosystem/router";
-import { CoSystemProvider as SolidCoSystemProvider, useComputed } from "@cosystem/solid";
+  return `import { provideCoSystem, injectSignal } from "@coexist/angular";
+import { createApp, defineModule, provide } from "@coexist/core";
+import { createCosystemProject } from "@coexist/create";
+import { createDevtoolsPlugin } from "@coexist/devtools";
+import { CoSystemProvider, useSelector } from "@coexist/react";
+import { createMemoryRouter, createRouterPlugin } from "@coexist/router";
+import { CoSystemProvider as SolidCoSystemProvider, useComputed } from "@coexist/solid";
 import {
   createLocalSpaceStorage,
   createLocalSpaceStoragePlugin,
   type StorageService,
-} from "@cosystem/storage";
-import { moduleRune } from "@cosystem/svelte/runes";
-import { moduleStore, setCoSystemApp } from "@cosystem/svelte";
-import { testApp } from "@cosystem/testing";
-import { cosystemPlugin, useComputed as useVueComputed } from "@cosystem/vue";
+} from "@coexist/storage";
+import { moduleRune } from "@coexist/svelte/runes";
+import { moduleStore, setCoSystemApp } from "@coexist/svelte";
+import { testApp } from "@coexist/testing";
+import { cosystemPlugin, useComputed as useVueComputed } from "@coexist/vue";
 
 class Counter {
   count = 0;
@@ -300,18 +300,18 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 const requiredExports = {
-  "@cosystem/angular": ["provideCoSystem", "injectSignal"],
-  "@cosystem/core": ["createApp", "defineModule", "provide"],
-  "@cosystem/create": ["createCosystemProject"],
-  "@cosystem/devtools": ["createDevtoolsPlugin"],
-  "@cosystem/react": ["CoSystemProvider", "useSelector"],
-  "@cosystem/router": ["createMemoryRouter", "createRouterPlugin"],
-  "@cosystem/solid": ["CoSystemProvider", "useComputed"],
-  "@cosystem/storage": ["createLocalSpaceStorage", "createLocalSpaceStoragePlugin"],
-  "@cosystem/svelte": ["moduleStore", "setCoSystemApp"],
-  "@cosystem/svelte/runes": ["moduleRune"],
-  "@cosystem/testing": ["testApp"],
-  "@cosystem/vue": ["cosystemPlugin", "useComputed"],
+  "@coexist/angular": ["provideCoSystem", "injectSignal"],
+  "@coexist/core": ["createApp", "defineModule", "provide"],
+  "@coexist/create": ["createCosystemProject"],
+  "@coexist/devtools": ["createDevtoolsPlugin"],
+  "@coexist/react": ["CoSystemProvider", "useSelector"],
+  "@coexist/router": ["createMemoryRouter", "createRouterPlugin"],
+  "@coexist/solid": ["CoSystemProvider", "useComputed"],
+  "@coexist/storage": ["createLocalSpaceStorage", "createLocalSpaceStoragePlugin"],
+  "@coexist/svelte": ["moduleStore", "setCoSystemApp"],
+  "@coexist/svelte/runes": ["moduleRune"],
+  "@coexist/testing": ["testApp"],
+  "@coexist/vue": ["cosystemPlugin", "useComputed"],
 };
 const modules = {};
 
@@ -329,7 +329,7 @@ for (const [specifier, exports] of Object.entries(requiredExports)) {
 const {
   createApp,
   defineModule,
-} = modules["@cosystem/core"];
+} = modules["@coexist/core"];
 
 class Counter {
   count = 0;
@@ -345,9 +345,9 @@ defineModule(Counter, {
   state: ["count"],
 });
 
-const devtools = modules["@cosystem/devtools"].createDevtoolsPlugin();
-const router = modules["@cosystem/router"].createMemoryRouter();
-const storage = modules["@cosystem/storage"].createLocalSpaceStorage({
+const devtools = modules["@coexist/devtools"].createDevtoolsPlugin();
+const router = modules["@coexist/router"].createMemoryRouter();
+const storage = modules["@coexist/storage"].createLocalSpaceStorage({
   options: {
     driver: "memoryStorageWrapper",
     name: "cosystem-package-install-smoke",
@@ -357,8 +357,8 @@ const storage = modules["@cosystem/storage"].createLocalSpaceStorage({
 const app = createApp({
   plugins: [
     devtools,
-    modules["@cosystem/router"].createRouterPlugin(router),
-    modules["@cosystem/storage"].createLocalSpaceStoragePlugin({
+    modules["@coexist/router"].createRouterPlugin(router),
+    modules["@coexist/storage"].createLocalSpaceStoragePlugin({
       hydrate: false,
       persist: false,
       service: storage,
@@ -373,28 +373,28 @@ router.navigate("/settings?tab=profile#advanced");
 await storage.set("counter", app.store.getPureState());
 
 if (app.store.getPureState().counter.count !== 1) {
-  throw new Error("Installed @cosystem/core did not update module state.");
+  throw new Error("Installed @coexist/core did not update module state.");
 }
 
 if (router.current.path !== "/settings" || router.current.search !== "?tab=profile") {
-  throw new Error("Installed @cosystem/router did not parse navigation.");
+  throw new Error("Installed @coexist/router did not parse navigation.");
 }
 
 if ((await storage.get("counter")).counter.count !== 1) {
-  throw new Error("Installed @cosystem/storage did not round-trip state.");
+  throw new Error("Installed @coexist/storage did not round-trip state.");
 }
 
 if (!devtools.getTimeline().some((event) => event.type === "action:end")) {
-  throw new Error("Installed @cosystem/devtools did not observe actions.");
+  throw new Error("Installed @coexist/devtools did not observe actions.");
 }
 
-const test = modules["@cosystem/testing"].testApp({
+const test = modules["@coexist/testing"].testApp({
   providers: [Counter],
 });
 test.getModule(Counter).increase();
 
 if (test.test.getState().counter.count !== 1) {
-  throw new Error("Installed @cosystem/testing did not expose test app state.");
+  throw new Error("Installed @coexist/testing did not expose test app state.");
 }
 
 await test.dispose();
@@ -404,13 +404,13 @@ await storage.destroy();
 const projectDir = await mkdtemp(join(tmpdir(), "cosystem-installed-create-"));
 
 try {
-  const created = await modules["@cosystem/create"].createCosystemProject({
+  const created = await modules["@coexist/create"].createCosystemProject({
     name: "installed-create-smoke",
     root: projectDir,
   });
 
   if (!created.files.includes("src/main.ts")) {
-    throw new Error("Installed @cosystem/create did not scaffold main source.");
+    throw new Error("Installed @coexist/create did not scaffold main source.");
   }
 } finally {
   await rm(projectDir, { force: true, recursive: true });

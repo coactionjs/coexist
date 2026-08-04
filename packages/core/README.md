@@ -1,21 +1,21 @@
-# @cosystem/core
+# @coexist/core
 
 > The CoSystem core runtime: a typed application core with lightweight dependency
 > injection, object-oriented state, actions, computed getters, effects, and a
 > framework-agnostic store powered by [Coaction](https://www.npmjs.com/package/coaction).
 
-`@cosystem/core` is the only package every CoSystem app depends on. It owns the
+`@coexist/core` is the only package every CoSystem app depends on. It owns the
 DI container, module metadata, the app runtime and lifecycle, the reactive
-store, and a worker-hosting prototype. UI adapters (`@cosystem/react`,
-`@cosystem/vue`, …) and plugins (`@cosystem/storage`, `@cosystem/router`, …) are
+store, and a worker-hosting prototype. UI adapters (`@coexist/react`,
+`@coexist/vue`, …) and plugins (`@coexist/storage`, `@coexist/router`, …) are
 thin layers on top of the primitives exported here.
 
 ## Installation
 
 ```sh
-pnpm add @cosystem/core
-# npm install @cosystem/core
-# yarn add @cosystem/core
+pnpm add @coexist/core
+# npm install @coexist/core
+# yarn add @coexist/core
 ```
 
 CoSystem ships as ESM only and targets Node.js `>=22.12.0` and modern browsers.
@@ -71,7 +71,7 @@ build setup, supports **plain fields** as state, and is the simplest way to
 start.
 
 ```ts
-import { createApp, defineModule, provide } from "@cosystem/core";
+import { createApp, defineModule, provide } from "@coexist/core";
 
 abstract class Logger {
   abstract info(message: string): void;
@@ -124,7 +124,7 @@ targets getters. Decorators require a TypeScript or build setup that supports th
 TC39 decorators + `accessor` keyword (the repo's `tsdown`/`tsc` config does).
 
 ```ts
-import { Action, Computed, Effect, Module, State } from "@cosystem/core";
+import { Action, Computed, Effect, Module, State } from "@coexist/core";
 
 @Module({
   deps: [Logger],
@@ -193,7 +193,7 @@ CoSystem includes a small but complete DI container. You register **providers**
 keyed by **injection tokens** (a class, a `Token`, a string, or a symbol).
 
 ```ts
-import { createApp, provide, token } from "@cosystem/core";
+import { createApp, provide, token } from "@coexist/core";
 
 const Config = token<{ apiUrl: string }>("Config");
 
@@ -222,7 +222,7 @@ Inside a factory or provider construction you may also call `inject(token)` to
 resolve dependencies imperatively:
 
 ```ts
-import { inject, provide } from "@cosystem/core";
+import { inject, provide } from "@coexist/core";
 
 provide(Service, {
   useFactory: () => new Service(inject(Logger)),
@@ -277,7 +277,7 @@ Async `@Action` methods may return promises. Synchronous writes before the first
 action boundary when strict mode is enabled. Use `runInAction(this, …)`:
 
 ```ts
-import { runInAction } from "@cosystem/core";
+import { runInAction } from "@coexist/core";
 
 class Counter {
   @State
@@ -368,7 +368,7 @@ Lazy modules are explicit and isolated — they do not mutate the root provider
 graph:
 
 ```ts
-import { createApp, defineModule, lazyModule } from "@cosystem/core";
+import { createApp, defineModule, lazyModule } from "@coexist/core";
 
 class AdminCounter {
   count = 0;
@@ -406,7 +406,7 @@ roll back the scope so a later call can retry.
 A plugin observes the app lifecycle and store. Implement any subset of the hooks:
 
 ```ts
-import type { Plugin } from "@cosystem/core";
+import type { Plugin } from "@coexist/core";
 
 const plugin: Plugin = {
   name: "my-plugin",
@@ -430,13 +430,13 @@ providers replace plugin providers for the same token; app-level `multi`
 providers append to plugin `multi` providers.
 
 Built-in: [`createLoggerPlugin()`](#logger-plugin). The
-[`@cosystem/storage`](../storage), [`@cosystem/router`](../router), and
-[`@cosystem/devtools`](../devtools) packages are plugins too.
+[`@coexist/storage`](../storage), [`@coexist/router`](../router), and
+[`@coexist/devtools`](../devtools) packages are plugins too.
 
 ### Logger plugin
 
 ```ts
-import { createApp, createLoggerPlugin } from "@cosystem/core";
+import { createApp, createLoggerPlugin } from "@coexist/core";
 
 const app = createApp({
   plugins: [createLoggerPlugin()],
@@ -471,10 +471,10 @@ hooks with phase `"watch"`.
 ## Testing
 
 `testApp()` wraps `createApp()` with an inspector and override support. See
-[`@cosystem/testing`](../testing) for the dedicated facade.
+[`@coexist/testing`](../testing) for the dedicated facade.
 
 ```ts
-import { provide, testApp } from "@cosystem/core";
+import { provide, testApp } from "@coexist/core";
 
 const app = testApp({
   providers: [Counter, provide(Logger, { useValue: console })],
@@ -497,7 +497,7 @@ cannot introduce a brand new `@Module` after module discovery. The inspector
 
 ## Worker / shared runtime
 
-`@cosystem/core` includes a worker-hosting prototype: run the app (and its
+`@coexist/core` includes a worker-hosting prototype: run the app (and its
 modules) in a Worker, iframe, `MessagePort`, `BroadcastChannel`, or custom RPC
 channel, and consume its state from another context.
 
@@ -506,7 +506,7 @@ import {
   createMemoryWorkerTransportPair,
   createWorkerApp,
   createWorkerClient,
-} from "@cosystem/core";
+} from "@coexist/core";
 
 const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
 
@@ -565,8 +565,8 @@ Clients can observe conflicts via `onConflict` (`stale-message`,
 
 The prototype intentionally does not implement full shared-runtime conflict
 resolution or framework-specific worker bootstrapping. Adapters
-(`@cosystem/react`, `@cosystem/vue`, `@cosystem/svelte`, `@cosystem/solid`,
-`@cosystem/angular`) ship `WorkerClient`-based hooks for consuming worker state.
+(`@coexist/react`, `@coexist/vue`, `@coexist/svelte`, `@coexist/solid`,
+`@coexist/angular`) ship `WorkerClient`-based hooks for consuming worker state.
 
 ## Errors
 

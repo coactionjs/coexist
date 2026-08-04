@@ -1,11 +1,11 @@
-# @cosystem/angular
+# @coexist/angular
 
 ## 0.2.0
 
 ### Patch Changes
 
-- 0751a50: Remove the unused `rxjs` peer dependency from `@cosystem/angular`.
-  `@cosystem/core` now builds with a neutral platform target and uses the same
+- 0751a50: Remove the unused `rxjs` peer dependency from `@coexist/angular`.
+  `@coexist/core` now builds with a neutral platform target and uses the same
   `.js`/`.d.ts` output convention as the other browser-and-server packages.
 - Updated dependencies [c9e64c3]
 - Updated dependencies [6aec125]
@@ -33,7 +33,7 @@
 - Updated dependencies [e3c3fff]
 - Updated dependencies [f9c4c3c]
 - Updated dependencies [71e762e]
-  - @cosystem/core@0.2.0
+  - @coexist/core@0.2.0
 
 ## 0.1.0
 
@@ -57,4 +57,4 @@
 - Updated dependencies [794566f]
 - Updated dependencies [77cd9a9]
 - Updated dependencies [80f25e8]
-  - @cosystem/core@0.1.0
+  - @coexist/core@0.1.0

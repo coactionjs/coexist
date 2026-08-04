@@ -7,7 +7,7 @@ import {
   createWorkerApp,
   createWorkerClient,
   defineModule,
-} from "@cosystem/core";
+} from "@coexist/core";
 
 import {
   clearCoSystemApp,

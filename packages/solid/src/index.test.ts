@@ -8,7 +8,7 @@ import {
   createWorkerClient,
   defineModule,
   type AsyncMethodProxy,
-} from "@cosystem/core";
+} from "@coexist/core";
 
 import {
   CoSystemProvider,

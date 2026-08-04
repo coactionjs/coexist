@@ -23,11 +23,11 @@ try {
   ]);
 
   if (reportedAppDir !== actualAppDir) {
-    throw new Error(`create-cosystem CLI printed unexpected output:\n${createResult.stdout}`);
+    throw new Error(`create-coexist CLI printed unexpected output:\n${createResult.stdout}`);
   }
 
-  await mkdir(join(appDir, "node_modules", "@cosystem"), { recursive: true });
-  await symlink(corePackageDir, join(appDir, "node_modules", "@cosystem/core"), "dir");
+  await mkdir(join(appDir, "node_modules", "@coexist"), { recursive: true });
+  await symlink(corePackageDir, join(appDir, "node_modules", "@coexist/core"), "dir");
 
   const runResult = await run(process.execPath, ["src/main.ts"], appDir);
 

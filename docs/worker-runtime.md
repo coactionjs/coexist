@@ -1,6 +1,6 @@
 # Worker & Shared Runtime
 
-`@cosystem/core` includes a worker-hosting prototype: run an app (and its
+`@coexist/core` includes a worker-hosting prototype: run an app (and its
 modules) in a Web Worker, iframe, `MessagePort`, `BroadcastChannel`, or custom
 RPC channel, and consume its state from another context with the same selector
 and module ergonomics you use on the main thread.
@@ -29,7 +29,7 @@ import {
   createMemoryWorkerTransportPair,
   createWorkerApp,
   createWorkerClient,
-} from "@cosystem/core";
+} from "@coexist/core";
 
 const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
 
@@ -134,7 +134,7 @@ adapters for the common channels — all interchangeable:
 
 ```ts
 // worker.ts
-import { createPostMessageWorkerTransport, createWorkerApp } from "@cosystem/core";
+import { createPostMessageWorkerTransport, createWorkerApp } from "@coexist/core";
 createWorkerApp({
   providers: [Counter],
   sync: "patch",
@@ -243,7 +243,7 @@ like local state:
 
 ```tsx
 // React
-import { WorkerClientProvider, useWorkerModule, useWorkerSelector } from "@cosystem/react";
+import { WorkerClientProvider, useWorkerModule, useWorkerSelector } from "@coexist/react";
 
 function View() {
   const counter = useWorkerModule<Counter>("counter");
@@ -273,5 +273,5 @@ runtime.
 
 ## Next
 
-- [`@cosystem/core` worker reference](../packages/core/README.md#worker--shared-runtime)
+- [`@coexist/core` worker reference](../packages/core/README.md#worker--shared-runtime)
 - The runnable [`worker-counter`](../examples/worker-counter) example.

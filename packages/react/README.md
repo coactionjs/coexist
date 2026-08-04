@@ -1,4 +1,4 @@
-# @cosystem/react
+# @coexist/react
 
 > React bindings for [CoSystem](../../README.md): context provider and hooks for
 > consuming a CoSystem app (or a worker-hosted app) with native React reactivity.
@@ -10,7 +10,7 @@ This adapter does not own rendering or define a view base class. It exposes a
 ## Installation
 
 ```sh
-pnpm add @cosystem/react @cosystem/core
+pnpm add @coexist/react @coexist/core
 ```
 
 Peer dependency: `react` `>=18.3` (React 19 supported).
@@ -19,8 +19,8 @@ Peer dependency: `react` `>=18.3` (React 19 supported).
 
 ```tsx
 import { createRoot } from "react-dom/client";
-import { createApp, defineModule } from "@cosystem/core";
-import { CoSystemProvider, useModule, useSelector } from "@cosystem/react";
+import { createApp, defineModule } from "@coexist/core";
+import { CoSystemProvider, useModule, useSelector } from "@coexist/react";
 
 class Counter {
   count = 0;
@@ -86,7 +86,7 @@ Wrap the tree in `WorkerClientProvider` and use the worker hooks to consume an
 app running in a Worker, iframe, or other [transport](../core/README.md#worker--shared-runtime).
 
 ```tsx
-import { WorkerClientProvider, useWorkerModule, useWorkerSelector } from "@cosystem/react";
+import { WorkerClientProvider, useWorkerModule, useWorkerSelector } from "@coexist/react";
 
 type CounterState = { readonly counter: { readonly count: number } };
 

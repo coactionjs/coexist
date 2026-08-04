@@ -58,7 +58,7 @@ describe("create package", () => {
             lib: ["DOM", "ESNext"],
             noEmit: true,
             paths: {
-              "@cosystem/core": [join(repoRoot, "packages/core/src/index.ts")],
+              "@coexist/core": [join(repoRoot, "packages/core/src/index.ts")],
             },
           },
         },
@@ -89,7 +89,7 @@ describe("create package", () => {
     });
     const originalArgv = process.argv;
 
-    process.argv = [process.execPath, "create-cosystem", target];
+    process.argv = [process.execPath, "create-coexist", target];
 
     try {
       await import("./cli.js");

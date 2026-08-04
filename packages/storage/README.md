@@ -1,4 +1,4 @@
-# @cosystem/storage
+# @coexist/storage
 
 > Cross-framework persistence plugin for [CoSystem](../../README.md), powered by
 > [`localspace`](https://www.npmjs.com/package/localspace): hydrate app state on
@@ -13,19 +13,19 @@ adapter is still available for simple `getItem` / `setItem` backends.
 ## Installation
 
 ```sh
-pnpm add @cosystem/storage @cosystem/core
+pnpm add @coexist/storage @coexist/core
 ```
 
 ## Quick start
 
 ```ts
-import { createApp } from "@cosystem/core";
+import { createApp } from "@coexist/core";
 import {
   StorageToken,
   createLocalSpaceStoragePlugin,
   syncPlugin,
   ttlPlugin,
-} from "@cosystem/storage";
+} from "@coexist/storage";
 
 type CounterAppState = {
   readonly counter: {

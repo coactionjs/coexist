@@ -4,9 +4,9 @@ CoSystem is designed to be tested without a UI. Modules are plain classes with
 injected dependencies, and `testApp()` gives you provider overrides plus an
 inspector for actions, state, and patches.
 
-`testApp` is exported from both [`@cosystem/core`](../packages/core/README.md) and
-the dedicated [`@cosystem/testing`](../packages/testing/README.md) facade —
-importing from `@cosystem/testing` keeps test wiring separate from production
+`testApp` is exported from both [`@coexist/core`](../packages/core/README.md) and
+the dedicated [`@coexist/testing`](../packages/testing/README.md) facade —
+importing from `@coexist/testing` keeps test wiring separate from production
 imports. The behavior is identical.
 
 ## `testApp(options)`
@@ -34,8 +34,8 @@ spy. It can replace a provider discovered from `providers`, but it **cannot add 
 brand-new `@Module`** after module discovery.
 
 ```ts
-import { defineModule, provide } from "@cosystem/core";
-import { testApp } from "@cosystem/testing";
+import { defineModule, provide } from "@coexist/core";
+import { testApp } from "@coexist/testing";
 
 abstract class Logger {
   abstract info(message: string): void;
@@ -145,11 +145,11 @@ provider. The module logic itself, though, is best tested directly through
 See the [`testing`](../examples/testing) example, runnable with:
 
 ```sh
-pnpm --filter @cosystem/example-testing test
+pnpm --filter @coexist/example-testing test
 ```
 
 ## Next
 
-- [`@cosystem/testing` reference](../packages/testing/README.md)
+- [`@coexist/testing` reference](../packages/testing/README.md)
 - [Dependency Injection](./dependency-injection.md) — overrides and scopes.
 - [State & Reactivity](./state-and-reactivity.md) — actions, patches, strict mode.

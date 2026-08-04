@@ -5,7 +5,7 @@ import {
   type InjectionToken,
   type Plugin,
   type StateChangeEvent,
-} from "@cosystem/core";
+} from "@coexist/core";
 import localspace, {
   compressionPlugin,
   encryptionPlugin,

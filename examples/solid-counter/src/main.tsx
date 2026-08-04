@@ -1,7 +1,7 @@
 import { render } from "solid-js/web";
 
-import { createApp, defineModule } from "@cosystem/core";
-import { CoSystemProvider, useComputed, useModule } from "@cosystem/solid";
+import { createApp, defineModule } from "@coexist/core";
+import { CoSystemProvider, useComputed, useModule } from "@coexist/solid";
 
 // oxlint-disable-next-line import/no-unassigned-import -- Vite loads example styles through CSS side effects.
 import "./styles.css";

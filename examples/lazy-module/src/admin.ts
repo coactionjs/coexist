@@ -1,4 +1,4 @@
-import { defineModule } from "@cosystem/core";
+import { defineModule } from "@coexist/core";
 
 export class AdminCounter {
   count = 0;

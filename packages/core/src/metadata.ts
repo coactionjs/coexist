@@ -31,7 +31,7 @@ interface RuntimeModuleOptions {
 }
 
 const moduleMetadata = new WeakMap<Function, ModuleMetadata>();
-const moduleMetadataKey = Symbol.for("@cosystem/core/moduleMetadata");
+const moduleMetadataKey = Symbol.for("@coexist/core/moduleMetadata");
 const symbolMetadataKey: symbol | undefined = (
   Symbol as SymbolConstructor & { readonly metadata?: symbol }
 ).metadata;

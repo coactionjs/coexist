@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { moduleStore, selectedModuleStore } from "@cosystem/svelte";
+  import { moduleStore, selectedModuleStore } from "@coexist/svelte";
 
   import { Counter, cosystem } from "./counter";
 
