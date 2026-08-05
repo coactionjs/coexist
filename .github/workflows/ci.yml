@@ -1,5 +1,12 @@
 name: CI
 
+# Verification runs in stages so a formatting slip is reported in a couple of
+# minutes instead of behind a full browser and packaging sweep. `checks` gates
+# the rest; the packaging and browser stages then run in parallel.
+#
+# Every `pnpm run` step here must also appear in the root `check` script — the
+# `test:check-steps` step fails the build when the two lists drift.
+
 on:
   pull_request:
   push:
@@ -14,8 +21,8 @@ env:
   NPM_VERSION: 11.18.0
 
 jobs:
-  verify:
-    name: Node ${{ matrix.node-version }}
+  checks:
+    name: Checks (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -28,27 +35,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+      - name: Setup
+        uses: ./.github/actions/setup
         with:
-          version: 11.8.0
-
-      - name: Setup Node
-        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
-        with:
-          cache: pnpm
           node-version: ${{ matrix.node-version }}
-
-      - name: Install pinned npm CLI
-        run: npm install -g npm@${{ env.NPM_VERSION }}
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Install Playwright browser
-        run: |
-          pnpm exec playwright install --with-deps chromium
-          echo "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=$(node -e 'const { chromium } = require(\"playwright\"); console.log(chromium.executablePath())')" >> "$GITHUB_ENV"
+          npm-version: ${{ env.NPM_VERSION }}
 
       - name: Verify check and CI step lists
         run: pnpm run test:check-steps
@@ -67,6 +58,39 @@ jobs:
 
       - name: Build
         run: pnpm run build
+
+  packaging:
+    name: Packaging (Node ${{ matrix.node-version }})
+    needs: checks
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version:
+          - 22.x
+          - 24.x
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup
+        uses: ./.github/actions/setup
+        with:
+          node-version: ${{ matrix.node-version }}
+          npm-version: ${{ env.NPM_VERSION }}
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Smoke package exports
+        run: pnpm run test:exports
+
+      - name: Smoke package pack
+        run: pnpm run test:pack
+
+      - name: Smoke package install
+        run: pnpm run test:install
 
       - name: Smoke generated project runtime
         run: pnpm run test:create-runtime
@@ -113,56 +137,23 @@ jobs:
       - name: Smoke installed testing example
         run: pnpm run test:examples:testing-install
 
+      - name: Smoke example runtime
+        run: pnpm run test:examples:runtime
+
       - name: Smoke testing helper install
         run: pnpm run test:testing:install-runtime
 
       - name: Smoke Svelte runtime install
         run: pnpm run test:svelte:install-runtime
 
-      - name: Smoke Svelte browser
-        run: pnpm run test:svelte:browser
-
-      - name: Smoke Svelte worker browser
-        run: pnpm run test:svelte:worker-browser
-
       - name: Smoke framework adapters install
         run: pnpm run test:frameworks:install
-
-      - name: Smoke React browser
-        run: pnpm run test:frameworks:react-browser
-
-      - name: Smoke React worker browser
-        run: pnpm run test:frameworks:react-worker-browser
-
-      - name: Smoke Vue browser
-        run: pnpm run test:frameworks:vue-browser
-
-      - name: Smoke Vue worker browser
-        run: pnpm run test:frameworks:vue-worker-browser
-
-      - name: Smoke Solid browser
-        run: pnpm run test:frameworks:solid-browser
-
-      - name: Smoke Solid worker browser
-        run: pnpm run test:frameworks:solid-worker-browser
-
-      - name: Smoke Angular browser
-        run: pnpm run test:frameworks:angular-browser
-
-      - name: Smoke Angular worker browser
-        run: pnpm run test:frameworks:angular-worker-browser
 
       - name: Smoke framework worker adapters install
         run: pnpm run test:frameworks:worker-install
 
-      - name: Smoke example runtime
-        run: pnpm run test:examples:runtime
-
       - name: Smoke router memory install
         run: pnpm run test:router:memory-install
-
-      - name: Smoke router browser
-        run: pnpm run test:router-browser
 
       - name: Smoke storage-like install
         run: pnpm run test:storage:like-install
@@ -172,6 +163,162 @@ jobs:
 
       - name: Smoke storage localspace plugins install
         run: pnpm run test:storage:localspace-plugins-install
+
+      - name: Smoke worker runtime install
+        run: pnpm run test:worker:install-runtime
+
+      - name: Smoke worker state conflict install
+        run: pnpm run test:worker:state-conflict-install
+
+      - name: Smoke data transport worker install
+        run: pnpm run test:worker:data-transport-install
+
+  browser-react:
+    name: Browser (React)
+    needs: checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup
+        uses: ./.github/actions/setup
+        with:
+          node-version: 24.x
+          npm-version: ${{ env.NPM_VERSION }}
+          playwright: "true"
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Smoke React browser
+        run: pnpm run test:frameworks:react-browser
+
+      - name: Smoke React worker browser
+        run: pnpm run test:frameworks:react-worker-browser
+
+  browser-vue:
+    name: Browser (Vue)
+    needs: checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup
+        uses: ./.github/actions/setup
+        with:
+          node-version: 24.x
+          npm-version: ${{ env.NPM_VERSION }}
+          playwright: "true"
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Smoke Vue browser
+        run: pnpm run test:frameworks:vue-browser
+
+      - name: Smoke Vue worker browser
+        run: pnpm run test:frameworks:vue-worker-browser
+
+  browser-svelte:
+    name: Browser (Svelte)
+    needs: checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup
+        uses: ./.github/actions/setup
+        with:
+          node-version: 24.x
+          npm-version: ${{ env.NPM_VERSION }}
+          playwright: "true"
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Smoke Svelte browser
+        run: pnpm run test:svelte:browser
+
+      - name: Smoke Svelte worker browser
+        run: pnpm run test:svelte:worker-browser
+
+  browser-solid:
+    name: Browser (Solid)
+    needs: checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup
+        uses: ./.github/actions/setup
+        with:
+          node-version: 24.x
+          npm-version: ${{ env.NPM_VERSION }}
+          playwright: "true"
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Smoke Solid browser
+        run: pnpm run test:frameworks:solid-browser
+
+      - name: Smoke Solid worker browser
+        run: pnpm run test:frameworks:solid-worker-browser
+
+  browser-angular:
+    name: Browser (Angular)
+    needs: checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup
+        uses: ./.github/actions/setup
+        with:
+          node-version: 24.x
+          npm-version: ${{ env.NPM_VERSION }}
+          playwright: "true"
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Smoke Angular browser
+        run: pnpm run test:frameworks:angular-browser
+
+      - name: Smoke Angular worker browser
+        run: pnpm run test:frameworks:angular-worker-browser
+
+  browser-plugins:
+    name: Browser (plugins)
+    needs: checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup
+        uses: ./.github/actions/setup
+        with:
+          node-version: 24.x
+          npm-version: ${{ env.NPM_VERSION }}
+          playwright: "true"
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Smoke router browser
+        run: pnpm run test:router-browser
 
       - name: Smoke storage browser
         run: pnpm run test:storage-browser
@@ -185,29 +332,48 @@ jobs:
       - name: Smoke plugin stack browser
         run: pnpm run test:plugins:browser
 
-      - name: Smoke worker runtime install
-        run: pnpm run test:worker:install-runtime
+  browser-worker:
+    name: Browser (worker)
+    needs: checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup
+        uses: ./.github/actions/setup
+        with:
+          node-version: 24.x
+          npm-version: ${{ env.NPM_VERSION }}
+          playwright: "true"
+
+      - name: Build
+        run: pnpm run build
 
       - name: Smoke worker async browser
         run: pnpm run test:worker:async-browser
 
-      - name: Smoke worker state conflict install
-        run: pnpm run test:worker:state-conflict-install
-
       - name: Smoke broadcast worker browser
         run: pnpm run test:worker:broadcast-browser
 
-      - name: Smoke data transport worker install
-        run: pnpm run test:worker:data-transport-install
+  release-checks:
+    name: Release checks
+    needs: packaging
+    runs-on: ubuntu-latest
 
-      - name: Smoke package exports
-        run: pnpm run test:exports
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Smoke package pack
-        run: pnpm run test:pack
+      - name: Setup
+        uses: ./.github/actions/setup
+        with:
+          node-version: 24.x
+          npm-version: ${{ env.NPM_VERSION }}
 
-      - name: Smoke package install
-        run: pnpm run test:install
+      - name: Build
+        run: pnpm run build
 
       - name: Smoke publish dry run
         run: pnpm run test:publish-dry-run

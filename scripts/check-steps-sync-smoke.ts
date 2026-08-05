@@ -1,7 +1,11 @@
 #!/usr/bin/env node
 // The repository verifies itself through two hand-maintained lists: the root
-// `check` script and the CI verify job. They must stay in sync — a step added
-// to one but not the other either never runs in CI or never runs locally.
+// `check` script and the CI workflow. They must stay in sync — a step added to
+// one but not the other either never runs in CI or never runs locally.
+//
+// CI spreads those steps across staged jobs, so this compares the set of
+// scripts rather than their order or grouping. Which job runs a step is a
+// scheduling decision; whether it runs at all is not.
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
@@ -36,7 +40,7 @@ if (checkSteps.length === 0) {
 }
 
 if (workflowSteps.length === 0) {
-  problems.push("The CI verify job runs no pnpm scripts.");
+  problems.push("The CI workflow runs no pnpm scripts.");
 }
 
 if (missingFromWorkflow.length > 0) {
@@ -57,4 +61,4 @@ if (problems.length > 0) {
   throw new Error(`check and CI step lists are out of sync.\n\n${problems.join("\n\n")}`);
 }
 
-console.log(`Verified ${checkSteps.length} check step(s) against the CI verify job.`);
+console.log(`Verified ${checkSteps.length} check step(s) against the CI workflow.`);
