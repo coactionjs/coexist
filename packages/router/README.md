@@ -43,8 +43,10 @@ app.get(RouterToken).navigate("/settings");
 
 ### Routers
 
-- `createMemoryRouter({ initialPath? })` — in-memory router for SSR and tests.
-- `createBrowserRouter({ window? })` — backed by `history.pushState` + `popstate`; reads `window` from the global by default, or accepts a `BrowserWindowLike`.
+- `createMemoryRouter({ initialPath?, onError? })` — in-memory router for SSR and tests.
+- `createBrowserRouter({ window?, onError? })` — backed by `history.pushState` + `popstate`; reads `window` from the global by default, or accepts a `BrowserWindowLike`.
+
+Subscribers are observers of a navigation that already happened, so one that throws is reported to `onError` and the remaining subscribers are still notified — a broken listener cannot leave the rest of the app on a stale location.
 
 Both implement the `Router` interface:
 
@@ -65,6 +67,8 @@ interface Router {
 | `onChange`  | `(location, app) => void \| Promise<void>` | Called on each navigation (may be async).            |
 | `immediate` | `boolean`                                  | Also call `onChange` once with the current location. |
 | `onError`   | `(error) => void`                          | Receives errors thrown/rejected by `onChange`.       |
+
+`onError` is a terminal observer: if it throws or returns a rejected promise, the failure is swallowed rather than escaping `navigate()` or surfacing as an unhandled rejection.
 
 ### DI
 

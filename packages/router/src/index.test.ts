@@ -111,6 +111,112 @@ describe("router package", () => {
     expect(pluginRouter.current.path).toBe("/plugin");
   });
 
+  it("keeps notifying subscribers after one of them throws", () => {
+    const errors: unknown[] = [];
+    const listenerError = new Error("subscriber failed");
+    const router = createMemoryRouter({
+      initialPath: "/",
+      onError(error) {
+        errors.push(error);
+      },
+    });
+    const seen: string[] = [];
+
+    router.subscribe(() => {
+      throw listenerError;
+    });
+    router.subscribe((location) => {
+      seen.push(location.path);
+    });
+
+    expect(() => router.navigate("/settings")).not.toThrow();
+    expect(seen).toEqual(["/settings"]);
+    expect(errors).toEqual([listenerError]);
+  });
+
+  it("keeps navigating when a browser router subscriber throws", () => {
+    const browserWindow = createMockBrowserWindow("/");
+    const errors: unknown[] = [];
+    const router = createBrowserRouter({
+      onError(error) {
+        errors.push(error);
+      },
+      window: browserWindow,
+    });
+    const seen: string[] = [];
+
+    router.subscribe(() => {
+      throw new Error("subscriber failed");
+    });
+    router.subscribe((location) => {
+      seen.push(location.path);
+    });
+
+    expect(() => router.navigate("/settings")).not.toThrow();
+    expect(() => browserWindow.pushPopState("/back")).not.toThrow();
+    expect(seen).toEqual(["/settings", "/back"]);
+    expect(errors).toHaveLength(2);
+  });
+
+  it("isolates a throwing router error observer from navigation", async () => {
+    const router = createMemoryRouter({ initialPath: "/" });
+    const changeError = new Error("onChange failed");
+    const app = createApp({
+      plugins: [
+        createRouterPlugin(router, {
+          onChange() {
+            throw changeError;
+          },
+          onError() {
+            throw new Error("observer failed");
+          },
+        }),
+      ],
+      providers: [provideRouter(router)],
+    });
+
+    await app.start();
+
+    // A broken observer must not turn a reported failure into a thrown one.
+    expect(() => router.navigate("/settings")).not.toThrow();
+    expect(router.current.path).toBe("/settings");
+
+    await app.dispose();
+  });
+
+  it("does not leave an unhandled rejection when an async onChange fails", async () => {
+    const router = createMemoryRouter({ initialPath: "/" });
+    const rejections: unknown[] = [];
+    const onUnhandledRejection = (error: unknown) => {
+      rejections.push(error);
+    };
+    const app = createApp({
+      plugins: [
+        createRouterPlugin(router, {
+          onChange: () => Promise.reject(new Error("async onChange failed")),
+          onError() {
+            throw new Error("observer failed");
+          },
+        }),
+      ],
+      providers: [provideRouter(router)],
+    });
+
+    await app.start();
+    process.on("unhandledRejection", onUnhandledRejection);
+
+    try {
+      router.navigate("/settings");
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    } finally {
+      process.off("unhandledRejection", onUnhandledRejection);
+    }
+
+    expect(rejections).toEqual([]);
+
+    await app.dispose();
+  });
+
   it("adapts browser history navigation to the router contract", () => {
     const browserWindow = createMockBrowserWindow("/initial?tab=1#top");
     const router = createBrowserRouter({

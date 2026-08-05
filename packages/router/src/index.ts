@@ -21,10 +21,17 @@ export interface Router {
 
 export interface RouterOptions {
   readonly initialPath?: string;
+  /**
+   * Observes a subscriber that threw while being notified. Without it such a
+   * failure is dropped, because one subscriber must not stop the others or
+   * abort the navigation that already happened.
+   */
+  readonly onError?: (error: unknown) => void;
 }
 
 export interface BrowserRouterOptions {
   readonly window?: BrowserWindowLike;
+  readonly onError?: (error: unknown) => void;
 }
 
 export interface BrowserWindowLike {
@@ -62,10 +69,7 @@ export function createMemoryRouter(options: RouterOptions = {}): Router {
     },
     navigate(to) {
       current = typeof to === "string" ? parseLocation(to) : to;
-
-      for (const listener of listeners) {
-        listener(current);
-      }
+      notifyRouteListeners(listeners, current, options.onError);
     },
     subscribe(listener) {
       listeners.add(listener);
@@ -84,10 +88,7 @@ export function createBrowserRouter(options: BrowserRouterOptions = {}): Router 
 
   const notify = () => {
     current = readBrowserLocation(targetWindow.location);
-
-    for (const listener of listeners) {
-      listener(current);
-    }
+    notifyRouteListeners(listeners, current, options.onError);
   };
 
   const start = () => {
@@ -115,10 +116,7 @@ export function createBrowserRouter(options: BrowserRouterOptions = {}): Router 
     navigate(to) {
       current = typeof to === "string" ? parseLocation(to) : to;
       targetWindow.history.pushState(null, "", formatLocation(current));
-
-      for (const listener of listeners) {
-        listener(current);
-      }
+      notifyRouteListeners(listeners, current, options.onError);
     },
     subscribe(listener) {
       listeners.add(listener);
@@ -150,11 +148,11 @@ export function createRouterPlugin(router: Router, options: RouterPluginOptions 
 
           if (isPromiseLike(result)) {
             void result.catch((error: unknown) => {
-              options.onError?.(error);
+              reportRouterError(options.onError, error);
             });
           }
         } catch (error) {
-          options.onError?.(error);
+          reportRouterError(options.onError, error);
         }
       };
 
@@ -208,6 +206,42 @@ function resolveGlobalWindow(): BrowserWindowLike {
   }
 
   throw new Error("createBrowserRouter() requires a browser window.");
+}
+
+/**
+ * Notifies every subscriber even when one throws. A router listener is an
+ * observer of a navigation that already happened; letting it abort the loop
+ * would leave the remaining subscribers rendering a stale location.
+ */
+function notifyRouteListeners(
+  listeners: ReadonlySet<(location: RouteLocation) => void>,
+  location: RouteLocation,
+  onError: ((error: unknown) => void) | undefined,
+): void {
+  for (const listener of listeners) {
+    try {
+      listener(location);
+    } catch (error) {
+      reportRouterError(onError, error);
+    }
+  }
+}
+
+/**
+ * Runs an error observer without letting it become a new failure: a throwing
+ * observer must not replace the navigation error or leave an unhandled
+ * rejection behind.
+ */
+function reportRouterError(onError: ((error: unknown) => void) | undefined, error: unknown): void {
+  try {
+    const result = onError?.(error) as unknown;
+
+    if (isPromiseLike(result)) {
+      void Promise.resolve(result).catch(() => undefined);
+    }
+  } catch {
+    // Error observers are terminal; do not recurse if they fail.
+  }
 }
 
 function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
