@@ -886,6 +886,7 @@ scripts/      # release/publish tooling
 - **API reference** — each package's README documents its exports; see the [Packages](#packages) table above.
 - **Examples** — runnable, framework-specific demos live in [`examples/`](./examples).
 - **Contributing** — workflow and conventions in [`CONTRIBUTING.md`](./CONTRIBUTING.md).
+- **Security** — private reporting channel and threat model in [`SECURITY.md`](./SECURITY.md).
 
 ## Contributing
 

@@ -95,6 +95,16 @@ Releases are automated:
 
 You generally only need to add a changeset; the rest is handled by CI.
 
+## Dependencies
+
+Runtime and tooling versions are pinned in the `catalog:` block of `pnpm-workspace.yaml`; packages reference them with `catalog:` rather than their own ranges, so a version is bumped in exactly one place. GitHub Actions are pinned to commit SHAs with the semver tag in a trailing comment — a moving tag is a re-tagable dependency in a workflow that can publish.
+
+[Renovate](https://docs.renovatebot.com) proposes updates (`.github/renovate.json`) and keeps the action digests in step with their comments. Framework peers and `coaction` majors require dashboard approval because they change the compatibility matrix rather than just a version.
+
+## Security
+
+Do not report vulnerabilities through issues or pull requests. [`SECURITY.md`](./SECURITY.md) has the private reporting channel and the threat model — including what is deliberately out of scope, such as treating a BroadcastChannel `authToken` as authentication.
+
 ## Pull requests
 
 1. Fork and branch from `main`.

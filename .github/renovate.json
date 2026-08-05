@@ -1,0 +1,54 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommitTypeAll(build)",
+    "helpers:pinGitHubActionDigests"
+  ],
+  "timezone": "Etc/UTC",
+  "schedule": ["before 6am on monday"],
+  "prConcurrentLimit": 5,
+  "labels": ["dependencies"],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 6am on the first day of the month"]
+  },
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "schedule": ["at any time"],
+    "labels": ["dependencies", "security"]
+  },
+  "packageRules": [
+    {
+      "description": "Framework peers define the compatibility matrix; a major needs a deliberate test-matrix change, not an automatic bump.",
+      "matchPackageNames": ["@angular/**", "react", "react-dom", "solid-js", "svelte", "vue"],
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "coaction is the runtime core depends on; review its majors by hand.",
+      "matchPackageNames": ["coaction"],
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Group the toolchain so one PR moves lint, format, build, and test together.",
+      "matchPackageNames": [
+        "oxfmt",
+        "oxlint",
+        "rolldown",
+        "tsdown",
+        "turbo",
+        "vitest",
+        "@vitest/**"
+      ],
+      "groupName": "toolchain"
+    },
+    {
+      "description": "Actions are pinned to digests; keep the semver comment updated alongside.",
+      "matchManagers": ["github-actions"],
+      "groupName": "github actions"
+    }
+  ],
+  "ignorePaths": ["**/node_modules/**", "**/dist/**"]
+}
