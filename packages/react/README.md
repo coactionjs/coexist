@@ -12,7 +12,7 @@ pnpm add @coexist/react @coexist/core
 
 Ships as ESM only: your project needs `"type": "module"` (or `.mjs`/`.mts`) and Node.js `>=22.12.0` or a modern bundler.
 
-Peer dependency: `react` `>=18.3` (React 19 supported).
+Peer dependency: `react` `^18.3.0 || ^19.0.0`. The range names the majors this adapter is tested against; a future major is not silently accepted.
 
 ## Quick start
 
