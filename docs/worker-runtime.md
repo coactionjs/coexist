@@ -52,7 +52,7 @@ await host.dispose();
 ```ts
 interface WorkerClient {
   readonly ready: Promise<void>; // resolves after the first snapshot
-  readonly state: { readonly version: number };
+  readonly state: { readonly version: number; readonly status: WorkerSyncStatus };
   getState(): unknown;
   select<T>(selector): T; // read derived state synchronously
   watch<T>(selector, listener, opts?): () => void; // subscribe (equals/immediate)
@@ -205,6 +205,34 @@ const client = createWorkerClient({
 | `missing-snapshot`   | A patch arrived before any snapshot.              |
 | `version-gap`        | A patch skipped a version (a message was lost).   |
 | `patch-apply-failed` | A patch could not be applied to local state.      |
+
+### Automatic recovery
+
+`missing-snapshot`, `version-gap`, and `patch-apply-failed` all mean the mirror can no longer be repaired from patches — every later patch would gap again. The client therefore requests a fresh snapshot instead of only reporting the anomaly. (`stale-message` is benign and never triggers recovery.)
+
+`client.state.status` tracks the mirror, and `onResync` reports each transition:
+
+| Status       | Meaning                                                            |
+| ------------ | ------------------------------------------------------------------ |
+| `synced`     | The mirror tracks the host.                                        |
+| `recovering` | A conflict was seen; a snapshot request is scheduled or in flight. |
+| `failed`     | `maxAttempts` snapshot requests went unanswered.                   |
+
+```ts
+const client = createWorkerClient({
+  transport: clientTransport,
+  resync: { delay: 100, backoffFactor: 2, maxDelay: 5000, maxAttempts: 5, timeout: 10_000 },
+  onResync(event) {
+    console.warn(event.status, event.reason, event.attempt);
+  },
+});
+```
+
+Recovery is single-flight: a burst of conflicts collapses into one run, `delay` debounces it, and each unanswered attempt backs off by `backoffFactor` up to `maxDelay`. A run that exhausts `maxAttempts` reports `failed` and stops; a later conflict starts a new run, but at `maxDelay`, so a host publishing unusable patches cannot turn recovery into a request loop. A failed run does not disable the client — the last good state stays readable.
+
+Pass `resync: false` to keep the report-only behaviour and hold the stale snapshot.
+
+This is snapshot recovery for a mirror that fell behind, not conflict _resolution_: concurrent writes from several peers are still not merged.
 
 ## Consuming from a UI framework
 

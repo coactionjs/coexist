@@ -98,10 +98,13 @@ export {
   type WorkerConflictEvent,
   type WorkerConflictReason,
   type WorkerMessage,
+  type WorkerResyncEvent,
+  type WorkerResyncOptions,
   type WorkerStateMessage,
   type WorkerStateSelector,
   type WorkerStateSection,
   type WorkerStateSyncMode,
+  type WorkerSyncStatus,
   type WorkerTransport,
   type WorkerWatchOptions,
 } from "./worker.js";

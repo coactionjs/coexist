@@ -16,6 +16,7 @@ import {
   type WorkerTransport,
   type WorkerConflictEvent,
   type WorkerMessage,
+  type WorkerResyncEvent,
   type WorkerStateMessage,
   WorkerHostUnavailableError,
   WorkerInitialSyncError,
@@ -71,6 +72,68 @@ defineModule(WorkerHidden, {
   name: "workerHidden",
   state: ["value"],
 });
+
+async function waitUntil(predicate: () => boolean, label: string, timeout = 2000): Promise<void> {
+  const deadline = Date.now() + timeout;
+
+  while (!predicate()) {
+    if (Date.now() > deadline) {
+      throw new Error(`Timed out waiting for ${label}.`);
+    }
+
+    // eslint-disable-next-line no-await-in-loop -- polling a condition is the point.
+    await new Promise((resolve) => setTimeout(resolve, 1));
+  }
+}
+
+/** A host stub that answers snapshot requests with whatever it currently holds. */
+function createSnapshotHost(transport: WorkerTransport) {
+  let version = 1;
+  let count = 0;
+  const requests: WorkerMessage[] = [];
+  let answer = true;
+  const stop = transport.subscribe((message) => {
+    if (message.type !== "sync") {
+      return;
+    }
+
+    requests.push(message);
+
+    if (answer) {
+      transport.post({
+        state: { counter: { count } },
+        sync: "snapshot",
+        type: "state",
+        version,
+      });
+    }
+  });
+
+  return {
+    requests,
+    stop,
+    get version() {
+      return version;
+    },
+    advanceTo(nextVersion: number, nextCount: number) {
+      version = nextVersion;
+      count = nextCount;
+    },
+    goSilent() {
+      answer = false;
+    },
+    publishPatch(nextVersion: number, nextCount: number) {
+      version = nextVersion;
+      count = nextCount;
+      transport.post({
+        patches: [{ op: "replace", path: "/counter/count", value: nextCount }],
+        sync: "patch",
+        type: "state",
+        version: nextVersion,
+      });
+    },
+  };
+}
 
 describe("worker prototype", () => {
   it("disposes the worker app when transport subscription fails", async () => {
@@ -1818,6 +1881,174 @@ describe("worker prototype", () => {
 
     expect(client.getState()).toEqual({});
     client.dispose();
+  });
+
+  it("recovers a stale mirror by requesting a snapshot after a version gap", async () => {
+    const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+    const host = createSnapshotHost(hostTransport);
+    const events: WorkerResyncEvent[] = [];
+    const client = createWorkerClient({
+      onResync(event) {
+        events.push(event);
+      },
+      resync: { delay: 1 },
+      transport: clientTransport,
+    });
+
+    await client.ready;
+
+    expect(client.state.status).toBe("synced");
+
+    // Version 2 is lost in transit, so the client can never apply version 3.
+    host.publishPatch(3, 3);
+
+    expect(client.state.status).toBe("recovering");
+    expect(client.state.version).toBe(1);
+
+    await waitUntil(() => client.state.status === "synced", "the mirror to recover");
+
+    expect(client.getState()).toEqual({ counter: { count: 3 } });
+    expect(client.state.version).toBe(3);
+    expect(events.map((event) => event.status)).toEqual(["recovering", "synced"]);
+    expect(events[0]).toMatchObject({ attempt: 1, reason: "version-gap" });
+
+    client.dispose();
+    host.stop();
+  });
+
+  it("recovers a watch-only client that never issues an RPC", async () => {
+    const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+    const host = createSnapshotHost(hostTransport);
+    const observed: number[] = [];
+    const client = createWorkerClient({
+      resync: { delay: 1 },
+      transport: clientTransport,
+    });
+
+    await client.ready;
+    client.watch(
+      (state) => (state as { counter: { count: number } }).counter.count,
+      (value) => {
+        observed.push(value);
+      },
+    );
+
+    host.publishPatch(5, 7);
+
+    await waitUntil(() => client.state.status === "synced", "the watch-only mirror to recover");
+
+    expect(observed).toEqual([7]);
+
+    client.dispose();
+    host.stop();
+  });
+
+  it("keeps the stale snapshot when automatic resync is disabled", async () => {
+    const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+    const host = createSnapshotHost(hostTransport);
+    const conflicts: WorkerConflictEvent[] = [];
+    const client = createWorkerClient({
+      onConflict(event) {
+        conflicts.push(event);
+      },
+      resync: false,
+      transport: clientTransport,
+    });
+
+    await client.ready;
+    host.requests.length = 0;
+    host.publishPatch(3, 3);
+
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    expect(host.requests).toEqual([]);
+    expect(client.state.status).toBe("synced");
+    expect(client.state.version).toBe(1);
+    expect(conflicts.map((event) => event.reason)).toEqual(["version-gap"]);
+
+    client.dispose();
+    host.stop();
+  });
+
+  it("gives up resyncing after the configured attempts and restarts on a later conflict", async () => {
+    const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+    const host = createSnapshotHost(hostTransport);
+    const events: WorkerResyncEvent[] = [];
+    const client = createWorkerClient({
+      onResync(event) {
+        events.push(event);
+      },
+      resync: { delay: 1, maxAttempts: 3, maxDelay: 1, timeout: 5 },
+      transport: clientTransport,
+    });
+
+    await client.ready;
+    host.goSilent();
+    host.requests.length = 0;
+    host.publishPatch(3, 3);
+
+    await waitUntil(() => client.state.status === "failed", "the resync run to give up");
+
+    expect(host.requests).toHaveLength(3);
+    expect(events.map((event) => event.status)).toEqual(["recovering", "failed"]);
+    expect(events.at(-1)?.error).toBeInstanceOf(Error);
+    // A failed run leaves the last good state readable rather than tearing down.
+    expect(client.getState()).toEqual({ counter: { count: 0 } });
+
+    host.publishPatch(4, 4);
+
+    expect(client.state.status).toBe("recovering");
+
+    client.dispose();
+    host.stop();
+  });
+
+  it("collapses a burst of conflicts into a single recovery run", async () => {
+    const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+    const host = createSnapshotHost(hostTransport);
+    const events: WorkerResyncEvent[] = [];
+    const client = createWorkerClient({
+      onResync(event) {
+        events.push(event);
+      },
+      resync: { delay: 5 },
+      transport: clientTransport,
+    });
+
+    await client.ready;
+    host.requests.length = 0;
+    host.advanceTo(9, 9);
+
+    for (const version of [3, 4, 5]) {
+      hostTransport.post({
+        patches: [{ op: "replace", path: "/counter/count", value: version }],
+        sync: "patch",
+        type: "state",
+        version,
+      });
+    }
+
+    await waitUntil(() => client.state.status === "synced", "the collapsed recovery run");
+
+    expect(host.requests).toHaveLength(1);
+    expect(events.map((event) => event.status)).toEqual(["recovering", "synced"]);
+
+    client.dispose();
+    host.stop();
+  });
+
+  it("rejects invalid resync options", () => {
+    const [, clientTransport] = createMemoryWorkerTransportPair();
+
+    expect(() =>
+      createWorkerClient({ resync: { backoffFactor: 0 }, transport: clientTransport }),
+    ).toThrow("resync.backoffFactor must be a finite number of at least 1.");
+    expect(() =>
+      createWorkerClient({ resync: { maxAttempts: 0 }, transport: clientTransport }),
+    ).toThrow("resync.maxAttempts must be a safe integer of at least 1.");
+    expect(() => createWorkerClient({ resync: { delay: -1 }, transport: clientTransport })).toThrow(
+      "resync.delay must be a finite, non-negative number.",
+    );
   });
 
   it("rejects client readiness when no host answers within the ready timeout", async () => {

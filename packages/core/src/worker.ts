@@ -184,7 +184,42 @@ export interface CreateWorkerClientOptions {
    * clients that may attach after the host published its initial snapshot.
    */
   readonly requestInitialSync?: boolean;
+  /**
+   * How the client recovers a mirror that fell behind the host — a patch that
+   * arrived without a baseline, skipped a version, or failed to apply. Pass
+   * `false` to only report those conflicts and keep the stale snapshot.
+   */
+  readonly resync?: WorkerResyncOptions | false;
+  readonly onResync?: (event: WorkerResyncEvent) => void;
   readonly signal?: AbortSignal;
+}
+
+export interface WorkerResyncOptions {
+  /** Delay before the first snapshot request. Also debounces conflict bursts. */
+  readonly delay?: number;
+  /** Multiplier applied to the delay after each failed attempt. */
+  readonly backoffFactor?: number;
+  /** Upper bound for the backoff delay. */
+  readonly maxDelay?: number;
+  /** Consecutive attempts before the client gives up and reports `failed`. */
+  readonly maxAttempts?: number;
+  /** How long one attempt waits for a snapshot. Pass 0 to wait indefinitely. */
+  readonly timeout?: number;
+}
+
+/**
+ * Whether the local mirror is known to track the host (`synced`), is chasing a
+ * snapshot after a conflict (`recovering`), or gave up (`failed`).
+ */
+export type WorkerSyncStatus = "failed" | "recovering" | "synced";
+
+export interface WorkerResyncEvent {
+  readonly status: WorkerSyncStatus;
+  /** 1 for the first request of a recovery run. */
+  readonly attempt: number;
+  /** The conflict that started the recovery run. */
+  readonly reason: WorkerConflictReason;
+  readonly error?: unknown;
 }
 
 export interface WorkerCallOptions {
@@ -225,6 +260,7 @@ export interface WorkerClient {
   readonly ready: Promise<void>;
   readonly state: {
     readonly version: number;
+    readonly status: WorkerSyncStatus;
   };
   getState(): unknown;
   select<T>(selector: WorkerStateSelector<T>): T;
@@ -260,6 +296,15 @@ type PatchContainer = Record<string, unknown> | unknown[];
 interface BroadcastMessageRoute {
   readonly id: number;
   readonly source: string;
+}
+
+interface ResolvedWorkerResyncOptions {
+  readonly enabled: boolean;
+  readonly delay: number;
+  readonly backoffFactor: number;
+  readonly maxDelay: number;
+  readonly maxAttempts: number;
+  readonly timeout: number;
 }
 
 interface WorkerPatch {
@@ -404,6 +449,7 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
   const {
     onConflict,
     onInvalidMessage,
+    onResync,
     readyTimeout = defaultWorkerReadyTimeout,
     requestInitialSync = true,
     requestTimeout = defaultWorkerRequestTimeout,
@@ -412,10 +458,14 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
   } = options;
   assertValidWorkerTimeout(requestTimeout, "requestTimeout");
   assertValidWorkerTimeout(readyTimeout, "readyTimeout");
+  const resyncOptions = resolveWorkerResyncOptions(options.resync);
   const listeners = new Set<(message: WorkerStateMessage) => void>();
   const selectorWatchers = new Set<WorkerSelectorWatcher<unknown>>();
   const pending = new Map<number, PendingWorkerCall>();
-  const state = { version: 0 };
+  const state: { version: number; status: WorkerSyncStatus } = {
+    status: "synced",
+    version: 0,
+  };
   let nextId = 1;
   let requestedSyncVersion: number | undefined;
   let syncedStaleVersion = 0;
@@ -426,6 +476,10 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
   let hasInitialState = false;
   let readySettled = false;
   let readyTimer: ReturnType<typeof setTimeout> | undefined;
+  let resyncTimer: ReturnType<typeof setTimeout> | undefined;
+  let resyncDeadline: ReturnType<typeof setTimeout> | undefined;
+  let resyncReason: WorkerConflictReason | undefined;
+  let resyncAttempt = 0;
   let disposed = false;
   let resolveReady!: () => void;
   let rejectReady!: (error: unknown) => void;
@@ -544,6 +598,7 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
       }
 
       disposed = true;
+      clearResyncTimers();
       let unsubscribeError: unknown;
       let unsubscribeFailed = false;
 
@@ -704,16 +759,141 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
       return;
     }
 
-    const id = nextId;
-    nextId += 1;
-
     try {
-      transport.post({
-        id,
-        type: "sync",
-      });
+      postSnapshotRequest();
     } catch (error) {
       failReady(new WorkerInitialSyncError(error));
+    }
+  };
+
+  const postSnapshotRequest = (): void => {
+    const id = nextId;
+    nextId += 1;
+    transport.post({
+      id,
+      type: "sync",
+    });
+  };
+
+  const clearResyncTimers = (): void => {
+    if (resyncTimer !== undefined) {
+      clearTimeout(resyncTimer);
+      resyncTimer = undefined;
+    }
+
+    if (resyncDeadline !== undefined) {
+      clearTimeout(resyncDeadline);
+      resyncDeadline = undefined;
+    }
+  };
+
+  const emitResync = (status: WorkerSyncStatus, error?: unknown): void => {
+    const reason = resyncReason;
+
+    if (onResync === undefined || reason === undefined) {
+      return;
+    }
+
+    runWorkerObserver(() =>
+      onResync({
+        attempt: resyncAttempt,
+        reason,
+        status,
+        ...(error === undefined ? {} : { error }),
+      }),
+    );
+  };
+
+  /**
+   * A conflict means the mirror can no longer be repaired from patches: only a
+   * fresh snapshot can. Reporting it and keeping the stale state — the previous
+   * behaviour — left a client that never issues RPC permanently behind, because
+   * every later patch produced another version gap.
+   */
+  const startResync = (reason: WorkerConflictReason): void => {
+    if (!resyncOptions.enabled || disposed || state.status === "recovering") {
+      return;
+    }
+
+    // A run that already exhausted its attempts restarts at the longest delay,
+    // so a host that keeps publishing unusable patches cannot turn recovery
+    // into a request loop.
+    const startAtMaxDelay = state.status === "failed";
+    resyncReason = reason;
+    resyncAttempt = 1;
+    state.status = "recovering";
+    emitResync("recovering");
+    scheduleResyncAttempt(startAtMaxDelay ? resyncOptions.maxDelay : resyncDelayForAttempt(1));
+  };
+
+  const scheduleResyncAttempt = (delay: number): void => {
+    clearResyncTimers();
+    resyncTimer = setTimeout(runResyncAttempt, delay);
+  };
+
+  const runResyncAttempt = (): void => {
+    resyncTimer = undefined;
+
+    if (disposed || state.status !== "recovering") {
+      return;
+    }
+
+    try {
+      postSnapshotRequest();
+    } catch (error) {
+      retryResync(error);
+      return;
+    }
+
+    if (resyncOptions.timeout > 0) {
+      resyncDeadline = setTimeout(() => {
+        resyncDeadline = undefined;
+        retryResync(
+          new CoexistError(
+            `Worker state resync timed out after ${resyncOptions.timeout}ms without a snapshot.`,
+          ),
+        );
+      }, resyncOptions.timeout);
+    }
+  };
+
+  const retryResync = (error: unknown): void => {
+    clearResyncTimers();
+
+    if (resyncAttempt >= resyncOptions.maxAttempts) {
+      state.status = "failed";
+      emitResync("failed", error);
+      return;
+    }
+
+    resyncAttempt += 1;
+    scheduleResyncAttempt(resyncDelayForAttempt(resyncAttempt));
+  };
+
+  const finishResync = (): void => {
+    clearResyncTimers();
+
+    if (state.status === "synced") {
+      return;
+    }
+
+    state.status = "synced";
+    emitResync("synced");
+    resyncReason = undefined;
+    resyncAttempt = 0;
+  };
+
+  const resyncDelayForAttempt = (attempt: number): number =>
+    Math.min(
+      resyncOptions.delay * resyncOptions.backoffFactor ** (attempt - 1),
+      resyncOptions.maxDelay,
+    );
+
+  const reportConflict = (event: WorkerConflictEvent): void => {
+    reportWorkerConflict(onConflict, event);
+
+    if (event.reason !== "stale-message") {
+      startResync(event.reason);
     }
   };
 
@@ -765,12 +945,21 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
     }
 
     if (message.type === "state") {
+      const isPatchOnly = message.state === undefined && message.sync === "patch";
+
       if (hasInitialState && message.version <= state.version) {
         if (message.version <= syncedStaleVersion) {
           return;
         }
 
-        reportWorkerConflict(onConflict, {
+        if (!isPatchOnly && state.status === "recovering") {
+          // A resync snapshot that lost the race against patches which already
+          // repaired the sequence. Recovery succeeded; this is not an anomaly.
+          finishResync();
+          return;
+        }
+
+        reportConflict({
           currentVersion: state.version,
           incomingVersion: message.version,
           message,
@@ -779,10 +968,8 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
         return;
       }
 
-      const isPatchOnly = message.state === undefined && message.sync === "patch";
-
       if (isPatchOnly && snapshot === undefined) {
-        reportWorkerConflict(onConflict, {
+        reportConflict({
           currentVersion: state.version,
           incomingVersion: message.version,
           message,
@@ -792,7 +979,7 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
       }
 
       if (isPatchOnly && hasInitialState && message.version !== state.version + 1) {
-        reportWorkerConflict(onConflict, {
+        reportConflict({
           currentVersion: state.version,
           incomingVersion: message.version,
           message,
@@ -812,7 +999,7 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
 
         snapshot = nextSnapshot;
       } catch (error) {
-        reportWorkerConflict(onConflict, {
+        reportConflict({
           currentVersion: state.version,
           error,
           incomingVersion: message.version,
@@ -830,6 +1017,9 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
 
       hasInitialState = true;
       resolveReadyOnce();
+      // The mirror advanced, so the patch sequence is intact again — whether a
+      // requested snapshot re-based it or a well-ordered patch caught it up.
+      finishResync();
 
       for (const listener of listeners) {
         runWorkerObserver(() => listener(message));
@@ -1657,6 +1847,14 @@ function createMemoryWorkerTransport(
 const workerMessageTypes = ["call", "result", "state", "sync", "ready"] as const;
 const defaultWorkerRequestTimeout = 30_000;
 const defaultWorkerReadyTimeout = 30_000;
+const defaultWorkerResyncOptions: ResolvedWorkerResyncOptions = {
+  backoffFactor: 2,
+  delay: 100,
+  enabled: true,
+  maxAttempts: 5,
+  maxDelay: 5_000,
+  timeout: 10_000,
+};
 const defaultBroadcastWorkerChannel = "coexist:worker";
 /** Upper bound on unanswered broadcast call/sync routes retained per transport. */
 const maxBroadcastMessageRoutes = 1024;
@@ -1843,6 +2041,33 @@ function isUnsafeWorkerPathSegment(segment: PatchPathSegment): boolean {
 
 function isAllowedPostMessageOrigin(origin: string, allowedOrigins: readonly string[]): boolean {
   return allowedOrigins.includes("*") || allowedOrigins.includes(origin);
+}
+
+function resolveWorkerResyncOptions(
+  resync: WorkerResyncOptions | false | undefined,
+): ResolvedWorkerResyncOptions {
+  if (resync === false) {
+    return { ...defaultWorkerResyncOptions, enabled: false };
+  }
+
+  const resolved: ResolvedWorkerResyncOptions = {
+    ...defaultWorkerResyncOptions,
+    ...resync,
+    enabled: true,
+  };
+  assertValidWorkerTimeout(resolved.delay, "resync.delay");
+  assertValidWorkerTimeout(resolved.maxDelay, "resync.maxDelay");
+  assertValidWorkerTimeout(resolved.timeout, "resync.timeout");
+
+  if (!Number.isFinite(resolved.backoffFactor) || resolved.backoffFactor < 1) {
+    throw new CoexistError("resync.backoffFactor must be a finite number of at least 1.");
+  }
+
+  if (!Number.isSafeInteger(resolved.maxAttempts) || resolved.maxAttempts < 1) {
+    throw new CoexistError("resync.maxAttempts must be a safe integer of at least 1.");
+  }
+
+  return resolved;
 }
 
 function assertValidWorkerTimeout(timeout: number, option: string): void {
