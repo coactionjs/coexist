@@ -99,6 +99,8 @@ Schema validation and the action allowlist limit capabilities, but a bare `Worke
 
 A transport is just `{ post(message), subscribe(listener) }`. The package ships adapters for the common channels — all interchangeable:
 
+`post()` returns `void | Promise<void>`, and **a transport that cannot deliver must throw or reject**. That failure is not decoration: the client uses it to fail the affected call immediately instead of waiting out `requestTimeout`, and the host uses it to publish the next update as a full snapshot instead of a patch on top of a version the peer never received. Hosts observe those failures with `createWorkerApp({ onDeliveryError })`; the built-in adapters additionally report them through their own `onError` before propagating.
+
 | Factory                                             | Use for                                     |
 | --------------------------------------------------- | ------------------------------------------- |
 | `createMemoryWorkerTransportPair()`                 | In-process host/client pair (tests, demos). |

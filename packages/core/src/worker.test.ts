@@ -443,7 +443,8 @@ describe("worker prototype", () => {
     failSync = false;
     const retry = client.call("workerCounter", "increase", 1);
     deliver({
-      id: 2,
+      // The failed sync request consumed id 2, so the retried call is id 3.
+      id: 3,
       stateVersion: 1,
       type: "result",
       value: 1,
@@ -1392,14 +1393,16 @@ describe("worker prototype", () => {
       { onError },
     );
 
-    expect(() => postMessageTransport.post(message)).not.toThrow();
-    expect(() => broadcastTransport.post(message)).not.toThrow();
-    expect(() => synchronousDataTransport.post(message)).not.toThrow();
+    // A throwing observer must not replace the delivery failure the caller
+    // needs to see, and must not swallow it either.
+    expect(() => postMessageTransport.post(message)).toThrow(deliveryError);
+    expect(() => broadcastTransport.post(message)).toThrow(deliveryError);
+    expect(() => synchronousDataTransport.post(message)).toThrow(deliveryError);
 
     process.on("unhandledRejection", onUnhandledRejection);
 
     try {
-      dataTransport.post(message);
+      await expect(dataTransport.post(message)).rejects.toBe(deliveryError);
       await new Promise((resolve) => setTimeout(resolve, 0));
     } finally {
       process.off("unhandledRejection", onUnhandledRejection);
@@ -1458,7 +1461,13 @@ describe("worker prototype", () => {
     const callerChannel = createMemoryBroadcastChannel(channel);
     const routedIds: number[] = [];
     const delivered: WorkerMessage[] = [];
-    const host = createBroadcastWorkerTransport(hostChannel, { peerId: "host" });
+    const hostErrors: unknown[] = [];
+    const host = createBroadcastWorkerTransport(hostChannel, {
+      onError(error) {
+        hostErrors.push(error);
+      },
+      peerId: "host",
+    });
     const caller = createBroadcastWorkerTransport(callerChannel, {
       peerId: "caller",
       targetPeerId: "host",
@@ -1489,11 +1498,14 @@ describe("worker prototype", () => {
     const newestRoutedId = routedIds.at(-1)!;
 
     host.post({ id: newestRoutedId, type: "result", value: "newest" });
-    host.post({ id: oldestRoutedId, type: "result", value: "oldest" });
 
     // The newest route still maps back to its original call id; the oldest was
-    // evicted, so its reply is no longer addressed to the caller.
+    // evicted, so its reply cannot be addressed and the failure reaches the caller.
+    expect(() => host.post({ id: oldestRoutedId, type: "result", value: "oldest" })).toThrow(
+      "Cannot route a broadcast result for call",
+    );
     expect(delivered).toEqual([{ id: 1025, type: "result", value: "newest" }]);
+    expect(hostErrors).toHaveLength(1);
 
     unsubscribeHost();
     unsubscribeCaller();
@@ -1881,6 +1893,98 @@ describe("worker prototype", () => {
 
     expect(client.getState()).toEqual({});
     client.dispose();
+  });
+
+  it("rejects a call as soon as an asynchronous transport reports a delivery failure", async () => {
+    const deliveryError = new Error("emit rejected");
+    const client = createWorkerClient({
+      readyTimeout: 0,
+      requestInitialSync: false,
+      requestTimeout: 30_000,
+      transport: {
+        post() {
+          return Promise.reject(deliveryError);
+        },
+        subscribe() {
+          return () => undefined;
+        },
+      },
+    });
+
+    // Without an observed delivery promise this would only fail after the
+    // 30-second request timeout.
+    await expect(client.call("workerCounter", "increase", 1)).rejects.toBe(deliveryError);
+
+    client.dispose();
+  });
+
+  it("republishes a snapshot after a state message fails to reach the client", async () => {
+    const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+    const deliveryErrors: unknown[] = [];
+    const client = createWorkerClient({
+      requestInitialSync: false,
+      transport: clientTransport,
+    });
+    let dropNextState = false;
+    const host = createWorkerApp({
+      onDeliveryError(error) {
+        deliveryErrors.push(error);
+      },
+      providers: [WorkerCounter],
+      sync: "patch",
+      transport: {
+        post(message) {
+          if (message.type === "state" && dropNextState) {
+            dropNextState = false;
+            return Promise.reject(new Error("state delivery failed"));
+          }
+
+          return hostTransport.post(message);
+        },
+        subscribe: hostTransport.subscribe.bind(hostTransport),
+      },
+    });
+
+    await client.ready;
+    expect(client.getState()).toEqual({ workerCounter: { count: 0 } });
+
+    dropNextState = true;
+    host.app.getModule(WorkerCounter).increase();
+    await waitUntil(() => deliveryErrors.length === 1, "the dropped state message");
+
+    // The client never saw version 1, so version 2 must arrive as a snapshot
+    // rather than a patch that would gap.
+    host.app.getModule(WorkerCounter).increase();
+    await waitUntil(
+      () => (client.getState() as { workerCounter: { count: number } }).workerCounter.count === 2,
+      "the re-based snapshot",
+    );
+
+    expect(client.state.status).toBe("synced");
+
+    client.dispose();
+    await host.dispose();
+  });
+
+  it("rejects host readiness when the initial snapshot cannot be delivered", async () => {
+    const deliveryError = new Error("initial publish failed");
+    const host = createWorkerApp({
+      providers: [WorkerCounter],
+      transport: {
+        post(message) {
+          if (message.type === "state") {
+            throw deliveryError;
+          }
+        },
+        subscribe() {
+          return () => undefined;
+        },
+      },
+    });
+
+    await expect(host.ready).rejects.toThrow("Worker host could not publish its initial state.");
+
+    await host.dispose();
   });
 
   it("recovers a stale mirror by requesting a snapshot after a version gap", async () => {

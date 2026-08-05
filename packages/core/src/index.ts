@@ -85,6 +85,7 @@ export {
   type DataTransportEmitOptions,
   type DataTransportLike,
   type DataTransportWorkerTransportOptions,
+  type WorkerDeliveryErrorHandler,
   type PostMessageEndpoint,
   type PostMessageEventLike,
   type PostMessageOriginTarget,

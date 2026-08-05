@@ -9,9 +9,19 @@ import { getModuleMetadata } from "./metadata.js";
 import type { Constructor } from "./types.js";
 
 export interface WorkerTransport {
-  post(message: WorkerMessage): void;
+  /**
+   * Hands a message to the channel. A transport that cannot deliver must throw
+   * or return a rejected promise: the host uses the failure to re-base the
+   * peer with a snapshot instead of continuing a patch sequence the peer never
+   * received, and the client uses it to fail the affected call immediately
+   * instead of waiting out its timeout. Returning `void` means the message was
+   * handed off synchronously and delivery is not separately observable.
+   */
+  post(message: WorkerMessage): void | Promise<void>;
   subscribe(listener: (message: WorkerMessage) => void): () => void;
 }
+
+export type WorkerDeliveryErrorHandler = (error: unknown, message: WorkerMessage) => void;
 
 export type DataTransportEmitOptions =
   | WorkerMessage["type"]
@@ -155,6 +165,12 @@ export interface CreateWorkerAppOptions extends CreateAppOptions {
   readonly sync?: WorkerStateSyncMode;
   readonly stateSections?: readonly WorkerStateSection[];
   readonly onInvalidMessage?: (message: unknown) => void;
+  /**
+   * Reports a message the transport could not deliver. A failed state publish
+   * also makes the next update a full snapshot, so a client never applies a
+   * patch on top of a version it never received.
+   */
+  readonly onDeliveryError?: WorkerDeliveryErrorHandler;
 }
 
 export type WorkerStateSyncMode = "snapshot" | "patch";
@@ -298,6 +314,12 @@ interface BroadcastMessageRoute {
   readonly source: string;
 }
 
+interface WorkerStatePublication {
+  readonly published: boolean;
+  readonly message?: WorkerStateMessage;
+  readonly delivery?: Promise<void>;
+}
+
 interface ResolvedWorkerResyncOptions {
   readonly enabled: boolean;
   readonly delay: number;
@@ -337,18 +359,42 @@ export function createWorkerApp(options: CreateWorkerAppOptions): WorkerAppHost 
     transport,
     ...appOptions
   } = options;
+  const { onDeliveryError } = options;
   let stateSyncVersion = 0;
   let publishPatches = false;
+  // A published version that never reached the peer cannot be the base for the
+  // next patch, so the following update re-bases the client with a snapshot.
+  let resendSnapshot = false;
+
+  const handleDeliveryFailure = (error: unknown, message: WorkerMessage): void => {
+    resendSnapshot = true;
+    reportWorkerDeliveryError(onDeliveryError, error, message);
+  };
+
   const patchPlugin: Plugin = {
     name: "coexist:worker-patches",
     onPatch(event) {
-      if (publishPatches) {
-        const version = stateSections === undefined ? app.state.version : stateSyncVersion + 1;
-
-        if (publishState(app, transport, event.patches, sync, stateSections, version)) {
-          stateSyncVersion = version;
-        }
+      if (!publishPatches) {
+        return;
       }
+
+      const version = stateSections === undefined ? app.state.version : stateSyncVersion + 1;
+      const publication = publishState(
+        app,
+        transport,
+        handleDeliveryFailure,
+        event.patches,
+        resendSnapshot ? "snapshot" : sync,
+        stateSections,
+        version,
+      );
+
+      if (publication.published) {
+        stateSyncVersion = version;
+        resendSnapshot = false;
+      }
+
+      observeWorkerDelivery(publication, handleDeliveryFailure);
     },
   };
   const app = createApp({
@@ -361,18 +407,32 @@ export function createWorkerApp(options: CreateWorkerAppOptions): WorkerAppHost 
   });
   let disposed = false;
   let disposePromise: Promise<void> | undefined;
-  const ready = app.start().then(() => {
+  const ready = app.start().then(async () => {
     if (disposed) {
       throw new CoexistError("Worker host disposed before initial state.");
     }
 
     publishPatches = true;
-    transport.post({ type: "ready" });
+    announceReady(transport, handleDeliveryFailure);
     const version = stateSections === undefined ? app.state.version : stateSyncVersion;
+    const publication = publishState(
+      app,
+      transport,
+      handleDeliveryFailure,
+      [],
+      "snapshot",
+      stateSections,
+      version,
+    );
 
-    if (publishState(app, transport, [], "snapshot", stateSections, version)) {
-      stateSyncVersion = version;
+    if (!publication.published) {
+      throw new CoexistError("Worker host could not publish its initial state.");
     }
+
+    stateSyncVersion = version;
+    // A host that reports ready must have handed its first snapshot to the
+    // transport; awaiting delivery keeps that promise honest for async channels.
+    await publication.delivery;
     return undefined;
   });
 
@@ -391,14 +451,28 @@ export function createWorkerApp(options: CreateWorkerAppOptions): WorkerAppHost 
       }
 
       if (message.type === "sync") {
-        void handleSync(app, transport, message, ready, stateSections, () => stateSyncVersion);
+        void handleSync(
+          app,
+          transport,
+          message,
+          ready,
+          stateSections,
+          () => stateSyncVersion,
+          handleDeliveryFailure,
+        );
         return;
       }
 
       if (message.type === "call") {
-        void handleCall(app, transport, message, ready, expose, () => stateSyncVersion).catch(
-          () => undefined,
-        );
+        void handleCall(
+          app,
+          transport,
+          message,
+          ready,
+          expose,
+          () => stateSyncVersion,
+          handleDeliveryFailure,
+        ).catch(() => undefined);
       }
     });
   } catch (error) {
@@ -579,17 +653,16 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
           }, timeout);
         }
 
-        try {
-          transport.post({
+        postWithDelivery(
+          {
             args,
             id,
             method,
             module,
             type: "call",
-          });
-        } catch (error) {
-          fail(error);
-        }
+          },
+          fail,
+        );
       });
     },
     dispose() {
@@ -726,7 +799,24 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
     }
   };
 
-  const requestStateSync = (stateVersion: number): void => {
+  /**
+   * Posts a message and routes both a synchronous throw and a rejected
+   * delivery to the same handler. A transport that reports failure only
+   * asynchronously would otherwise leave the caller waiting out its timeout.
+   */
+  const postWithDelivery = (message: WorkerMessage, onFailure: (error: unknown) => void): void => {
+    try {
+      const delivery = transport.post(message);
+
+      if (isPromiseLike(delivery)) {
+        void Promise.resolve(delivery).catch(onFailure);
+      }
+    } catch (error) {
+      onFailure(error);
+    }
+  };
+
+  const requestStateSync = (stateVersion: number, onFailure: (error: unknown) => void): void => {
     if (disposed) {
       return;
     }
@@ -740,18 +830,17 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
 
     const previousRequestedVersion = requestedSyncVersion;
     requestedSyncVersion = stateVersion;
+    const id = nextId;
+    nextId += 1;
 
-    try {
-      transport.post({
-        id: nextId,
-        stateVersion,
-        type: "sync",
-      });
-      nextId += 1;
-    } catch (error) {
-      requestedSyncVersion = previousRequestedVersion;
-      throw error;
-    }
+    postWithDelivery({ id, stateVersion, type: "sync" }, (error) => {
+      // The request never left, so a later result may request this version again.
+      if (requestedSyncVersion === stateVersion) {
+        requestedSyncVersion = previousRequestedVersion;
+      }
+
+      onFailure(error);
+    });
   };
 
   const requestInitialSnapshot = (): void => {
@@ -759,20 +848,15 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
       return;
     }
 
-    try {
-      postSnapshotRequest();
-    } catch (error) {
+    postSnapshotRequest((error) => {
       failReady(new WorkerInitialSyncError(error));
-    }
+    });
   };
 
-  const postSnapshotRequest = (): void => {
+  const postSnapshotRequest = (onFailure: (error: unknown) => void): void => {
     const id = nextId;
     nextId += 1;
-    transport.post({
-      id,
-      type: "sync",
-    });
+    postWithDelivery({ id, type: "sync" }, onFailure);
   };
 
   const clearResyncTimers = (): void => {
@@ -838,10 +922,13 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
       return;
     }
 
-    try {
-      postSnapshotRequest();
-    } catch (error) {
+    let delivered = true;
+    postSnapshotRequest((error) => {
+      delivered = false;
       retryResync(error);
+    });
+
+    if (!delivered) {
       return;
     }
 
@@ -1054,15 +1141,13 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
     entry.result = result;
     pending.set(message.id, entry);
 
-    try {
-      requestStateSync(result.stateVersion!);
-    } catch (error) {
+    requestStateSync(result.stateVersion!, (error) => {
       if (pending.get(message.id) === entry) {
         pending.delete(message.id);
         entry.cleanup();
         entry.reject(error);
       }
-    }
+    });
   });
 
   if (readyTimeout > 0) {
@@ -1096,7 +1181,7 @@ function reportWorkerConflict(
 }
 
 function reportWorkerTransportError(
-  onError: ((error: unknown, message: WorkerMessage) => void) | undefined,
+  onError: WorkerDeliveryErrorHandler | undefined,
   error: unknown,
   message: WorkerMessage,
 ): void {
@@ -1104,6 +1189,18 @@ function reportWorkerTransportError(
     onError?.(error, message);
   } catch {
     // Transport error observers must not rethrow delivery failures or create rejected tasks.
+  }
+}
+
+function reportWorkerDeliveryError(
+  onDeliveryError: WorkerDeliveryErrorHandler | undefined,
+  error: unknown,
+  message: WorkerMessage,
+): void {
+  try {
+    onDeliveryError?.(error, message);
+  } catch {
+    // Delivery observers cannot repair the channel and must not mask the failure handling.
   }
 }
 
@@ -1158,6 +1255,8 @@ export function createPostMessageWorkerTransport(
         }
       } catch (error) {
         reportWorkerTransportError(options.onError, error, message);
+        // The message was not delivered, so the caller must not treat it as sent.
+        throw error;
       }
     },
     subscribe(listener) {
@@ -1226,6 +1325,8 @@ export function createBroadcastWorkerTransport(
         broadcast.postMessage(envelope);
       } catch (error) {
         reportWorkerTransportError(options.onError, error, message);
+        // An unroutable or rejected envelope never reached a peer.
+        throw error;
       }
     },
     subscribe(listener) {
@@ -1361,21 +1462,32 @@ export function createDataTransportWorkerTransport(
 
   return {
     post(message) {
+      let emitted: Promise<unknown>;
+
       try {
-        void dataTransport
-          .emit(
+        emitted = Promise.resolve(
+          dataTransport.emit(
             {
               name: message.type,
               respond: false,
             },
             message,
-          )
-          .catch((error: unknown) => {
-            reportWorkerTransportError(options.onError, error, message);
-          });
+          ),
+        );
       } catch (error) {
         reportWorkerTransportError(options.onError, error, message);
+        throw error;
       }
+
+      // The emit promise is the only signal that an asynchronous backend
+      // accepted the message, so it becomes the caller's delivery promise.
+      return emitted.then(
+        () => undefined,
+        (error: unknown) => {
+          reportWorkerTransportError(options.onError, error, message);
+          throw error;
+        },
+      );
     },
     subscribe(listener) {
       listeners.add(listener);
@@ -1467,6 +1579,7 @@ async function handleCall(
   ready: Promise<void>,
   expose: Readonly<Record<string, readonly string[]>> | undefined,
   getStateVersion: () => number,
+  onDeliveryError: WorkerDeliveryErrorHandler,
 ): Promise<void> {
   try {
     await ready;
@@ -1490,19 +1603,27 @@ async function handleCall(
     }
 
     const value = await method.apply(module, message.args);
-    transport.post({
-      id: message.id,
-      stateVersion: getStateVersion(),
-      type: "result",
-      value,
-    });
+    postWorkerMessage(
+      transport,
+      {
+        id: message.id,
+        stateVersion: getStateVersion(),
+        type: "result",
+        value,
+      },
+      onDeliveryError,
+    );
   } catch (error) {
-    transport.post({
-      error: serializeError(error),
-      id: message.id,
-      stateVersion: getStateVersion(),
-      type: "result",
-    });
+    postWorkerMessage(
+      transport,
+      {
+        error: serializeError(error),
+        id: message.id,
+        stateVersion: getStateVersion(),
+        type: "result",
+      },
+      onDeliveryError,
+    );
   }
 }
 
@@ -1513,29 +1634,92 @@ async function handleSync(
   ready: Promise<void>,
   sections: readonly WorkerStateSection[] | undefined,
   getStateVersion: () => number,
+  onDeliveryError: WorkerDeliveryErrorHandler,
 ): Promise<void> {
   try {
     await ready;
-    publishState(app, transport, [], "snapshot", sections, getStateVersion(), message.id);
   } catch {
     // The startup failure is reported through the host ready promise and call results.
+    return;
   }
+
+  observeWorkerDelivery(
+    publishState(
+      app,
+      transport,
+      onDeliveryError,
+      [],
+      "snapshot",
+      sections,
+      getStateVersion(),
+      message.id,
+    ),
+    onDeliveryError,
+  );
+}
+
+/**
+ * Hands a message to the transport and turns both synchronous throws and
+ * rejected deliveries into one reported failure. A silently dropped message
+ * would otherwise leave the peer waiting for a reply that never comes.
+ */
+function postWorkerMessage(
+  transport: WorkerTransport,
+  message: WorkerMessage,
+  onDeliveryError: WorkerDeliveryErrorHandler,
+): void {
+  try {
+    const delivery = transport.post(message);
+
+    if (isPromiseLike(delivery)) {
+      void Promise.resolve(delivery).catch((error: unknown) => {
+        onDeliveryError(error, message);
+      });
+    }
+  } catch (error) {
+    onDeliveryError(error, message);
+  }
+}
+
+function announceReady(
+  transport: WorkerTransport,
+  onDeliveryError: WorkerDeliveryErrorHandler,
+): void {
+  // The announcement is a hint that lets late clients ask for a snapshot; the
+  // snapshot published right after is the signal `host.ready` depends on.
+  postWorkerMessage(transport, { type: "ready" }, onDeliveryError);
+}
+
+function observeWorkerDelivery(
+  publication: WorkerStatePublication,
+  onDeliveryError: WorkerDeliveryErrorHandler,
+): void {
+  const { delivery, message } = publication;
+
+  if (delivery === undefined || message === undefined) {
+    return;
+  }
+
+  void delivery.catch((error: unknown) => {
+    onDeliveryError(error, message);
+  });
 }
 
 function publishState(
   app: App,
   transport: WorkerTransport,
+  onDeliveryError: WorkerDeliveryErrorHandler,
   patches: readonly unknown[] = [],
   mode: WorkerStateSyncMode = "snapshot",
   sections?: readonly WorkerStateSection[],
   version: number = app.state.version,
   syncId?: number,
-): boolean {
+): WorkerStatePublication {
   const filteredPatches = filterWorkerPatches(patches, sections);
   const isPatch = filteredPatches.length > 0;
 
   if (patches.length > 0 && filteredPatches.length === 0) {
-    return false;
+    return { published: false };
   }
 
   const state = filterWorkerState(app.store.getPureState(), sections);
@@ -1549,8 +1733,16 @@ function publishState(
     ...(isPatch ? { patches: filteredPatches } : {}),
   };
 
-  transport.post(message);
-  return true;
+  try {
+    const delivery = transport.post(message);
+
+    return isPromiseLike(delivery)
+      ? { delivery: Promise.resolve(delivery), message, published: true }
+      : { message, published: true };
+  } catch (error) {
+    onDeliveryError(error, message);
+    return { published: false };
+  }
 }
 
 function filterWorkerState(state: unknown, sections?: readonly WorkerStateSection[]): unknown {
