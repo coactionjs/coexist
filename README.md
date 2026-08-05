@@ -1,17 +1,19 @@
 # Coexist
 
-**The meta-framework for coexisting UI frameworks.**
+**The application runtime for coexisting UI frameworks.**
 
 ![base class: none](https://img.shields.io/badge/base_class-none-success)
 ![inheritance: none](https://img.shields.io/badge/inheritance-none-success)
 ![reflect-metadata: none](https://img.shields.io/badge/reflect--metadata-none-success)
 ![UI frameworks: 5](https://img.shields.io/badge/UI_frameworks-5-blue)
-![Web Worker: ready](https://img.shields.io/badge/Web_Worker-ready-blueviolet)
+![Web Worker: beta](https://img.shields.io/badge/Web_Worker-beta-blueviolet)
 ![module: ESM](https://img.shields.io/badge/module-ESM-orange)
 
 **Facts:** [5 UI frameworks](./docs/ui-adapters.md) · [no base class, no inheritance](./docs/modules.md) · [no `reflect-metadata`](./docs/dependency-injection.md) · [runs in a Web Worker](./docs/worker-runtime.md)
 
 Write your business logic once as plain modules — state, computed, actions, and effects — and let React, Vue, Svelte, Solid, and Angular coexist on one framework-agnostic app core. With lightweight dependency injection and a single observable store powered by [Coaction](https://www.npmjs.com/package/coaction), the same modules can even run in a Web Worker or across tabs — no rewrite required.
+
+> **What this is.** Coexist is the application layer _below_ the view: state, modules, DI, lifecycle, plugins, and worker execution. It is **not** a Next/Nuxt/SvelteKit-style meta-framework — it does not render, match routes, fetch data, bundle, or deploy. Pair it with whichever of those you already use. See [Scope and stability](./docs/scope-and-stability.md) for what is production-ready today and what is still beta.
 
 ```ts
 import { createApp, defineModule } from "@coexist/core";
@@ -589,7 +591,7 @@ More focused examples live in [`examples/`](./examples).
 
 ## Worker Prototype
 
-`@coexist/core` includes a small worker-hosting prototype:
+`@coexist/core` includes a beta worker runtime:
 
 ```ts
 import {
@@ -714,7 +716,7 @@ const host = createWorkerApp({
 await client.ready;
 ```
 
-The prototype covers app creation, method delegation, initial state snapshots, patch-only sync messages after startup, client-side readiness, selector watches for worker-hosted state, `postMessage` endpoints, and a `data-transport`-style `listen`/`emit` bridge. It also supports BroadcastChannel-style shared tab coordination with routed call results. It does not attempt full shared-runtime conflict handling or framework-specific worker bootstrapping.
+The beta covers app creation, method delegation, initial state snapshots, patch-only sync messages after startup, client-side readiness, selector watches for worker-hosted state, `postMessage` endpoints, and a `data-transport`-style `listen`/`emit` bridge. It also supports BroadcastChannel-style shared tab coordination with routed call results. It does not attempt full shared-runtime conflict handling or framework-specific worker bootstrapping.
 
 Remote calls are limited to declared module actions by default. Additional methods can be enabled explicitly per module with `createWorkerApp({ expose: { counter: ["refresh"] }, ... })`.
 
@@ -885,6 +887,7 @@ scripts/      # release/publish tooling
 - **Guides** — conceptual documentation lives in [`docs/`](./docs). Start with the [Introduction](./docs/introduction.md) and [Getting Started](./docs/getting-started.md), then dig into [Core Concepts](./docs/core-concepts.md), [Dependency Injection](./docs/dependency-injection.md), [State & Reactivity](./docs/state-and-reactivity.md), [UI Adapters](./docs/ui-adapters.md), [Plugins](./docs/plugins.md), [Worker & Shared Runtime](./docs/worker-runtime.md), [Testing](./docs/testing.md), and [Architecture](./docs/architecture.md).
 - **API reference** — each package's README documents its exports; see the [Packages](#packages) table above.
 - **Examples** — runnable, framework-specific demos live in [`examples/`](./examples).
+- **Scope & stability** — maturity per area, compatibility matrix, and versioning policy in [Scope & Stability](./docs/scope-and-stability.md).
 - **Contributing** — workflow and conventions in [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 - **Security** — private reporting channel and threat model in [`SECURITY.md`](./SECURITY.md).
 

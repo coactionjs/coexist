@@ -2,7 +2,7 @@
 
 > The Coexist core runtime: a typed application core with lightweight dependency injection, object-oriented state, actions, computed getters, effects, and a framework-agnostic store powered by [Coaction](https://www.npmjs.com/package/coaction).
 
-`@coexist/core` is the only package every Coexist app depends on. It owns the DI container, module metadata, the app runtime and lifecycle, the reactive store, and a worker-hosting prototype. UI adapters (`@coexist/react`, `@coexist/vue`, …) and plugins (`@coexist/storage`, `@coexist/router`, …) are thin layers on top of the primitives exported here.
+`@coexist/core` is the only package every Coexist app depends on. It owns the DI container, module metadata, the app runtime and lifecycle, the reactive store, and a beta worker runtime. UI adapters (`@coexist/react`, `@coexist/vue`, …) and plugins (`@coexist/storage`, `@coexist/router`, …) are thin layers on top of the primitives exported here.
 
 ## Installation
 
@@ -406,7 +406,7 @@ expect(started.started).toBe(true);
 
 ## Worker / shared runtime
 
-`@coexist/core` includes a worker-hosting prototype: run the app (and its modules) in a Worker, iframe, `MessagePort`, `BroadcastChannel`, or custom RPC channel, and consume its state from another context.
+`@coexist/core` includes a beta worker runtime: run the app (and its modules) in a Worker, iframe, `MessagePort`, `BroadcastChannel`, or custom RPC channel, and consume its state from another context.
 
 ```ts
 import {
@@ -459,7 +459,7 @@ Hosts can isolate published state to selected top-level sections with `stateSect
 
 A mirror that lost its patch sequence (`missing-snapshot`, `version-gap`, `patch-apply-failed`) requests a fresh snapshot instead of only reporting the conflict, so a watch-only client cannot stay behind forever. `client.state.status` is `synced` / `recovering` / `failed`, `onResync` reports transitions, and `resync` tunes the single-flight run (`delay`, `backoffFactor`, `maxDelay`, `maxAttempts`, `timeout`) or disables it with `resync: false`.
 
-The prototype intentionally does not implement full shared-runtime conflict resolution or framework-specific worker bootstrapping. Adapters (`@coexist/react`, `@coexist/vue`, `@coexist/svelte`, `@coexist/solid`, `@coexist/angular`) ship `WorkerClient`-based hooks for consuming worker state.
+The beta intentionally does not implement full shared-runtime conflict resolution or framework-specific worker bootstrapping. Adapters (`@coexist/react`, `@coexist/vue`, `@coexist/svelte`, `@coexist/solid`, `@coexist/angular`) ship `WorkerClient`-based hooks for consuming worker state.
 
 ## Errors
 

@@ -1,10 +1,12 @@
 # Introduction
 
-Coexist is a **UI-agnostic application meta-framework** built on top of [Coaction](https://www.npmjs.com/package/coaction). It gives you a typed application core — dependency injection, object-oriented stateful modules, lifecycle, plugins, testing, and worker execution — without binding your business logic to any one UI framework.
+Coexist is a **UI-agnostic application runtime** built on top of [Coaction](https://www.npmjs.com/package/coaction). It gives you a typed application core — dependency injection, object-oriented stateful modules, lifecycle, plugins, testing, and worker execution — without binding your business logic to any one UI framework.
+
+"Meta-framework" usually means Next, Nuxt, or SvelteKit: routing, SSR, data fetching, bundling, and deployment conventions around a renderer. Coexist is the layer _underneath_ that — it owns none of those. Read it as an application kernel you put a meta-framework, or a plain SPA, on top of.
 
 ## The one-line pitch
 
-> **The meta-framework for coexisting UI frameworks.**
+> **The application runtime for coexisting UI frameworks.**
 
 The value is not "write one UI for every framework." It is:
 

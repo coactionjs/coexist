@@ -1,6 +1,6 @@
 # Worker & Shared Runtime
 
-`@coexist/core` includes a worker-hosting prototype: run an app (and its modules) in a Web Worker, iframe, `MessagePort`, `BroadcastChannel`, or custom RPC channel, and consume its state from another context with the same selector and module ergonomics you use on the main thread.
+`@coexist/core` includes a beta worker runtime: run an app (and its modules) in a Web Worker, iframe, `MessagePort`, `BroadcastChannel`, or custom RPC channel, and consume its state from another context with the same selector and module ergonomics you use on the main thread.
 
 Because business logic is plain modules, **moving it off-thread does not change the modules** — only where they run.
 
@@ -268,11 +268,13 @@ function View() {
 
 See [UI Adapters](./ui-adapters.md#consuming-worker-hosted-state) for the per-framework helper names.
 
-## What the prototype covers (and doesn't)
+## What the beta covers (and doesn't)
 
-Covered: app creation, method delegation, initial snapshots, patch-only sync after startup, client readiness, selector watches, `postMessage` endpoints, a `data-transport`-style `listen`/`emit` bridge, and BroadcastChannel shared-tab coordination with routed call results.
+Covered: app creation, method delegation, initial snapshots, patch-only sync after startup, bounded client readiness, snapshot recovery after a lost patch, a delivery contract that surfaces transport failures, protocol size quotas, selector watches, `postMessage` endpoints, a `data-transport`-style `listen`/`emit` bridge, and BroadcastChannel shared-tab coordination with routed call results.
 
-Not covered: full shared-runtime conflict _resolution_ (it reports conflicts, it does not merge them) and framework-specific worker bootstrapping. It reuses Coaction's transport/worker primitives rather than reimplementing a full shared runtime.
+Not covered: full shared-runtime conflict _resolution_ (it reports conflicts and re-syncs a stale mirror, but does not merge competing writes) and framework-specific worker bootstrapping. It reuses Coaction's transport/worker primitives rather than reimplementing a full shared runtime.
+
+**This is beta, not a prototype and not production-hardened.** Over a trusted, reliable transport — a dedicated `Worker`, a `MessagePort`, a same-origin iframe you control — it is meant to be depended on. Over an unreliable remote transport, or with several peers writing the same state, treat it as experimental. [Scope & Stability](./scope-and-stability.md#the-worker-runtime-is-beta) states exactly what that label covers.
 
 ## Next
 

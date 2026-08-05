@@ -1,6 +1,6 @@
 # Coexist Documentation
 
-> Coexist — the meta-framework for coexisting UI frameworks. Write business modules once; run them with React, Vue, Svelte, Solid, Angular, vanilla JS, workers, shared tabs, and tests.
+> Coexist — the application runtime for coexisting UI frameworks. Write business modules once; run them with React, Vue, Svelte, Solid, Angular, vanilla JS, workers, shared tabs, and tests.
 
 This directory contains the conceptual guides. For per-package API references, see each package's README (linked from the root [Packages](../README.md#packages) table). For runnable demos, see [`examples/`](../examples).
 
@@ -26,10 +26,11 @@ This directory contains the conceptual guides. For per-package API references, s
 
 ## Background
 
-| Document                          | What it covers                                                      |
-| --------------------------------- | ------------------------------------------------------------------- |
-| [Architecture](./architecture.md) | High-level architecture, package boundaries, and design principles. |
-| [FAQ](./faq.md)                   | Decorators, the OO model, strict mode, and other common questions.  |
+| Document                                      | What it covers                                                                 |
+| --------------------------------------------- | ------------------------------------------------------------------------------ |
+| [Architecture](./architecture.md)             | High-level architecture, package boundaries, and design principles.            |
+| [Scope & Stability](./scope-and-stability.md) | Maturity per area, compatibility matrix, versioning, and what is out of scope. |
+| [FAQ](./faq.md)                               | Decorators, the OO model, strict mode, and other common questions.             |
 
 ## Conventions in these docs
 

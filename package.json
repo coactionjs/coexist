@@ -2,7 +2,7 @@
   "name": "coexist",
   "version": "0.0.0",
   "private": true,
-  "description": "Coexist - The meta-framework for coexisting UI frameworks.",
+  "description": "Coexist - The application runtime for coexisting UI frameworks.",
   "license": "MIT",
   "repository": {
     "type": "git",

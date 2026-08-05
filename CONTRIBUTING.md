@@ -96,13 +96,15 @@ User-facing changes need a [changeset](https://github.com/changesets/changesets)
 pnpm changeset
 ```
 
-Releases are automated:
+Releasing is automated but maintainer-triggered at both ends:
 
-1. Merged changesets are collected into a version PR (`version-packages`).
-2. Merging that PR updates versions and changelogs.
-3. Pushing the resulting `v*` tag triggers the publish workflow.
+1. Merged changesets are collected into a version PR by the `Version Packages` workflow, which a maintainer dispatches manually.
+2. Merging that PR updates versions and changelogs on `main`. It does **not** publish.
+3. A maintainer publishes by pushing the matching `v*` tag (or dispatching `Publish Packages`). The workflow refuses to run while any changeset is still pending, then verifies the repo before publishing with npm Trusted Publisher OIDC.
 
-You generally only need to add a changeset; the rest is handled by CI.
+You generally only need to add a changeset; a maintainer drives steps 1 and 3.
+
+Which bump to pick is described in [Scope & Stability](./docs/scope-and-stability.md#versioning): pre-1.0, a minor may break, a patch may not.
 
 ## Dependencies
 
