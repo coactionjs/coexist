@@ -23,6 +23,23 @@ export interface WorkerTransport {
 
 export type WorkerDeliveryErrorHandler = (error: unknown, message: WorkerMessage) => void;
 
+/**
+ * Upper bounds on what one peer can make the other allocate or walk. Schema
+ * validation rejects malformed messages but says nothing about size, so a
+ * runaway — or hostile — peer could otherwise spend the endpoint's memory and
+ * CPU with well-formed traffic.
+ */
+export interface WorkerProtocolLimits {
+  /** Unanswered calls a client will hold before refusing new ones. */
+  readonly maxPendingCalls?: number;
+  /** Arguments a host accepts on one remote call. */
+  readonly maxCallArgs?: number;
+  /** Patches a client applies from one state message. */
+  readonly maxPatchesPerMessage?: number;
+  /** Segments a client walks in one patch path. */
+  readonly maxPatchPathDepth?: number;
+}
+
 export type DataTransportEmitOptions =
   | WorkerMessage["type"]
   | {
@@ -180,6 +197,7 @@ export interface CreateWorkerAppOptions extends CreateAppOptions {
   readonly includeErrorStack?: boolean;
   /** Replaces the default error shape sent to callers. */
   readonly serializeError?: (error: unknown) => SerializedWorkerError;
+  readonly limits?: WorkerProtocolLimits;
 }
 
 export type WorkerStateSyncMode = "snapshot" | "patch";
@@ -217,6 +235,7 @@ export interface CreateWorkerClientOptions {
   readonly resync?: WorkerResyncOptions | false;
   readonly onResync?: (event: WorkerResyncEvent) => void;
   readonly signal?: AbortSignal;
+  readonly limits?: WorkerProtocolLimits;
 }
 
 export interface WorkerResyncOptions {
@@ -323,6 +342,8 @@ interface BroadcastMessageRoute {
   readonly source: string;
 }
 
+type ResolvedWorkerProtocolLimits = Required<WorkerProtocolLimits>;
+
 interface WorkerStatePublication {
   readonly published: boolean;
   readonly message?: WorkerStateMessage;
@@ -371,6 +392,7 @@ export function createWorkerApp(options: CreateWorkerAppOptions): WorkerAppHost 
   const { includeErrorStack = false, onDeliveryError } = options;
   const serializeError =
     options.serializeError ?? ((error: unknown) => serializeWorkerError(error, includeErrorStack));
+  const limits = resolveWorkerProtocolLimits(options.limits);
   let stateSyncVersion = 0;
   let publishPatches = false;
   // A published version that never reached the peer cannot be the base for the
@@ -461,6 +483,30 @@ export function createWorkerApp(options: CreateWorkerAppOptions): WorkerAppHost 
         return;
       }
 
+      const exceeded = findExceededWorkerLimit(message, limits);
+
+      if (exceeded !== undefined) {
+        if (message.type === "call") {
+          // Answering keeps the caller from waiting out its timeout, and one
+          // reply per request adds no amplification.
+          postWorkerMessage(
+            transport,
+            {
+              error: serializeError(
+                new CoexistError(`Worker call exceeds the host limit ${exceeded}.`),
+              ),
+              id: message.id,
+              stateVersion: stateSyncVersion,
+              type: "result",
+            },
+            handleDeliveryFailure,
+          );
+        }
+
+        reportInvalidWorkerMessage(onInvalidMessage, message);
+        return;
+      }
+
       if (message.type === "sync") {
         void handleSync(
           app,
@@ -545,6 +591,7 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
   assertValidWorkerTimeout(requestTimeout, "requestTimeout");
   assertValidWorkerTimeout(readyTimeout, "readyTimeout");
   const resyncOptions = resolveWorkerResyncOptions(options.resync);
+  const limits = resolveWorkerProtocolLimits(options.limits);
   const listeners = new Set<(message: WorkerStateMessage) => void>();
   const selectorWatchers = new Set<WorkerSelectorWatcher<unknown>>();
   const pending = new Map<number, PendingWorkerCall>();
@@ -619,6 +666,15 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
     callWithOptions(module, method, args, callOptions = {}) {
       if (disposed) {
         return Promise.reject(new CoexistError("Worker client has been disposed."));
+      }
+
+      if (pending.size >= limits.maxPendingCalls) {
+        return Promise.reject(
+          new CoexistError(
+            `Worker client already has ${limits.maxPendingCalls} unanswered calls ` +
+              "(limits.maxPendingCalls); the host is not keeping up.",
+          ),
+        );
       }
 
       const timeout = callOptions.timeout ?? requestTimeout;
@@ -1032,6 +1088,11 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
 
   unsubscribe = transport.subscribe((message) => {
     if (!isWorkerMessage(message)) {
+      reportInvalidWorkerMessage(onInvalidMessage, message);
+      return;
+    }
+
+    if (findExceededWorkerLimit(message, limits) !== undefined) {
       reportInvalidWorkerMessage(onInvalidMessage, message);
       return;
     }
@@ -2052,6 +2113,12 @@ function createMemoryWorkerTransport(
 const workerMessageTypes = ["call", "result", "state", "sync", "ready"] as const;
 const defaultWorkerRequestTimeout = 30_000;
 const defaultWorkerReadyTimeout = 30_000;
+const defaultWorkerProtocolLimits: ResolvedWorkerProtocolLimits = {
+  maxCallArgs: 100,
+  maxPatchPathDepth: 100,
+  maxPatchesPerMessage: 10_000,
+  maxPendingCalls: 1_000,
+};
 const defaultWorkerResyncOptions: ResolvedWorkerResyncOptions = {
   backoffFactor: 2,
   delay: 100,
@@ -2246,6 +2313,59 @@ function isUnsafeWorkerPathSegment(segment: PatchPathSegment): boolean {
 
 function isAllowedPostMessageOrigin(origin: string, allowedOrigins: readonly string[]): boolean {
   return allowedOrigins.includes("*") || allowedOrigins.includes(origin);
+}
+
+function resolveWorkerProtocolLimits(
+  limits: WorkerProtocolLimits | undefined,
+): ResolvedWorkerProtocolLimits {
+  const resolved: ResolvedWorkerProtocolLimits = { ...defaultWorkerProtocolLimits, ...limits };
+
+  for (const [option, value] of Object.entries(resolved)) {
+    if (!Number.isSafeInteger(value) || value < 1) {
+      throw new CoexistError(`limits.${option} must be a safe integer of at least 1.`);
+    }
+  }
+
+  return resolved;
+}
+
+/** Reports the first limit an inbound message exceeds, or `undefined`. */
+function findExceededWorkerLimit(
+  message: WorkerMessage,
+  limits: ResolvedWorkerProtocolLimits,
+): string | undefined {
+  if (message.type === "call") {
+    return message.args.length > limits.maxCallArgs
+      ? `maxCallArgs (${limits.maxCallArgs})`
+      : undefined;
+  }
+
+  if (message.type !== "state" || message.patches === undefined) {
+    return undefined;
+  }
+
+  if (message.patches.length > limits.maxPatchesPerMessage) {
+    return `maxPatchesPerMessage (${limits.maxPatchesPerMessage})`;
+  }
+
+  for (const patch of message.patches) {
+    if (getWorkerPatchPathDepth(patch) > limits.maxPatchPathDepth) {
+      return `maxPatchPathDepth (${limits.maxPatchPathDepth})`;
+    }
+  }
+
+  return undefined;
+}
+
+function getWorkerPatchPathDepth(patch: unknown): number {
+  const path = (patch as { readonly path?: unknown }).path;
+
+  if (Array.isArray(path)) {
+    return path.length;
+  }
+
+  // A JSON Pointer's depth is its separator count; "" is the root.
+  return typeof path === "string" && path !== "" ? path.split("/").length - 1 : 0;
 }
 
 function resolveWorkerResyncOptions(

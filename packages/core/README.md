@@ -442,6 +442,8 @@ Worker host disposal aborts in-flight app initialization before awaiting readine
 
 Declared module actions are remotely callable by default. Opt additional plain methods in per module with `createWorkerApp({ expose: { counter: ["refresh"] }, ... })`. Protocol messages are schema-validated (including safe patch paths), and client requests default to a 30-second timeout with per-call timeout/`AbortSignal` support through `callWithOptions()`. Bare/custom transports are trusted-endpoint APIs; postMessage adds `targetOrigin` plus origin/source filters, while broadcast transports support a shared `authToken` routing capability. Broadcast peers can observe that token, so BroadcastChannel remains a trusted same-origin transport, not an adversarial security boundary.
 
+Both endpoints enforce size quotas alongside schema validation, tunable with `limits`: `maxCallArgs` (100), `maxPatchesPerMessage` (10000), `maxPatchPathDepth` (100), and `maxPendingCalls` (1000). Remote errors cross as `{ name, message }`; opt stacks in with `includeErrorStack: true` or replace the payload with `serializeError`.
+
 `WorkerTransport.post()` returns `void | Promise<void>` and must throw or reject when delivery fails. Clients fail the affected call immediately instead of waiting out `requestTimeout`, and a host whose publish failed sends the next update as a full snapshot rather than a patch on a version the peer never received. Observe host-side failures with `createWorkerApp({ onDeliveryError })`.
 
 Transports (all interchangeable):

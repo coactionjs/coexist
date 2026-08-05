@@ -1911,6 +1911,101 @@ describe("worker prototype", () => {
     client.dispose();
   });
 
+  it("refuses remote calls whose argument count exceeds the host limit", async () => {
+    const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+    const invalidMessages: unknown[] = [];
+    const client = createWorkerClient({ transport: clientTransport });
+    const host = createWorkerApp({
+      limits: { maxCallArgs: 2 },
+      onInvalidMessage(message) {
+        invalidMessages.push(message);
+      },
+      providers: [WorkerCounter],
+      transport: hostTransport,
+    });
+
+    await client.ready;
+
+    await expect(client.call("workerCounter", "increase", 1, 2, 3)).rejects.toThrow(
+      "Worker call exceeds the host limit maxCallArgs (2).",
+    );
+    expect(invalidMessages).toHaveLength(1);
+
+    // The limit rejects the oversized call, not the module.
+    await expect(client.call("workerCounter", "increase", 1)).resolves.toBe(1);
+
+    client.dispose();
+    await host.dispose();
+  });
+
+  it("drops state messages that exceed the client patch limits", async () => {
+    const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+    const invalidMessages: unknown[] = [];
+    const client = createWorkerClient({
+      limits: { maxPatchPathDepth: 2, maxPatchesPerMessage: 2 },
+      onInvalidMessage(message) {
+        invalidMessages.push(message);
+      },
+      transport: clientTransport,
+    });
+
+    hostTransport.post({
+      state: { counter: { count: 0 }, deep: { a: { b: { c: 0 } } } },
+      sync: "snapshot",
+      type: "state",
+      version: 1,
+    });
+    await client.ready;
+
+    hostTransport.post({
+      patches: [
+        { op: "replace", path: "/counter/count", value: 1 },
+        { op: "replace", path: "/counter/count", value: 2 },
+        { op: "replace", path: "/counter/count", value: 3 },
+      ],
+      sync: "patch",
+      type: "state",
+      version: 2,
+    });
+    hostTransport.post({
+      patches: [{ op: "replace", path: "/deep/a/b/c", value: 1 }],
+      sync: "patch",
+      type: "state",
+      version: 2,
+    });
+
+    expect(invalidMessages).toHaveLength(2);
+    expect(client.state.version).toBe(1);
+
+    client.dispose();
+  });
+
+  it("refuses new calls once the pending call limit is reached", async () => {
+    const [, clientTransport] = createMemoryWorkerTransportPair();
+    const client = createWorkerClient({
+      limits: { maxPendingCalls: 1 },
+      readyTimeout: 0,
+      requestTimeout: 0,
+      transport: clientTransport,
+    });
+    const first = client.call("workerCounter", "increase", 1);
+
+    await expect(client.call("workerCounter", "increase", 1)).rejects.toThrow(
+      "Worker client already has 1 unanswered calls",
+    );
+
+    client.dispose();
+    await expect(first).rejects.toThrow("Worker client disposed before response.");
+  });
+
+  it("rejects invalid protocol limits", () => {
+    const [, clientTransport] = createMemoryWorkerTransportPair();
+
+    expect(() =>
+      createWorkerClient({ limits: { maxPendingCalls: 0 }, transport: clientTransport }),
+    ).toThrow("limits.maxPendingCalls must be a safe integer of at least 1.");
+  });
+
   it("keeps remote error stacks on the host unless they are opted in", async () => {
     class FailingModule {
       fail(): never {

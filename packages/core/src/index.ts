@@ -99,6 +99,7 @@ export {
   type WorkerConflictEvent,
   type WorkerConflictReason,
   type WorkerMessage,
+  type WorkerProtocolLimits,
   type WorkerResyncEvent,
   type WorkerResyncOptions,
   type WorkerStateMessage,
