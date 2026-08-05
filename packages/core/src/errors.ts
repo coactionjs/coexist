@@ -1,6 +1,6 @@
 export class CoexistError extends Error {
-  constructor(message: string) {
-    super(message);
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
     this.name = "CoexistError";
   }
 }
@@ -73,5 +73,29 @@ export class InjectContextError extends CoexistError {
   constructor(token: string) {
     super(`${token} can only be injected while resolving a provider or running an app hook.`);
     this.name = "InjectContextError";
+  }
+}
+
+export class WorkerReadyTimeoutError extends CoexistError {
+  constructor(timeout: number) {
+    super(
+      `Worker client did not receive an initial state snapshot within ${timeout}ms. ` +
+        "Check that a worker host is running on the same transport, or raise readyTimeout.",
+    );
+    this.name = "WorkerReadyTimeoutError";
+  }
+}
+
+export class WorkerHostUnavailableError extends CoexistError {
+  constructor(reason: string) {
+    super(`Worker host became unavailable before the initial state snapshot: ${reason}`);
+    this.name = "WorkerHostUnavailableError";
+  }
+}
+
+export class WorkerInitialSyncError extends CoexistError {
+  constructor(cause: unknown) {
+    super("Worker client could not request an initial state snapshot from its host.", { cause });
+    this.name = "WorkerInitialSyncError";
   }
 }

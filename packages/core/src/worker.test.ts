@@ -17,6 +17,9 @@ import {
   type WorkerConflictEvent,
   type WorkerMessage,
   type WorkerStateMessage,
+  WorkerHostUnavailableError,
+  WorkerInitialSyncError,
+  WorkerReadyTimeoutError,
 } from "./index.js";
 
 class WorkerCounter {
@@ -345,6 +348,7 @@ describe("worker prototype", () => {
     let failSync = true;
     const successfulSyncs: number[] = [];
     const client = createWorkerClient({
+      requestInitialSync: false,
       requestTimeout: 0,
       transport: {
         post(message) {
@@ -1643,10 +1647,10 @@ describe("worker prototype", () => {
   });
 
   it("rejects new calls immediately after the worker client is disposed", async () => {
-    let posted = 0;
+    const posted: WorkerMessage["type"][] = [];
     const transport: WorkerTransport = {
-      post() {
-        posted += 1;
+      post(message) {
+        posted.push(message.type);
       },
       subscribe() {
         return () => undefined;
@@ -1661,7 +1665,7 @@ describe("worker prototype", () => {
       "Worker client has been disposed.",
     );
     await expect(counter.increase(1)).rejects.toThrow("Worker client has been disposed.");
-    expect(posted).toBe(0);
+    expect(posted).toEqual(["sync"]);
   });
 
   it("times out and aborts worker calls that do not receive a response", async () => {
@@ -1814,6 +1818,138 @@ describe("worker prototype", () => {
 
     expect(client.getState()).toEqual({});
     client.dispose();
+  });
+
+  it("rejects client readiness when no host answers within the ready timeout", async () => {
+    const [, clientTransport] = createMemoryWorkerTransportPair();
+    const client = createWorkerClient({
+      readyTimeout: 10,
+      transport: clientTransport,
+    });
+
+    await expect(client.ready).rejects.toThrow(
+      "Worker client did not receive an initial state snapshot within 10ms.",
+    );
+    await expect(client.ready).rejects.toBeInstanceOf(WorkerReadyTimeoutError);
+
+    client.dispose();
+  });
+
+  it("keeps a client usable after the ready timeout when a snapshot finally arrives", async () => {
+    const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+    const client = createWorkerClient({
+      readyTimeout: 10,
+      transport: clientTransport,
+    });
+
+    await expect(client.ready).rejects.toBeInstanceOf(WorkerReadyTimeoutError);
+
+    hostTransport.post({
+      state: { workerCounter: { count: 3 } },
+      sync: "snapshot",
+      type: "state",
+      version: 4,
+    });
+    await Promise.resolve();
+
+    expect(client.getState()).toEqual({ workerCounter: { count: 3 } });
+    expect(client.state.version).toBe(4);
+
+    client.dispose();
+  });
+
+  it("rejects client readiness when the client signal aborts before the initial state", async () => {
+    const [, clientTransport] = createMemoryWorkerTransportPair();
+    const controller = new AbortController();
+    const client = createWorkerClient({
+      readyTimeout: 0,
+      signal: controller.signal,
+      transport: clientTransport,
+    });
+
+    controller.abort();
+
+    await expect(client.ready).rejects.toBeInstanceOf(WorkerHostUnavailableError);
+    await expect(client.ready).rejects.toThrow("the client signal was aborted.");
+
+    client.dispose();
+  });
+
+  it("rejects client readiness when the initial sync request cannot be posted", async () => {
+    const postError = new Error("initial sync post failed");
+    const client = createWorkerClient({
+      readyTimeout: 0,
+      transport: {
+        post() {
+          throw postError;
+        },
+        subscribe() {
+          return () => undefined;
+        },
+      },
+    });
+
+    await expect(client.ready).rejects.toBeInstanceOf(WorkerInitialSyncError);
+    await expect(client.ready).rejects.toMatchObject({ cause: postError });
+
+    client.dispose();
+  });
+
+  it("requests a snapshot for a client that attaches after the host published one", async () => {
+    const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+    const host = createWorkerApp({
+      providers: [WorkerCounter],
+      transport: hostTransport,
+    });
+
+    await host.ready;
+    host.app.getModule(WorkerCounter).increase();
+
+    // The host already announced itself and published, so a late client only
+    // recovers because it asks for a snapshot of its own accord.
+    const late = createWorkerClient({
+      readyTimeout: 1000,
+      transport: clientTransport,
+    });
+
+    await late.ready;
+
+    expect(late.getState()).toEqual({ workerCounter: { count: 1 } });
+
+    late.dispose();
+    await host.dispose();
+  });
+
+  it("requests a snapshot when the host announces readiness after the client attached", async () => {
+    const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+    const syncRequests: WorkerMessage[] = [];
+    const stopHost = hostTransport.subscribe((message) => {
+      if (message.type === "sync") {
+        syncRequests.push(message);
+      }
+    });
+    const client = createWorkerClient({
+      readyTimeout: 0,
+      requestInitialSync: false,
+      transport: clientTransport,
+    });
+
+    hostTransport.post({ type: "ready" });
+    await Promise.resolve();
+
+    expect(syncRequests).toHaveLength(1);
+
+    hostTransport.post({
+      state: { workerCounter: { count: 0 } },
+      sync: "snapshot",
+      type: "state",
+      version: 1,
+    });
+
+    await client.ready;
+
+    client.dispose();
+    stopHost();
   });
 
   it("rejects client readiness when disposed before the initial state", async () => {

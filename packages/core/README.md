@@ -438,6 +438,8 @@ Delegated method promises settle after the client mirror reaches the worker stat
 
 Worker host disposal aborts in-flight app initialization before awaiting readiness. Worker client disposal rejects both pending and newly attempted RPC calls, so no request can remain orphaned after subscriptions are removed.
 
+`client.ready` is bounded. A client requests its own initial snapshot (`requestInitialSync`, default on) so it can attach after the host published, re-requests one whenever the host announces `ready`, and rejects with `WorkerReadyTimeoutError` when nothing arrives within `readyTimeout` (default 30s; `0` waits forever). An aborted `signal` rejects it with `WorkerHostUnavailableError`, and a transport that cannot post the request rejects it with `WorkerInitialSyncError`.
+
 Declared module actions are remotely callable by default. Opt additional plain methods in per module with `createWorkerApp({ expose: { counter: ["refresh"] }, ... })`. Protocol messages are schema-validated (including safe patch paths), and client requests default to a 30-second timeout with per-call timeout/`AbortSignal` support through `callWithOptions()`. Bare/custom transports are trusted-endpoint APIs; postMessage adds `targetOrigin` plus origin/source filters, while broadcast transports support a shared `authToken` routing capability. Broadcast peers can observe that token, so BroadcastChannel remains a trusted same-origin transport, not an adversarial security boundary.
 
 Transports (all interchangeable):
@@ -466,6 +468,9 @@ All errors extend `CoexistError`:
 | `FrozenContainerError`               | The provider graph is mutated after freezing.                         |
 | `DisposedContainerError`             | A container is used after disposal begins.                            |
 | `InjectContextError`                 | `inject()` is used outside provider resolution.                       |
+| `WorkerReadyTimeoutError`            | No worker snapshot arrived within `readyTimeout`.                     |
+| `WorkerHostUnavailableError`         | The client signal aborted before the first worker snapshot.           |
+| `WorkerInitialSyncError`             | The client could not post its initial snapshot request.               |
 
 ## API reference
 

@@ -68,6 +68,20 @@ interface WorkerClient {
 
 Disposal is terminal on both sides. `host.dispose()` first starts app disposal, which aborts plugin setup through `PluginContext.signal`, and only then waits for startup to settle; this prevents initialization/disposal deadlocks. Repeated host disposal shares one promise. If disposal wins the race with initial state publication, `host.ready` rejects instead of reporting a host that never became observable as ready. `client.dispose()` rejects pending calls and all later `call()` / module-proxy requests immediately instead of posting work that can no longer receive a response.
 
+### Client readiness
+
+`client.ready` never stays pending indefinitely. Three controls settle it:
+
+| Option               | Default | Effect                                                                                      |
+| -------------------- | ------- | ------------------------------------------------------------------------------------------- |
+| `readyTimeout`       | `30000` | Rejects with `WorkerReadyTimeoutError` when no snapshot arrives in time. `0` waits forever. |
+| `requestInitialSync` | `true`  | Asks the host for a snapshot at construction instead of waiting to be published to.         |
+| `signal`             | —       | Aborting rejects `ready` with `WorkerHostUnavailableError` (and aborts in-flight calls).    |
+
+If the initial sync request cannot even be posted, `ready` rejects with `WorkerInitialSyncError` whose `cause` is the transport failure. Because a client asks for its own snapshot — and asks again whenever the host announces `ready` — a client that attaches _after_ the host published still catches up rather than hanging.
+
+A rejected `ready` does not disable the client: a snapshot that arrives later is still applied and still notifies watchers. `ready` simply cannot re-settle, so treat its rejection as "startup was not observed in time", not as "this client is dead".
+
 RPC calls default to a 30-second timeout (`requestTimeout` on `createWorkerClient`; `0` disables it). Use `callWithOptions()` for a per-call timeout or `AbortSignal`. Remote invocation is restricted to methods explicitly listed in the module's `actions` metadata; ordinary methods, lifecycle hooks, computed properties, and arbitrary callable fields are not remotely exposed by default. When a plain method intentionally belongs to the RPC surface, list it by module name with `createWorkerApp({ expose: { counter: ["refresh"] }, ... })`.
 
 ## Trust boundary
@@ -125,7 +139,7 @@ const transport = createPostMessageWorkerTransport(window as any, {
 
 ### Shared tabs (BroadcastChannel)
 
-The client should subscribe before the host starts so it receives the initial snapshot. Identify peers with `peerId` / `targetPeerId`:
+Clients request their own initial snapshot, so they may attach before or after the host starts. Identify peers with `peerId` / `targetPeerId`:
 
 ```ts
 const client = createWorkerClient({

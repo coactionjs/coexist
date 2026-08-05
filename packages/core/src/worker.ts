@@ -1,4 +1,9 @@
-import { CoexistError } from "./errors.js";
+import {
+  CoexistError,
+  WorkerHostUnavailableError,
+  WorkerInitialSyncError,
+  WorkerReadyTimeoutError,
+} from "./errors.js";
 import { createApp, type App, type CreateAppOptions, type Plugin } from "./app.js";
 import { getModuleMetadata } from "./metadata.js";
 import type { Constructor } from "./types.js";
@@ -166,6 +171,19 @@ export interface CreateWorkerClientOptions {
   readonly onConflict?: (event: WorkerConflictEvent) => void;
   readonly onInvalidMessage?: (message: unknown) => void;
   readonly requestTimeout?: number;
+  /**
+   * How long `client.ready` waits for the first state snapshot before it
+   * rejects with a {@link WorkerReadyTimeoutError}. A host that never starts,
+   * a dropped snapshot, or a transport that silently discards messages would
+   * otherwise leave `ready` pending forever. Pass 0 to wait indefinitely.
+   */
+  readonly readyTimeout?: number;
+  /**
+   * Whether to ask the host for a snapshot as soon as the client is created,
+   * instead of waiting for the host to publish one. Keep this enabled for
+   * clients that may attach after the host published its initial snapshot.
+   */
+  readonly requestInitialSync?: boolean;
   readonly signal?: AbortSignal;
 }
 
@@ -386,11 +404,14 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
   const {
     onConflict,
     onInvalidMessage,
+    readyTimeout = defaultWorkerReadyTimeout,
+    requestInitialSync = true,
     requestTimeout = defaultWorkerRequestTimeout,
     signal: defaultSignal,
     transport,
   } = options;
   assertValidWorkerTimeout(requestTimeout, "requestTimeout");
+  assertValidWorkerTimeout(readyTimeout, "readyTimeout");
   const listeners = new Set<(message: WorkerStateMessage) => void>();
   const selectorWatchers = new Set<WorkerSelectorWatcher<unknown>>();
   const pending = new Map<number, PendingWorkerCall>();
@@ -399,7 +420,12 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
   let requestedSyncVersion: number | undefined;
   let syncedStaleVersion = 0;
   let snapshot: unknown;
+  // Whether a first snapshot has been applied. `ready` can settle without one —
+  // on a timeout, an abort, or disposal — so protocol decisions must not read
+  // the promise state.
+  let hasInitialState = false;
   let readySettled = false;
+  let readyTimer: ReturnType<typeof setTimeout> | undefined;
   let disposed = false;
   let resolveReady!: () => void;
   let rejectReady!: (error: unknown) => void;
@@ -409,6 +435,39 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
   });
 
   ready.catch(() => undefined);
+
+  const abortReady = () => {
+    failReady(new WorkerHostUnavailableError("the client signal was aborted."));
+  };
+
+  const finishReady = () => {
+    readySettled = true;
+
+    if (readyTimer !== undefined) {
+      clearTimeout(readyTimer);
+      readyTimer = undefined;
+    }
+
+    defaultSignal?.removeEventListener("abort", abortReady);
+  };
+
+  const failReady = (error: unknown) => {
+    if (readySettled) {
+      return;
+    }
+
+    finishReady();
+    rejectReady(error);
+  };
+
+  const resolveReadyOnce = () => {
+    if (readySettled) {
+      return;
+    }
+
+    finishReady();
+    resolveReady();
+  };
 
   let unsubscribe = noop;
   const client: WorkerClient = {
@@ -495,10 +554,7 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
         unsubscribeError = error;
       }
 
-      if (!readySettled) {
-        readySettled = true;
-        rejectReady(new CoexistError("Worker client disposed before initial state."));
-      }
+      failReady(new CoexistError("Worker client disposed before initial state."));
 
       for (const entry of pending.values()) {
         entry.cleanup();
@@ -598,7 +654,7 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
   ): boolean => {
     if (
       result.stateVersion !== undefined &&
-      (!readySettled || result.stateVersion > state.version)
+      (!hasInitialState || result.stateVersion > state.version)
     ) {
       return false;
     }
@@ -621,7 +677,7 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
     }
 
     if (
-      (readySettled && stateVersion <= state.version) ||
+      (hasInitialState && stateVersion <= state.version) ||
       (requestedSyncVersion !== undefined && stateVersion <= requestedSyncVersion)
     ) {
       return;
@@ -640,6 +696,24 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
     } catch (error) {
       requestedSyncVersion = previousRequestedVersion;
       throw error;
+    }
+  };
+
+  const requestInitialSnapshot = (): void => {
+    if (disposed || hasInitialState) {
+      return;
+    }
+
+    const id = nextId;
+    nextId += 1;
+
+    try {
+      transport.post({
+        id,
+        type: "sync",
+      });
+    } catch (error) {
+      failReady(new WorkerInitialSyncError(error));
     }
   };
 
@@ -683,8 +757,15 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
       return;
     }
 
+    if (message.type === "ready") {
+      // The host announces itself before publishing. A client that attached
+      // after the host's initial snapshot would otherwise never see one.
+      requestInitialSnapshot();
+      return;
+    }
+
     if (message.type === "state") {
-      if (readySettled && message.version <= state.version) {
+      if (hasInitialState && message.version <= state.version) {
         if (message.version <= syncedStaleVersion) {
           return;
         }
@@ -710,7 +791,7 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
         return;
       }
 
-      if (isPatchOnly && readySettled && message.version !== state.version + 1) {
+      if (isPatchOnly && hasInitialState && message.version !== state.version + 1) {
         reportWorkerConflict(onConflict, {
           currentVersion: state.version,
           incomingVersion: message.version,
@@ -747,10 +828,8 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
         requestedSyncVersion = undefined;
       }
 
-      if (!readySettled) {
-        readySettled = true;
-        resolveReady();
-      }
+      hasInitialState = true;
+      resolveReadyOnce();
 
       for (const listener of listeners) {
         runWorkerObserver(() => listener(message));
@@ -795,6 +874,22 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
       }
     }
   });
+
+  if (readyTimeout > 0) {
+    readyTimer = setTimeout(() => {
+      failReady(new WorkerReadyTimeoutError(readyTimeout));
+    }, readyTimeout);
+  }
+
+  if (defaultSignal?.aborted === true) {
+    abortReady();
+  } else {
+    defaultSignal?.addEventListener("abort", abortReady, { once: true });
+  }
+
+  if (requestInitialSync) {
+    requestInitialSnapshot();
+  }
 
   return client;
 }
@@ -1561,6 +1656,7 @@ function createMemoryWorkerTransport(
 
 const workerMessageTypes = ["call", "result", "state", "sync", "ready"] as const;
 const defaultWorkerRequestTimeout = 30_000;
+const defaultWorkerReadyTimeout = 30_000;
 const defaultBroadcastWorkerChannel = "coexist:worker";
 /** Upper bound on unanswered broadcast call/sync routes retained per transport. */
 const maxBroadcastMessageRoutes = 1024;

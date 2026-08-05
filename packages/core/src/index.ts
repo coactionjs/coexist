@@ -9,6 +9,9 @@ export {
   InjectContextError,
   LifetimeLeakError,
   MissingProviderError,
+  WorkerHostUnavailableError,
+  WorkerInitialSyncError,
+  WorkerReadyTimeoutError,
 } from "./errors.js";
 export { createContainer } from "./container.js";
 export {
