@@ -33,13 +33,16 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@coexist/core": "workspace:*",
     "localspace": "catalog:"
   },
   "devDependencies": {
+    "@coexist/core": "workspace:*",
     "@coexist/tsconfig": "workspace:*",
     "tsdown": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "@coexist/core": "workspace:^"
   }
 }

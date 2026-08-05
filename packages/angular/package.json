@@ -32,11 +32,9 @@
     "test:coverage": "cd ../.. && vitest run --coverage --project @coexist/angular",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
-  "dependencies": {
-    "@coexist/core": "workspace:*"
-  },
   "devDependencies": {
     "@angular/core": "catalog:",
+    "@coexist/core": "workspace:*",
     "@coexist/tsconfig": "workspace:*",
     "rxjs": "catalog:",
     "tsdown": "catalog:",
@@ -44,6 +42,7 @@
     "vitest": "catalog:"
   },
   "peerDependencies": {
-    "@angular/core": ">=17.0.0 <23"
+    "@angular/core": ">=17.0.0 <23",
+    "@coexist/core": "workspace:^"
   }
 }

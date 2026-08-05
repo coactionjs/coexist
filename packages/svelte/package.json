@@ -36,10 +36,8 @@
     "test:coverage": "cd ../.. && vitest run --coverage --project @coexist/svelte",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
-  "dependencies": {
-    "@coexist/core": "workspace:*"
-  },
   "devDependencies": {
+    "@coexist/core": "workspace:*",
     "@coexist/tsconfig": "workspace:*",
     "svelte": "catalog:",
     "tsdown": "catalog:",
@@ -47,6 +45,7 @@
     "vitest": "catalog:"
   },
   "peerDependencies": {
+    "@coexist/core": "workspace:^",
     "svelte": "^4.0.0 || ^5.0.0"
   }
 }

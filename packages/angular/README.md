@@ -10,6 +10,8 @@ pnpm add @coexist/angular @coexist/core
 
 Ships as ESM only: your project needs `"type": "module"` (or `.mjs`/`.mts`) and Node.js `>=22.12.0` or a modern bundler.
 
+`@coexist/core` is a peer dependency: this package shares the app runtime you install, rather than bundling a second copy of it.
+
 Peer dependency: `@angular/core` `>=17 <23`.
 
 ## Quick start

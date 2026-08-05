@@ -29,6 +29,7 @@ for (const pkg of publicPackages) {
   }
 
   assertBinModes(pkg, files);
+  assertCoreIsAPeer(pkg);
 }
 
 console.log(`Verified npm pack contents for ${publicPackages.length} public package(s).`);
@@ -196,6 +197,22 @@ function assertBinModes(pkg, files) {
     if ((file.mode & 0o111) === 0) {
       throw new Error(`${pkg.packageJson.name} bin ${path} must be executable.`);
     }
+  }
+}
+
+// A package that bundles the runtime as an ordinary dependency lets npm install
+// a second copy alongside the app's, which breaks `instanceof CoexistError`
+// across the boundary and ships the runtime twice.
+function assertCoreIsAPeer(pkg) {
+  if (pkg.packageJson.name === "@coexist/core") {
+    return;
+  }
+
+  if (pkg.packageJson.dependencies?.["@coexist/core"] !== undefined) {
+    throw new Error(
+      `${pkg.packageJson.name} lists @coexist/core in dependencies. ` +
+        "Declare it in peerDependencies (plus devDependencies) so one runtime copy is shared.",
+    );
   }
 }
 

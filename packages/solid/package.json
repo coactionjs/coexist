@@ -32,10 +32,8 @@
     "test:coverage": "cd ../.. && vitest run --coverage --project @coexist/solid",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
-  "dependencies": {
-    "@coexist/core": "workspace:*"
-  },
   "devDependencies": {
+    "@coexist/core": "workspace:*",
     "@coexist/tsconfig": "workspace:*",
     "solid-js": "catalog:",
     "tsdown": "catalog:",
@@ -43,6 +41,7 @@
     "vitest": "catalog:"
   },
   "peerDependencies": {
+    "@coexist/core": "workspace:^",
     "solid-js": ">=1.9.0 <2"
   }
 }
