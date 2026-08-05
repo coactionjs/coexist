@@ -88,6 +88,8 @@ RPC calls default to a 30-second timeout (`requestTimeout` on `createWorkerClien
 
 Every inbound protocol envelope is runtime-validated: call IDs, module/method names, argument arrays, result errors, state versions/sections, sync fields, and patch operations/paths must match the complete message schema. Malformed input is dropped and can be observed with `onInvalidMessage`. Unsafe patch path segments such as `__proto__` are rejected.
 
+A remote error crosses the transport as `{ name, message }` only. Stacks stay on the host, because they name local file paths, the source layout, and internal function names — information a client on another origin, socket, or process should not receive. Opt in with `createWorkerApp({ includeErrorStack: true })` for a trusted same-trust-domain channel, or replace the shape entirely with `serializeError`. The host still observes the full error locally through its own plugin `onError` hooks.
+
 Schema validation and the action allowlist limit capabilities, but a bare `WorkerTransport` does not authenticate its peer. Connect bare/custom and data-transport adapters only to trusted endpoints, or enforce authentication in the underlying channel. For cross-origin/ambient channels, use the adapter controls below:
 
 - `createPostMessageWorkerTransport`: set `targetOrigin`, `allowedOrigins`, and `expectedSource` for iframe/window messaging. Omitting them is appropriate only for dedicated `Worker`/`MessagePort` endpoints already held as trusted capabilities.

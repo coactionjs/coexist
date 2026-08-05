@@ -86,6 +86,22 @@ async function waitUntil(predicate: () => boolean, label: string, timeout = 2000
   }
 }
 
+/** Runs one failing remote call and returns the error the client observed. */
+async function captureRemoteError(
+  hostOptions: Omit<Parameters<typeof createWorkerApp>[0], "transport">,
+): Promise<Error> {
+  const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+  const client = createWorkerClient({ transport: clientTransport });
+  const host = createWorkerApp({ ...hostOptions, transport: hostTransport });
+
+  await client.ready;
+  const error = await client.call("failingModule", "fail").catch((caught: unknown) => caught);
+
+  client.dispose();
+  await host.dispose();
+  return error as Error;
+}
+
 /** A host stub that answers snapshot requests with whatever it currently holds. */
 function createSnapshotHost(transport: WorkerTransport) {
   let version = 1;
@@ -1893,6 +1909,37 @@ describe("worker prototype", () => {
 
     expect(client.getState()).toEqual({});
     client.dispose();
+  });
+
+  it("keeps remote error stacks on the host unless they are opted in", async () => {
+    class FailingModule {
+      fail(): never {
+        throw new Error("host secret path");
+      }
+    }
+
+    defineModule(FailingModule, { actions: ["fail"], name: "failingModule" });
+
+    const withoutStack = await captureRemoteError({ providers: [FailingModule] });
+
+    expect(withoutStack.message).toBe("Remote worker error: host secret path");
+    // The local stack is the client's own; the host's frames never crossed.
+    expect(withoutStack.stack).not.toContain("FailingModule.fail");
+
+    const withStack = await captureRemoteError({
+      includeErrorStack: true,
+      providers: [FailingModule],
+    });
+
+    expect(withStack.stack).toContain("FailingModule.fail");
+
+    const withCustomSerializer = await captureRemoteError({
+      providers: [FailingModule],
+      serializeError: () => ({ message: "redacted", name: "RedactedError" }),
+    });
+
+    expect(withCustomSerializer.message).toBe("Remote worker error: redacted");
+    expect(withCustomSerializer.name).toBe("RedactedError");
   });
 
   it("rejects a call as soon as an asynchronous transport reports a delivery failure", async () => {

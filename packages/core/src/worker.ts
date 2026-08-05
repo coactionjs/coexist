@@ -171,6 +171,15 @@ export interface CreateWorkerAppOptions extends CreateAppOptions {
    * patch on top of a version it never received.
    */
   readonly onDeliveryError?: WorkerDeliveryErrorHandler;
+  /**
+   * Whether a failed call sends its stack to the caller. A stack names local
+   * file paths, the source layout, and internal functions, so it stays on the
+   * host unless the transport is known to be a trusted, same-trust-domain
+   * channel. The host still sees the full error through its own reporting.
+   */
+  readonly includeErrorStack?: boolean;
+  /** Replaces the default error shape sent to callers. */
+  readonly serializeError?: (error: unknown) => SerializedWorkerError;
 }
 
 export type WorkerStateSyncMode = "snapshot" | "patch";
@@ -359,7 +368,9 @@ export function createWorkerApp(options: CreateWorkerAppOptions): WorkerAppHost 
     transport,
     ...appOptions
   } = options;
-  const { onDeliveryError } = options;
+  const { includeErrorStack = false, onDeliveryError } = options;
+  const serializeError =
+    options.serializeError ?? ((error: unknown) => serializeWorkerError(error, includeErrorStack));
   let stateSyncVersion = 0;
   let publishPatches = false;
   // A published version that never reached the peer cannot be the base for the
@@ -472,6 +483,7 @@ export function createWorkerApp(options: CreateWorkerAppOptions): WorkerAppHost 
           expose,
           () => stateSyncVersion,
           handleDeliveryFailure,
+          serializeError,
         ).catch(() => undefined);
       }
     });
@@ -1580,6 +1592,7 @@ async function handleCall(
   expose: Readonly<Record<string, readonly string[]>> | undefined,
   getStateVersion: () => number,
   onDeliveryError: WorkerDeliveryErrorHandler,
+  serializeError: (error: unknown) => SerializedWorkerError,
 ): Promise<void> {
   try {
     await ready;
@@ -2290,12 +2303,12 @@ function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
   );
 }
 
-function serializeError(error: unknown): SerializedWorkerError {
+function serializeWorkerError(error: unknown, includeStack: boolean): SerializedWorkerError {
   if (error instanceof Error) {
     return {
       message: error.message,
       name: error.name,
-      ...(error.stack === undefined ? {} : { stack: error.stack }),
+      ...(includeStack && error.stack !== undefined ? { stack: error.stack } : {}),
     };
   }
 
