@@ -5,10 +5,11 @@ import {
   startBatch,
   type Store,
 } from "coaction";
-import { createReactiveTracker } from "coaction/adapter";
-
 import { createRuntimeAsyncContext } from "./async-context.js";
 import { createContainer } from "./container.js";
+import { EffectRuntime } from "./effectRuntime.js";
+import { ModuleRegistry } from "./moduleRegistry.js";
+import { AppLifecycleController } from "./lifecycleController.js";
 import { CoexistError, DuplicateProviderError, InjectContextError } from "./errors.js";
 import {
   isLazyModule,
@@ -621,15 +622,12 @@ class RuntimeApp implements App {
 
   readonly #container: Container;
   private readonly devOptions: AppDevOptions;
-  private readonly modules: ModuleBinding[];
+  private readonly registry: ModuleRegistry<ModuleBinding>;
   private readonly pendingLazyModules: LazyModule[];
-  private readonly moduleByToken = new Map<InjectionToken, ModuleBinding>();
-  private readonly moduleByName = new Map<string, ModuleBinding>();
   private readonly pluginRecords: readonly PluginRecord[];
   private readonly testInspector: MutableTestInspector | undefined;
   private readonly readRawStoreState: () => RootState;
-  private readonly effectDisposers: (() => void)[] = [];
-  private readonly pendingEffects = new Set<Promise<void>>();
+  private readonly effects = new EffectRuntime();
   private readonly stateProxyCache = new WeakMap<object, object>();
   private readonly strictStateSnapshotCache = new WeakMap<object, object>();
   private readonly loadedLazyModules = new WeakMap<LazyModule, LazyModuleLoadResult>();
@@ -638,16 +636,11 @@ class RuntimeApp implements App {
   private readonly dynamicScopes: Container[] = [];
   private readonly childApps: RuntimeApp[] = [];
   private parentApp: RuntimeApp | undefined;
-  private initPromise: Promise<void> = Promise.resolve();
-  private startPromise: Promise<void> | undefined;
-  private stopPromise: Promise<void> | undefined;
-  private lifecycleTransition: Promise<void> | undefined;
-  private disposePromise: Promise<void> | undefined;
-  private isInitialized = false;
-  private isStarted = false;
-  private shouldBeStarted = false;
-  private isDisposing = false;
-  private isDisposed = false;
+  private readonly lifecycle = new AppLifecycleController({
+    dispose: () => this.disposeApp(),
+    start: () => this.startApp(),
+    stop: () => this.stopApp(),
+  });
   private readonly fallbackManagedExecutions: AppManagedExecution[] = [];
   private readonly synchronousFallbackManagedExecutions: AppManagedExecution[] = [];
   private actionDepth = 0;
@@ -680,7 +673,7 @@ class RuntimeApp implements App {
     this.#container = options.container;
     this.devOptions = options.devOptions;
     this.pendingLazyModules = [...options.lazyModules];
-    this.modules = options.modules;
+    this.registry = new ModuleRegistry(options.modules);
     this.parentApp = options.parentApp;
     this.state = options.state;
     this.store = options.store;
@@ -695,11 +688,6 @@ class RuntimeApp implements App {
       plugin,
     }));
 
-    for (const moduleBinding of options.modules) {
-      this.moduleByToken.set(moduleBinding.token, moduleBinding);
-      this.moduleByName.set(moduleBinding.name, moduleBinding);
-    }
-
     this.wrapStoreMutations();
 
     this.store.subscribe(() => {
@@ -713,7 +701,7 @@ class RuntimeApp implements App {
   }
 
   get started(): boolean {
-    return this.isStarted;
+    return this.lifecycle.started;
   }
 
   get ready(): Promise<void> {
@@ -722,16 +710,20 @@ class RuntimeApp implements App {
     // stack here so external callers can still wait for initialization.
     const phase = this.getActiveManagedPhase(false);
 
-    if (phase === "setup" || phase === "onInit" || (phase === "effect" && !this.isInitialized)) {
+    if (
+      phase === "setup" ||
+      phase === "onInit" ||
+      (phase === "effect" && !this.lifecycle.initialized)
+    ) {
       return this.rejectManagedReentry("await app.ready", phase, "init");
     }
 
-    return this.initPromise;
+    return this.lifecycle.initPromise;
   }
 
   get<T>(token: InjectionToken<T>): T {
     this.assertActive("resolve providers");
-    const moduleBinding = this.moduleByToken.get(token);
+    const moduleBinding = this.registry.getByToken(token);
 
     if (moduleBinding !== undefined) {
       return moduleBinding.instance as T;
@@ -742,7 +734,7 @@ class RuntimeApp implements App {
 
   async getAsync<T>(token: InjectionToken<T>): Promise<T> {
     this.assertActive("resolve providers");
-    const moduleBinding = this.moduleByToken.get(token);
+    const moduleBinding = this.registry.getByToken(token);
 
     if (moduleBinding !== undefined) {
       return moduleBinding.instance as T;
@@ -781,12 +773,12 @@ class RuntimeApp implements App {
 
   private findModuleBindingByToken(token: InjectionToken): ModuleBinding | undefined {
     this.assertActive("access modules");
-    return this.moduleByToken.get(token) ?? this.parentApp?.findModuleBindingByToken(token);
+    return this.registry.getByToken(token) ?? this.parentApp?.findModuleBindingByToken(token);
   }
 
   private findModuleBindingByName(name: string): ModuleBinding | undefined {
     this.assertActive("access modules");
-    return this.moduleByName.get(name) ?? this.parentApp?.findModuleBindingByName(name);
+    return this.registry.getByName(name) ?? this.parentApp?.findModuleBindingByName(name);
   }
 
   watch<T>(
@@ -873,63 +865,35 @@ class RuntimeApp implements App {
       return this.rejectManagedReentry("call start()", phase, "start");
     }
 
-    if (this.isDisposing || this.isDisposed) {
+    if (this.lifecycle.disposalBegun) {
       return Promise.reject(new CoexistError("Cannot start an app after disposal."));
     }
 
-    this.shouldBeStarted = true;
-
-    if (this.isStarted && this.lifecycleTransition === undefined) {
-      return Promise.resolve();
-    }
-
-    return this.transitionLifecycle();
-  }
-
-  private transitionLifecycle(): Promise<void> {
-    this.lifecycleTransition ??= this.reconcileLifecycleState();
-    return this.lifecycleTransition;
-  }
-
-  private async reconcileLifecycleState(): Promise<void> {
-    try {
-      while (this.shouldBeStarted !== this.isStarted) {
-        if (this.shouldBeStarted) {
-          this.startPromise ??= this.startApp();
-          // eslint-disable-next-line no-await-in-loop -- Opposite lifecycle requests must run in order.
-          await this.startPromise;
-        } else {
-          this.stopPromise ??= this.stopApp();
-          // eslint-disable-next-line no-await-in-loop -- Opposite lifecycle requests must run in order.
-          await this.stopPromise;
-        }
-      }
-    } catch (error) {
-      this.shouldBeStarted = this.isStarted;
-      throw error;
-    } finally {
-      this.lifecycleTransition = undefined;
-    }
+    return this.lifecycle.requestStart();
   }
 
   private async startApp(): Promise<void> {
     const startedModules: ModuleBinding[] = [];
 
-    if (this.isDisposing || this.isDisposed) {
+    if (this.lifecycle.disposalBegun) {
       throw new CoexistError("Cannot start an app after disposal.");
     }
 
     try {
-      await this.initPromise;
+      await this.lifecycle.initPromise;
 
-      if (this.isDisposing || this.isDisposed) {
+      if (this.lifecycle.disposalBegun) {
         throw new CoexistError("Cannot start an app after disposal.");
       }
 
-      await this.runLifecycle("onStart", false, this.modules, this.#container, (moduleBinding) =>
-        startedModules.push(moduleBinding),
+      await this.runLifecycle(
+        "onStart",
+        false,
+        this.registry.modules,
+        this.#container,
+        (moduleBinding) => startedModules.push(moduleBinding),
       );
-      this.isStarted = true;
+      this.lifecycle.markStarted();
     } catch (error) {
       const rollbackErrors: unknown[] = [];
 
@@ -952,7 +916,7 @@ class RuntimeApp implements App {
       this.emitError(error, { phase: "start" });
       throw error;
     } finally {
-      this.startPromise = undefined;
+      this.lifecycle.finishStart();
     }
   }
 
@@ -963,13 +927,7 @@ class RuntimeApp implements App {
       return this.rejectManagedReentry("call stop()", phase, "stop");
     }
 
-    this.shouldBeStarted = false;
-
-    if (!this.isStarted && this.lifecycleTransition === undefined) {
-      return Promise.resolve();
-    }
-
-    return this.transitionLifecycle();
+    return this.lifecycle.requestStop();
   }
 
   private async stopApp(): Promise<void> {
@@ -980,8 +938,7 @@ class RuntimeApp implements App {
       this.emitError(error, { phase: "stop" });
       throw error;
     } finally {
-      this.isStarted = false;
-      this.stopPromise = undefined;
+      this.lifecycle.markStopped();
     }
   }
 
@@ -992,33 +949,32 @@ class RuntimeApp implements App {
       return this.rejectManagedReentry("call dispose()", phase, "dispose");
     }
 
-    this.disposePromise ??= this.disposeApp();
-    return this.disposePromise;
+    return this.lifecycle.requestDispose();
   }
 
   private async disposeApp(): Promise<void> {
-    this.isDisposing = true;
+    this.lifecycle.beginDisposal();
     const errors: unknown[] = [];
 
-    if (!this.isInitialized) {
+    if (!this.lifecycle.initialized) {
       // Initialization is scheduled before createApp() returns. Let its first
       // turn enter plugin setup before aborting so setup cannot miss the signal.
       await Promise.resolve();
 
-      if (!this.isInitialized) {
+      if (!this.lifecycle.initialized) {
         this.abortPluginContexts();
       }
     }
 
     try {
-      await this.initPromise;
+      await this.lifecycle.initPromise;
     } catch {
       // Init errors are already reported through plugin onError hooks. Disposal
       // should still release any resources registered before the failure.
     }
 
     try {
-      await this.startPromise;
+      await this.lifecycle.startPromise;
     } catch {
       // Start errors are already reported through plugin onError hooks. Disposal
       // should still release any resources registered before the failure.
@@ -1027,8 +983,8 @@ class RuntimeApp implements App {
     await this.waitForStagedLazyLoads();
     await runCleanupPhase(errors, () => this.disposeChildApps());
     await runCleanupPhase(errors, () => this.stop());
-    await runCleanupPhase(errors, () => this.stopEffects());
-    await runCleanupPhase(errors, () => this.waitForPendingEffects());
+    await runCleanupPhase(errors, () => this.effects.stopAll());
+    await runCleanupPhase(errors, () => this.effects.waitForPending());
     await runCleanupPhase(errors, () => this.runTeardownLifecycle("onDispose"));
 
     for (const scope of this.dynamicScopes.splice(0).toReversed()) {
@@ -1040,9 +996,7 @@ class RuntimeApp implements App {
     await runCleanupPhase(errors, () => this.#container.dispose());
     await runCleanupPhase(errors, () => this.store.destroy());
 
-    this.isStarted = false;
-    this.isDisposed = true;
-    this.isDisposing = false;
+    this.lifecycle.finishDisposal();
     this.parentApp?.unregisterChildApp(this);
     this.parentApp = undefined;
 
@@ -1119,7 +1073,7 @@ class RuntimeApp implements App {
       return results;
     }
 
-    await this.initPromise;
+    await this.lifecycle.initPromise;
     this.assertCanLoadLazyModule();
 
     const existing = this.loadedLazyModules.get(module);
@@ -1183,28 +1137,28 @@ class RuntimeApp implements App {
 
       scopeContainer.freeze();
       loadedModules = instantiateModules(scopeContainer, moduleTokens, false);
-      this.assertNewModules(loadedModules);
+      this.registry.assertAbsent(loadedModules);
       instantiateEagerProviders(scopeContainer);
 
       initAttempted = true;
       await this.runLifecycle("onInit", false, loadedModules, scopeContainer);
       this.assertCanLoadLazyModule();
 
-      if (this.isStarted) {
+      if (this.lifecycle.started) {
         await this.runLifecycle("onStart", false, loadedModules, scopeContainer, (moduleBinding) =>
           startedModules.push(moduleBinding),
         );
         this.assertCanLoadLazyModule();
       }
 
-      this.assertNewModules(loadedModules);
+      this.registry.assertAbsent(loadedModules);
       stagedState = createRootState(loadedModules);
 
       this.bindModules(loadedModules);
       metadataAttached = true;
       this.attachRuntimeMetadata(loadedModules);
       modulesRegistered = true;
-      this.registerModules(loadedModules);
+      this.registry.add(loadedModules);
       scopeRegistered = true;
       this.dynamicScopes.push(scopeContainer);
       this.runStatePublicationTransaction((publication) => {
@@ -1215,8 +1169,8 @@ class RuntimeApp implements App {
           // again. Effects must start reactive or they would track nothing.
           setReactiveSlices(loadedModules, true);
 
-          pendingEffectsBeforeStart = new Set(this.pendingEffects);
-          effectStartIndex = this.effectDisposers.length;
+          pendingEffectsBeforeStart = this.effects.snapshotPending();
+          effectStartIndex = this.effects.size;
           this.startEffects(loadedModules, scopeContainer);
         } catch (error) {
           setReactiveSlices(loadedModules, false);
@@ -1225,7 +1179,7 @@ class RuntimeApp implements App {
 
           if (rollbackEffectStartIndex !== undefined) {
             runSyncCleanupPhase(publicationRollbackErrors, () =>
-              this.stopEffectsFrom(rollbackEffectStartIndex),
+              this.effects.stopFrom(rollbackEffectStartIndex),
             );
             effectStartIndex = undefined;
           }
@@ -1286,14 +1240,16 @@ class RuntimeApp implements App {
       const rollbackEffectStartIndex = effectStartIndex;
 
       if (rollbackEffectStartIndex !== undefined) {
-        await runCleanupPhase(rollbackErrors, () => this.stopEffectsFrom(rollbackEffectStartIndex));
+        await runCleanupPhase(rollbackErrors, () =>
+          this.effects.stopFrom(rollbackEffectStartIndex),
+        );
       }
 
       const stagedEffectBaseline = pendingEffectsBeforeStart;
 
       if (stagedEffectBaseline !== undefined) {
         await runCleanupPhase(rollbackErrors, () =>
-          this.waitForPendingEffectsCreatedAfter(stagedEffectBaseline),
+          this.effects.waitForPendingCreatedAfter(stagedEffectBaseline),
         );
       }
 
@@ -1305,7 +1261,7 @@ class RuntimeApp implements App {
       }
 
       if (modulesRegistered) {
-        this.unregisterModules(loadedModules);
+        this.registry.remove(loadedModules);
       }
 
       if (scopeRegistered) {
@@ -1350,7 +1306,7 @@ class RuntimeApp implements App {
     }
   }
 
-  bindModules(modules: readonly ModuleBinding[] = this.modules): void {
+  bindModules(modules: readonly ModuleBinding[] = this.registry.modules): void {
     for (const moduleBinding of modules) {
       this.bindState(moduleBinding);
       this.bindComputed(moduleBinding);
@@ -1358,7 +1314,7 @@ class RuntimeApp implements App {
     }
   }
 
-  attachRuntimeMetadata(modules: readonly ModuleBinding[] = this.modules): void {
+  attachRuntimeMetadata(modules: readonly ModuleBinding[] = this.registry.modules): void {
     for (const moduleBinding of modules) {
       Object.defineProperty(moduleBinding.instance, runtimeModuleMetadataKey, {
         configurable: true,
@@ -1377,8 +1333,10 @@ class RuntimeApp implements App {
     const errors: unknown[] = [];
     const state = this.readRawStoreState();
 
-    runSyncCleanupPhase(errors, () => this.restoreModuleBindingsForRollback(this.modules, state));
-    runSyncCleanupPhase(errors, () => this.detachRuntimeMetadata(this.modules));
+    runSyncCleanupPhase(errors, () =>
+      this.restoreModuleBindingsForRollback(this.registry.modules, state),
+    );
+    runSyncCleanupPhase(errors, () => this.detachRuntimeMetadata(this.registry.modules));
     runSyncCleanupPhase(errors, () => this.store.destroy());
 
     if (errors.length > 0) {
@@ -1386,7 +1344,7 @@ class RuntimeApp implements App {
     }
   }
 
-  runModuleCreatedHooks(modules: readonly ModuleBinding[] = this.modules): void {
+  runModuleCreatedHooks(modules: readonly ModuleBinding[] = this.registry.modules): void {
     for (const moduleBinding of modules) {
       const event = toModuleCreatedEvent(moduleBinding);
 
@@ -1399,8 +1357,7 @@ class RuntimeApp implements App {
   }
 
   init(): void {
-    this.initPromise = Promise.resolve().then(() => this.initialize());
-    this.initPromise.catch(() => undefined);
+    this.lifecycle.beginInit(() => this.initialize());
   }
 
   private async initialize(): Promise<void> {
@@ -1416,23 +1373,23 @@ class RuntimeApp implements App {
           "setup",
         );
 
-        if (this.isDisposing || this.isDisposed) {
+        if (this.lifecycle.disposalBegun) {
           return;
         }
       }
 
-      if (this.isDisposing || this.isDisposed) {
+      if (this.lifecycle.disposalBegun) {
         return;
       }
 
       await this.runLifecycle("onInit");
 
-      if (this.isDisposing || this.isDisposed) {
+      if (this.lifecycle.disposalBegun) {
         return;
       }
 
       this.startEffects();
-      this.isInitialized = true;
+      this.lifecycle.markInitialized();
     } catch (error) {
       this.emitError(error, { phase: "init" });
       throw error;
@@ -1747,7 +1704,7 @@ class RuntimeApp implements App {
           throw new CoexistError("runInAction() target belongs to another Coexist app.");
         }
 
-        const moduleBinding = this.moduleByToken.get(metadata.token);
+        const moduleBinding = this.registry.getByToken(metadata.token);
 
         if (moduleBinding !== undefined) {
           return moduleBinding;
@@ -1755,7 +1712,7 @@ class RuntimeApp implements App {
       }
 
       if (isTokenObject(target)) {
-        const moduleBinding = this.moduleByToken.get(target);
+        const moduleBinding = this.registry.getByToken(target);
 
         if (moduleBinding !== undefined) {
           return moduleBinding;
@@ -1766,7 +1723,7 @@ class RuntimeApp implements App {
     }
 
     if (typeof target === "string") {
-      const moduleBinding = this.moduleByName.get(target) ?? this.moduleByToken.get(target);
+      const moduleBinding = this.registry.getByName(target) ?? this.registry.getByToken(target);
 
       if (moduleBinding !== undefined) {
         return moduleBinding;
@@ -1775,7 +1732,7 @@ class RuntimeApp implements App {
       throw new CoexistError(`${target} is not a Coexist module.`);
     }
 
-    const moduleBinding = this.moduleByToken.get(target);
+    const moduleBinding = this.registry.getByToken(target);
 
     if (moduleBinding !== undefined) {
       return moduleBinding;
@@ -1797,7 +1754,7 @@ class RuntimeApp implements App {
   private async runLifecycle(
     method: keyof LifecycleModule,
     reverse = false,
-    modules: readonly ModuleBinding[] = this.modules,
+    modules: readonly ModuleBinding[] = this.registry.modules,
     container: Container = this.#container,
     onAttempt?: (moduleBinding: ModuleBinding) => void,
   ): Promise<void> {
@@ -1817,7 +1774,7 @@ class RuntimeApp implements App {
 
   private async runTeardownLifecycle(
     method: "onStop" | "onDispose",
-    modules: readonly ModuleBinding[] = this.modules,
+    modules: readonly ModuleBinding[] = this.registry.modules,
     container: Container = this.#container,
   ): Promise<void> {
     const errors: unknown[] = [];
@@ -1843,7 +1800,7 @@ class RuntimeApp implements App {
   }
 
   private startEffects(
-    modules: readonly ModuleBinding[] = this.modules,
+    modules: readonly ModuleBinding[] = this.registry.modules,
     container: Container = this.#container,
   ): void {
     for (const moduleBinding of modules) {
@@ -1877,102 +1834,18 @@ class RuntimeApp implements App {
     container: Container,
   ): void {
     const method = getMethod(moduleBinding.instance, property);
-    const tracker = createReactiveTracker();
-    let disposed = false;
 
-    const run = () => {
-      if (disposed) {
-        return;
-      }
-
-      try {
-        tracker.track(() => this.runEffect(moduleBinding, property, method, container));
-      } catch (error) {
-        this.emitError(error, { phase: "effect" });
-        throw error;
-      }
-    };
-
-    const unsubscribe = tracker.subscribe(() => {
-      try {
-        run();
-      } catch {
-        // The error has already been emitted through plugin hooks.
-      }
-    });
-
-    const dispose = () => {
-      disposed = true;
-      unsubscribe();
-      tracker.dispose();
-    };
-
-    try {
-      run();
-    } catch (error) {
-      try {
-        dispose();
-      } catch (disposeError) {
-        // eslint-disable-next-line preserve-caught-error -- AggregateError.errors and cause both retain the startup failure.
-        throw new AggregateError([error, disposeError], "Effect startup and cleanup failed.", {
-          cause: error,
-        });
-      }
-
-      throw error;
-    }
-
-    this.effectDisposers.push(dispose);
-  }
-
-  private runEffect(
-    moduleBinding: ModuleBinding,
-    property: PropertyKey,
-    method: (...args: unknown[]) => unknown,
-    container: Container,
-  ): void {
-    const result = this.runWithManagedExecution("effect", () =>
-      this.runWithAppInjectContext(() => method.call(moduleBinding.instance), container),
-    );
-
-    if (!isPromiseLike(result)) {
-      return;
-    }
-
-    const pending = Promise.resolve(result)
-      .then(() => undefined)
-      .catch((error) => {
+    this.effects.start({
+      reportError: (error, phase) => {
         this.emitError(error, {
-          phase: `effect:${moduleBinding.name}.${String(property)}`,
+          phase: phase === "run" ? `effect:${moduleBinding.name}.${String(property)}` : "effect",
         });
-        throw error;
-      })
-      .finally(() => {
-        this.pendingEffects.delete(pending);
-      });
-
-    this.pendingEffects.add(pending);
-    pending.catch(() => undefined);
-  }
-
-  private stopEffects(): void {
-    this.stopEffectsFrom(0);
-  }
-
-  private stopEffectsFrom(index: number): void {
-    const errors: unknown[] = [];
-
-    for (const dispose of this.effectDisposers.splice(index).toReversed()) {
-      try {
-        dispose();
-      } catch (error) {
-        errors.push(error);
-      }
-    }
-
-    if (errors.length > 0) {
-      throw new AggregateError(errors, "One or more effects failed to stop.");
-    }
+      },
+      run: () =>
+        this.runWithManagedExecution("effect", () =>
+          this.runWithAppInjectContext(() => method.call(moduleBinding.instance), container),
+        ),
+    });
   }
 
   private async disposePlugins(): Promise<void> {
@@ -2015,43 +1888,8 @@ class RuntimeApp implements App {
   }
 
   private async flushEffects(): Promise<void> {
-    await this.initPromise;
-    await this.waitForPendingEffects();
-  }
-
-  private async waitForPendingEffects(): Promise<void> {
-    const errors: unknown[] = [];
-
-    while (this.pendingEffects.size > 0) {
-      // eslint-disable-next-line no-await-in-loop -- async effects may enqueue follow-up effects while settling.
-      const results = await Promise.allSettled(this.pendingEffects);
-
-      for (const result of results) {
-        if (result.status === "rejected") {
-          errors.push(result.reason);
-        }
-      }
-    }
-
-    if (errors.length > 0) {
-      throw new AggregateError(errors, "One or more pending effects failed while disposing.");
-    }
-  }
-
-  private async waitForPendingEffectsCreatedAfter(
-    existingEffects: ReadonlySet<Promise<void>>,
-  ): Promise<void> {
-    const pendingEffects = [...this.pendingEffects].filter(
-      (pending) => !existingEffects.has(pending),
-    );
-    const results = await Promise.allSettled(pendingEffects);
-    const errors = results
-      .filter((result): result is PromiseRejectedResult => result.status === "rejected")
-      .map((result) => result.reason);
-
-    if (errors.length > 0) {
-      throw new AggregateError(errors, "One or more staged effects failed while rolling back.");
-    }
+    await this.lifecycle.initPromise;
+    await this.effects.waitForPending();
   }
 
   private async waitForStagedLazyLoads(): Promise<void> {
@@ -2234,7 +2072,9 @@ class RuntimeApp implements App {
         if (
           property === "ready" &&
           isActive() &&
-          (phase === "setup" || phase === "onInit" || (phase === "effect" && !target.isInitialized))
+          (phase === "setup" ||
+            phase === "onInit" ||
+            (phase === "effect" && !target.lifecycle.initialized))
         ) {
           return target.rejectManagedReentry("await app.ready", phase, "init");
         }
@@ -2704,42 +2544,30 @@ class RuntimeApp implements App {
     });
   }
 
-  private assertNewModules(modules: readonly ModuleBinding[]): void {
-    for (const moduleBinding of modules) {
-      if (this.moduleByToken.has(moduleBinding.token)) {
-        throw new DuplicateProviderError(tokenName(moduleBinding.token));
-      }
-
-      if (this.moduleByName.has(moduleBinding.name)) {
-        throw new DuplicateProviderError(moduleBinding.name);
-      }
-    }
-  }
-
   private assertCanLoadLazyModule(): void {
-    if (this.isDisposing || this.isDisposed) {
+    if (this.lifecycle.disposalBegun) {
       throw new CoexistError("Cannot load a lazy module after app disposal.");
     }
 
-    if (this.stopPromise !== undefined) {
+    if (this.lifecycle.stopping) {
       throw new CoexistError("Cannot load a lazy module while the app is stopping.");
     }
   }
 
   private assertActive(operation: string): void {
-    if (this.isDisposing || this.isDisposed) {
+    if (this.lifecycle.disposalBegun) {
       throw new CoexistError(`Cannot ${operation} after app disposal has begun.`);
     }
   }
 
   private assertModuleMutationAllowed(operation: string): void {
-    if (!this.isDisposing && !this.isDisposed) {
+    if (!this.lifecycle.disposalBegun) {
       return;
     }
 
     const phase = this.getActiveManagedPhase();
 
-    if (!this.isDisposed && (phase === "onStop" || phase === "onDispose")) {
+    if (!this.lifecycle.disposed && (phase === "onStop" || phase === "onDispose")) {
       return;
     }
 
@@ -2757,32 +2585,6 @@ class RuntimeApp implements App {
     this.runWithInternalMutation(() => {
       this.store.setState(rootState);
     });
-  }
-
-  private registerModules(modules: readonly ModuleBinding[]): void {
-    for (const moduleBinding of modules) {
-      this.modules.push(moduleBinding);
-      this.moduleByToken.set(moduleBinding.token, moduleBinding);
-      this.moduleByName.set(moduleBinding.name, moduleBinding);
-    }
-  }
-
-  private unregisterModules(modules: readonly ModuleBinding[]): void {
-    for (const moduleBinding of modules) {
-      if (this.moduleByToken.get(moduleBinding.token) === moduleBinding) {
-        this.moduleByToken.delete(moduleBinding.token);
-      }
-
-      if (this.moduleByName.get(moduleBinding.name) === moduleBinding) {
-        this.moduleByName.delete(moduleBinding.name);
-      }
-
-      const index = this.modules.indexOf(moduleBinding);
-
-      if (index !== -1) {
-        this.modules.splice(index, 1);
-      }
-    }
   }
 
   private detachRuntimeMetadata(modules: readonly ModuleBinding[]): void {
