@@ -229,7 +229,7 @@ export function createLocalSpaceStoragePlugin<TState = unknown>(
   const shouldPersist = options.persist !== false;
   const destroyOnDispose =
     options.destroyOnDispose ?? (options.service === undefined && options.instance === undefined);
-  let readyPromise: Promise<void> = Promise.resolve();
+  const hydration = createHydrationGate();
   let writeQueue: Promise<void> = Promise.resolve();
 
   const runQueued = (
@@ -254,14 +254,14 @@ export function createLocalSpaceStoragePlugin<TState = unknown>(
     providers: [provide(StorageToken, { useValue: storage })],
     storage,
     async clear() {
-      await readyPromise;
+      await hydration.pending();
       pendingWrites.discard();
       await runQueued("clear", async () => {
         await storage.remove(key);
       });
     },
     async flush() {
-      await readyPromise;
+      await hydration.pending();
       pendingWrites.flush();
       await writeQueue;
     },
@@ -277,21 +277,21 @@ export function createLocalSpaceStoragePlugin<TState = unknown>(
       pendingWrites.schedule(partialize(event.state));
     },
     async persist(app) {
-      await readyPromise;
+      await hydration.pending();
       pendingWrites.discard();
       await runQueued("persist", async () => {
         await storage.set(key, partialize(app.store.getPureState()));
       });
     },
     ready() {
-      return readyPromise;
+      return hydration.promise;
     },
     setup(app, context) {
       context.onDispose(async () => {
         const errors: unknown[] = [];
 
         try {
-          await readyPromise;
+          await hydration.pending();
         } catch (error) {
           errors.push(error);
         }
@@ -321,31 +321,36 @@ export function createLocalSpaceStoragePlugin<TState = unknown>(
         }
       });
 
-      readyPromise = (async () => {
-        try {
-          await storage.ready();
+      return hydration.settle(
+        (async () => {
+          try {
+            await storage.ready();
 
-          if (!shouldHydrate) {
-            return;
+            if (!shouldHydrate) {
+              return;
+            }
+
+            const stored = await storage.get<TState>(key);
+
+            if (stored === null) {
+              return;
+            }
+
+            app.runInAction(
+              () => app.store.setState(merge(stored, app.store.getPureState()) as never),
+              { name: "storage.hydrate" },
+            );
+          } catch (error) {
+            reportStorageError(options.onError, error, "hydrate");
+            throw error;
           }
-
-          const stored = await storage.get<TState>(key);
-
-          if (stored === null) {
-            return;
-          }
-
-          app.runInAction(
-            () => app.store.setState(merge(stored, app.store.getPureState()) as never),
-            { name: "storage.hydrate" },
-          );
-        } catch (error) {
-          reportStorageError(options.onError, error, "hydrate");
-          throw error;
-        }
-      })();
-
-      return readyPromise;
+        })(),
+      );
+    },
+    dispose() {
+      // An app disposed before this plugin's setup ran will never hydrate, so
+      // `ready()` must settle rather than stay pending forever.
+      hydration.abandon(new Error("Storage plugin was disposed before hydration started."));
     },
   };
 }
@@ -357,7 +362,7 @@ export function createStoragePlugin<TState = unknown>(
   const deserialize = options.deserialize ?? JSON.parse;
   const partialize = options.partialize ?? ((state: unknown) => state as TState);
   const merge = options.merge ?? ((persisted: TState) => persisted);
-  let readyPromise: Promise<void> = Promise.resolve();
+  const hydration = createHydrationGate();
   let writeQueue: Promise<void> = Promise.resolve();
 
   const runQueued = (
@@ -380,14 +385,14 @@ export function createStoragePlugin<TState = unknown>(
   return {
     name: "coexist:storage",
     async clear() {
-      await readyPromise;
+      await hydration.pending();
       pendingWrites.discard();
       await runQueued("clear", async () => {
         await options.storage.removeItem?.(options.key);
       });
     },
     async flush() {
-      await readyPromise;
+      await hydration.pending();
       pendingWrites.flush();
       await writeQueue;
     },
@@ -399,21 +404,21 @@ export function createStoragePlugin<TState = unknown>(
       pendingWrites.schedule(partialize(event.state));
     },
     async persist(app) {
-      await readyPromise;
+      await hydration.pending();
       pendingWrites.discard();
       await runQueued("persist", async () => {
         await options.storage.setItem(options.key, serialize(partialize(app.store.getPureState())));
       });
     },
     ready() {
-      return readyPromise;
+      return hydration.promise;
     },
     setup(app, context) {
       context.onDispose(async () => {
         const errors: unknown[] = [];
 
         try {
-          await readyPromise;
+          await hydration.pending();
         } catch (error) {
           errors.push(error);
         }
@@ -435,25 +440,88 @@ export function createStoragePlugin<TState = unknown>(
         }
       });
 
-      readyPromise = (async () => {
-        try {
-          const stored = await options.storage.getItem(options.key);
+      return hydration.settle(
+        (async () => {
+          try {
+            const stored = await options.storage.getItem(options.key);
 
-          if (stored === null) {
-            return;
+            if (stored === null) {
+              return;
+            }
+
+            app.runInAction(
+              () =>
+                app.store.setState(merge(deserialize(stored), app.store.getPureState()) as never),
+              { name: "storage.hydrate" },
+            );
+          } catch (error) {
+            reportStorageError(options.onError, error, "hydrate");
+            throw error;
           }
+        })(),
+      );
+    },
+    dispose() {
+      // An app disposed before this plugin's setup ran will never hydrate, so
+      // `ready()` must settle rather than stay pending forever.
+      hydration.abandon(new Error("Storage plugin was disposed before hydration started."));
+    },
+  };
+}
 
-          app.runInAction(
-            () => app.store.setState(merge(deserialize(stored), app.store.getPureState()) as never),
-            { name: "storage.hydrate" },
-          );
-        } catch (error) {
-          reportStorageError(options.onError, error, "hydrate");
-          throw error;
-        }
-      })();
+interface HydrationGate {
+  /** What `ready()` returns: settles only once hydration has actually run. */
+  readonly promise: Promise<void>;
+  /**
+   * What the write path waits on. A plugin used standalone — never installed
+   * in an app — has no hydration to order against, so writes must not block.
+   */
+  pending(): Promise<void>;
+  settle(hydration: Promise<void>): Promise<void>;
+  abandon(error: unknown): void;
+}
 
-      return readyPromise;
+/**
+ * `ready()` must describe hydration even before the app runs plugin setup.
+ * Plugin setup starts on a later microtask than `createApp()`, so a plugin that
+ * only replaced an already-resolved promise inside `setup()` let
+ * `await plugin.ready()` return before hydration had begun.
+ */
+function createHydrationGate(): HydrationGate {
+  let resolveHydration!: () => void;
+  let rejectHydration!: (error: unknown) => void;
+  let started = false;
+  const promise = new Promise<void>((resolve, reject) => {
+    resolveHydration = resolve;
+    rejectHydration = reject;
+  });
+
+  promise.catch(() => undefined);
+
+  return {
+    promise,
+    pending() {
+      return started ? promise : Promise.resolve();
+    },
+    /** Settles `ready()` for an app that was disposed before plugin setup ran. */
+    abandon(error) {
+      if (started) {
+        return;
+      }
+
+      started = true;
+      rejectHydration(error);
+    },
+    async settle(hydration) {
+      started = true;
+
+      try {
+        await hydration;
+        resolveHydration();
+      } catch (error) {
+        rejectHydration(error);
+        throw error;
+      }
     },
   };
 }

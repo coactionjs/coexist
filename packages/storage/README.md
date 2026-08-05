@@ -115,6 +115,8 @@ await storage.persist(app); // force-write the current full state
 await storage.clear(); // remove the persisted entry
 ```
 
+`ready()` describes the hydration of the app the plugin is installed in, so it stays pending until that app runs the plugin's setup — awaiting it right after `createApp()` is safe. It rejects if hydration fails, and also if the app tears down without ever reaching this plugin's setup. Awaiting `ready()` on a plugin that was never passed to an app therefore never resolves: there is no hydration to wait for. The imperative write methods (`flush`, `persist`, `clear`) stay usable standalone.
+
 `app.dispose()` also waits for pending storage writes through the plugin context, so production teardown does not need an extra `flush()` call. Hydration is committed through an app action boundary, so both storage adapters remain compatible with `devOptions.strictActions: true`.
 
 For the localspace plugin, `storage.clear()` removes the persisted app-state key. Use `app.get(StorageToken).clear()` when you want to clear the whole localspace store.

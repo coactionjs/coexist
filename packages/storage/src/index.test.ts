@@ -181,6 +181,76 @@ describe("storage plugin", () => {
     }
   });
 
+  it("resolves ready() only after hydration has actually applied", async () => {
+    const storage = new AsyncMemoryStorage();
+    storage.values.set("app", JSON.stringify({ storageCounter: { count: 7 } }));
+
+    const plugin = createStoragePlugin({
+      key: "app",
+      storage,
+    });
+    const app = createApp({
+      plugins: [plugin],
+      providers: [Counter],
+    });
+
+    // Plugin setup starts on a later microtask than createApp(), so awaiting
+    // ready() here used to return before hydration had even begun.
+    await plugin.ready();
+
+    expect(app.getModule(Counter).count).toBe(7);
+
+    await app.dispose();
+  });
+
+  it("rejects ready() when hydration fails", async () => {
+    const hydrateError = new Error("read failed");
+    const plugin = createStoragePlugin({
+      key: "app",
+      onError() {},
+      storage: {
+        getItem() {
+          return Promise.reject(hydrateError);
+        },
+        setItem() {},
+      },
+    });
+
+    createApp({
+      plugins: [plugin],
+      providers: [Counter],
+    });
+
+    await expect(plugin.ready()).rejects.toBe(hydrateError);
+  });
+
+  it("settles ready() when setup never runs because an earlier plugin failed", async () => {
+    const plugin = createStoragePlugin({
+      key: "app",
+      storage: new MemoryStorage(),
+    });
+    const app = createApp({
+      plugins: [
+        {
+          name: "failing-setup",
+          setup() {
+            throw new Error("earlier plugin failed");
+          },
+        },
+        plugin,
+      ],
+      providers: [Counter],
+    });
+
+    await expect(app.ready).rejects.toThrow("earlier plugin failed");
+    await app.dispose();
+
+    // Hydration never started, so ready() must report that rather than hang.
+    await expect(plugin.ready()).rejects.toThrow(
+      "Storage plugin was disposed before hydration started.",
+    );
+  });
+
   it("can clear stored state", async () => {
     const storage = new MemoryStorage();
     storage.setItem("app", "{}");
