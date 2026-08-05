@@ -93,6 +93,20 @@ app.watch(
 
 Prefer keeping effects cheap, or guard them against unchanged input, rather than assuming they are dependency-precise.
 
+### What that costs
+
+`pnpm run bench` measures it, so the trade-off can be argued from numbers. On a 2024 laptop with one module changing and every selector reading something unrelated:
+
+| Selectors watching the app | Cost of one action |
+| -------------------------- | ------------------ |
+| 100                        | ~0.02 ms           |
+| 1,000                      | ~0.09 ms           |
+| 10,000                     | ~1.2 ms            |
+
+Cost tracks the number of selectors, not the size of the change: every selector is given the chance to re-run, and `equals` then suppresses the UI update rather than the selector call. That is comfortable well past a thousand selectors and becomes worth measuring beyond that. Module count behaves the same way — app creation is roughly linear (~20 ms for 1,000 modules, ~1 s for 10,000), while a single action stays under a millisecond until about 10,000 modules.
+
+The benchmark also contrasts worker sync modes on the same state: a 1,000-item snapshot is ~30 KB, while the patch for renaming one item is under 100 bytes. Prefer `sync: "patch"` for anything but small state.
+
 ## Actions and transactions
 
 A method declared as an action wraps its synchronous state writes in a single transaction: multiple writes produce one patch and one notification.

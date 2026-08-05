@@ -30,6 +30,8 @@ app.watch(read, listener, opts); // subscribe to a derived value
 
 Selectors accept an `{ equals }` option (default `Object.is`) to control when the view updates.
 
+Those two capabilities are not a convention — they are a contract every adapter is tested against. `packages/integration/src/adapterConformance.ts` runs the same spec against all five: the resolved module is the facade the app owns (not a copy), a selector starts from the current value and follows later actions, two apps observed in one process stay isolated, a disposed scope stops following the app, and a missing app raises an error instead of returning `undefined`. Idioms differ; these semantics do not.
+
 ## React — [`@coexist/react`](../packages/react/README.md)
 
 ```tsx
