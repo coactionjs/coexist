@@ -37,10 +37,28 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "json-summary", "html"],
       reportsDirectory: "coverage",
+      // Floors, not targets. They sit below today's numbers so an unrelated
+      // change is not blocked by a rounding difference, but close enough that
+      // deleting a test suite fails the build instead of passing quietly.
+      thresholds: {
+        branches: 78,
+        functions: 88,
+        lines: 85,
+        statements: 85,
+        // The runtime everything else depends on is held to a higher bar.
+        "packages/core/src/**": {
+          branches: 80,
+          functions: 90,
+          lines: 87,
+          statements: 87,
+        },
+      },
     },
     environment: "node",
     globals: false,
-    passWithNoTests: true,
+    // A project whose tests all disappeared must fail rather than report
+    // success for running nothing.
+    passWithNoTests: false,
     projects: [
       {
         extends: true,

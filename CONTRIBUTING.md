@@ -43,15 +43,20 @@ Run from the repository root:
 ```sh
 pnpm run dev          # watch-build all packages in parallel
 pnpm run build        # build all packages (turbo)
-pnpm run test         # run the full Vitest suite
-pnpm run test:watch   # watch mode
+pnpm run test          # run the full Vitest suite
+pnpm run test:coverage # the same suite with coverage thresholds enforced
+pnpm run test:watch    # watch mode
 pnpm run typecheck    # tsc --noEmit across packages
 pnpm run lint         # oxlint
 pnpm run lint:fix     # oxlint --fix
 pnpm run format       # oxfmt --write
 pnpm run format:check # oxfmt --check
-pnpm run check        # format:check + lint + typecheck + test + build (what CI runs)
+pnpm run check        # format:check + lint + typecheck + coverage + build + smokes (what CI runs)
 ```
+
+Coverage thresholds are floors, enforced by `test:coverage` and therefore by `check` and CI. `packages/core/src/**` is held to a higher bar than the rest. A project that finds no test files fails rather than passing, so a suite cannot disappear unnoticed.
+
+The `*.fuzz.test.ts` suites are seeded, not random: they replay fixed seeds so a failure reproduces from the seed named in the test. They cover the input spaces too large to enumerate — arbitrary worker protocol messages and patch paths, and interleaved app lifecycle commands — asserting invariants rather than specific outputs.
 
 Target a single package or example with pnpm filters:
 
