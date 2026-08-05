@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { promisify } from "node:util";
@@ -38,6 +38,72 @@ describe("create package", () => {
       '"skipLibCheck": true',
     );
     await expect(readFile(join(root, "src/main.ts"), "utf8")).resolves.toContain("createApp");
+  });
+
+  it("pins scaffolded dependencies instead of tracking latest", async () => {
+    const root = await mkdtemp(join(tmpdir(), "coexist-create-pins-"));
+    roots.push(root);
+
+    await createCoexistProject({ name: "demo", root });
+
+    const manifest = JSON.parse(await readFile(join(root, "package.json"), "utf8")) as {
+      dependencies: Record<string, string>;
+      devDependencies: Record<string, string>;
+    };
+    const createVersion = (
+      JSON.parse(await readFile(join(repoRoot, "packages/create/package.json"), "utf8")) as {
+        version: string;
+      }
+    ).version;
+
+    // "latest" would make the same CLI build produce a different project on
+    // every run, eventually one its own template no longer compiles against.
+    expect(Object.values({ ...manifest.dependencies, ...manifest.devDependencies })).not.toContain(
+      "latest",
+    );
+    expect(manifest.dependencies["@coexist/core"]).toBe(`^${createVersion}`);
+  });
+
+  it("refuses to overwrite a non-empty target without force", async () => {
+    const workspace = await mkdtemp(join(tmpdir(), "coexist-create-guard-"));
+    roots.push(workspace);
+    const root = join(workspace, "existing");
+    await mkdir(root, { recursive: true });
+    await writeFile(join(root, "package.json"), '{ "name": "do-not-clobber" }\n');
+
+    await expect(createCoexistProject({ name: "demo", root })).rejects.toThrow("is not empty");
+    await expect(readFile(join(root, "package.json"), "utf8")).resolves.toContain("do-not-clobber");
+
+    await createCoexistProject({ force: true, name: "demo", root });
+
+    await expect(readFile(join(root, "package.json"), "utf8")).resolves.toContain('"name": "demo"');
+  });
+
+  it("rejects target names npm would refuse", async () => {
+    const root = await mkdtemp(join(tmpdir(), "coexist-create-name-"));
+    roots.push(root);
+
+    await Promise.all(
+      ["Demo", ".demo", "my app", ""].map(async (name) => {
+        await expect(createCoexistProject({ name, root })).rejects.toThrow(
+          "is not a valid npm package name",
+        );
+      }),
+    );
+
+    await expect(readdir(root)).resolves.toEqual([]);
+  });
+
+  it("leaves nothing behind when scaffolding fails midway", async () => {
+    const workspace = await mkdtemp(join(tmpdir(), "coexist-create-atomic-"));
+    roots.push(workspace);
+    const root = join(workspace, "app");
+
+    await expect(createCoexistProject({ name: "Invalid Name", root })).rejects.toThrow(
+      "is not a valid npm package name",
+    );
+
+    await expect(readdir(workspace)).resolves.toEqual([]);
   });
 
   it("generates a project entrypoint that typechecks against the current core package", async () => {

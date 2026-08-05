@@ -16,7 +16,15 @@ pnpm install
 pnpm start
 ```
 
-The target directory defaults to `coexist-app` when no name is given. The generated project contains:
+The target directory defaults to `coexist-app` when no name is given. A directory that already has contents is refused — scaffolding replaces `package.json`, `tsconfig.json`, and `src/main.ts` — so pass `--force` when you mean to overwrite:
+
+```sh
+pnpm dlx @coexist/create my-app --force
+```
+
+The name is validated against npm's package-name rules before anything is written, and the whole project is staged in a temporary directory first, so a failed run leaves no half-scaffolded target behind.
+
+The generated project contains:
 
 ```text
 my-app/
@@ -59,13 +67,16 @@ const result = await createCoexistProject({
 console.log(result.files); // ["package.json", "tsconfig.json", "src/main.ts"]
 ```
 
-| Option           | Type     | Description                                     |
-| ---------------- | -------- | ----------------------------------------------- |
-| `root`           | `string` | Absolute directory to generate into.            |
-| `name`           | `string` | Project name written to `package.json`.         |
-| `packageManager` | `string` | `packageManager` field (default `pnpm@11.8.0`). |
+| Option           | Type      | Description                                     |
+| ---------------- | --------- | ----------------------------------------------- |
+| `root`           | `string`  | Absolute directory to generate into.            |
+| `name`           | `string`  | Project name written to `package.json`.         |
+| `packageManager` | `string`  | `packageManager` field (default `pnpm@11.8.0`). |
+| `force`          | `boolean` | Write into a directory that is not empty.       |
 
 Returns `{ root, files }`.
+
+Generated dependencies are pinned, not `latest`: `@coexist/core` gets the range matching this CLI's own version, and `tsx` / `typescript` get the ranges the scaffold is tested against. The same CLI build therefore generates the same project every time, instead of eventually pairing an old template with an incompatible release.
 
 ## Exports
 
