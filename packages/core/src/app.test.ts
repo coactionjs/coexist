@@ -10,6 +10,7 @@ import {
   createContainer,
   defineModule,
   Effect,
+  getAppCreationCleanup,
   inject,
   lazyModule,
   Module,
@@ -2348,6 +2349,82 @@ describe("app runtime", () => {
 
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(events).toEqual(["dispose:1"]);
+  });
+
+  it("exposes async container cleanup when app creation fails", async () => {
+    const events: string[] = [];
+    const ConnectionToken = token<{ readonly id: string }>("FailedCreationConnection");
+    const BrokenToken = token<string>("FailedCreationBroken");
+
+    let caught: unknown;
+
+    try {
+      createApp({
+        providers: [
+          provide(ConnectionToken, {
+            eager: true,
+            async dispose() {
+              await Promise.resolve();
+              events.push("closed");
+            },
+            useFactory: () => ({ id: "connection" }),
+          }),
+          provide(BrokenToken, {
+            eager: true,
+            useFactory: () => {
+              throw new Error("eager provider failed");
+            },
+          }),
+        ],
+      });
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(caught).toMatchObject({ message: "eager provider failed" });
+
+    const cleanup = getAppCreationCleanup(caught);
+
+    expect(cleanup).toBeInstanceOf(Promise);
+    // The connection is still closing when the caller receives the error.
+    expect(events).toEqual([]);
+
+    await cleanup;
+
+    expect(events).toEqual(["closed"]);
+  });
+
+  it("reports async disposal failures through the app creation cleanup promise", async () => {
+    const disposeError = new Error("connection close failed");
+    const ConnectionToken = token<{ readonly id: string }>("FailedCleanupConnection");
+    const BrokenToken = token<string>("FailedCleanupBroken");
+
+    let caught: unknown;
+
+    try {
+      createApp({
+        providers: [
+          provide(ConnectionToken, {
+            eager: true,
+            dispose: () => Promise.reject(disposeError),
+            useFactory: () => ({ id: "connection" }),
+          }),
+          provide(BrokenToken, {
+            eager: true,
+            useFactory: () => {
+              throw new Error("eager provider failed");
+            },
+          }),
+        ],
+      });
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(caught).toMatchObject({ message: "eager provider failed" });
+    await expect(getAppCreationCleanup(caught)).rejects.toMatchObject({
+      errors: [disposeError],
+    });
   });
 
   it("keeps non-module class and factory providers lazy by default", () => {

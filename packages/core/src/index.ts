@@ -16,6 +16,7 @@ export {
 export { createContainer } from "./container.js";
 export {
   createApp,
+  getAppCreationCleanup,
   type ActionEvent,
   type App,
   type AppDevOptions,

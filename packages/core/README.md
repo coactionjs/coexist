@@ -161,6 +161,8 @@ const app = createApp({
 
 `@Module` providers are instantiated during `createApp()` so their state can be bound to the store. Plugin `setup`, module `onInit` hooks, and effects are kicked off on the next microtask and tracked by the stable `app.ready` promise. `app.start()` awaits that same initialization, then runs `onStart` hooks and marks the app started; many apps can skip `start()` entirely if they have no startup work. Initialization failures reject `app.ready` even though the runtime observes them internally to prevent an unhandled rejection when an app is never started.
 
+When `createApp()` itself throws, its rollback releases everything creation had already built. Because creation is synchronous, an async provider disposer outlives the throw, so the error carries the disposal promise: `getAppCreationCleanup(error)` returns it, resolving when cleanup finishes and rejecting with whatever it failed on.
+
 ## Dependency injection
 
 Coexist includes a small but complete DI container. You register **providers** keyed by **injection tokens** (a class, a `Token`, a string, or a symbol).

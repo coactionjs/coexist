@@ -268,6 +268,7 @@ interface DetachedDraftContext {
 }
 
 const runtimeModuleMetadataKey = Symbol.for("@coexist/core/runtimeModule");
+const appCreationCleanupKey = Symbol.for("@coexist/core/appCreationCleanup");
 const appContainerMap = new WeakMap<App, Container>();
 const appRuntimeMap = new WeakMap<App, RuntimeApp>();
 const appManagedExecutionContext = createRuntimeAsyncContext<AppManagedExecution>();
@@ -393,23 +394,67 @@ export function createAppInternal(options: InternalCreateAppOptions = {}): App {
       runSyncCleanupPhase(rollbackErrors, () => failedStore.destroy());
     }
 
-    try {
-      void container.dispose().catch(() => undefined);
-    } catch (cleanupError) {
-      rollbackErrors.push(cleanupError);
-    }
+    // createApp() is synchronous, so an async provider disposer cannot be
+    // awaited before rethrowing. Hand the caller its promise instead of
+    // dropping it: a silently discarded disposal failure is how a failed
+    // creation leaks the connection or handle it had already opened.
+    const cleanup = disposeFailedAppContainer(container, rollbackErrors);
 
     if (rollbackErrors.length > 0) {
-      // eslint-disable-next-line preserve-caught-error -- AggregateError.errors and cause both retain the creation failure.
-      throw new AggregateError(
-        [error, ...rollbackErrors],
-        error instanceof Error ? error.message : "App creation and rollback failed.",
-        { cause: error },
+      throw attachAppCreationCleanup(
+        // eslint-disable-next-line preserve-caught-error -- AggregateError.errors and cause both retain the creation failure.
+        new AggregateError(
+          [error, ...rollbackErrors],
+          error instanceof Error ? error.message : "App creation and rollback failed.",
+          { cause: error },
+        ),
+        cleanup,
       );
     }
 
-    throw error;
+    throw attachAppCreationCleanup(error, cleanup);
   }
+}
+
+/**
+ * Resolves once a failed `createApp()` finished releasing what it had already
+ * built, and rejects with whatever that release failed on.
+ */
+export function getAppCreationCleanup(error: unknown): Promise<void> | undefined {
+  if (typeof error !== "object" || error === null) {
+    return undefined;
+  }
+
+  const cleanup = (error as { readonly [appCreationCleanupKey]?: unknown })[appCreationCleanupKey];
+  // eslint-disable-next-line promise/no-promise-in-callback -- the stored value is a promise by construction.
+  return isPromiseLike<void>(cleanup) ? Promise.resolve(cleanup) : undefined;
+}
+
+function disposeFailedAppContainer(container: Container, rollbackErrors: unknown[]): Promise<void> {
+  try {
+    return container.dispose();
+  } catch (cleanupError) {
+    collectCleanupError(rollbackErrors, cleanupError);
+    return Promise.resolve();
+  }
+}
+
+function attachAppCreationCleanup<T>(error: T, cleanup: Promise<void>): T {
+  // Observing the rejection here keeps an ignored cleanup from surfacing as an
+  // unhandled rejection, while `await getAppCreationCleanup(error)` still sees it.
+  // eslint-disable-next-line promise/no-promise-in-callback -- this deliberately observes an already-detached rejection.
+  cleanup.catch(() => undefined);
+
+  if (typeof error === "object" && error !== null) {
+    Object.defineProperty(error, appCreationCleanupKey, {
+      configurable: true,
+      enumerable: false,
+      value: cleanup,
+      writable: true,
+    });
+  }
+
+  return error;
 }
 
 class RuntimePluginContext implements PluginContext {
