@@ -4,6 +4,9 @@ name: CI
 # minutes instead of behind a full browser and packaging sweep. `checks` gates
 # the rest; the packaging and browser stages then run in parallel.
 #
+# Staging changes when a failure is reported, not what is verified: every stage
+# still runs on every supported Node version.
+#
 # Every `pnpm run` step here must also appear in the root `check` script — the
 # `test:check-steps` step fails the build when the two lists drift.
 
@@ -174,9 +177,15 @@ jobs:
         run: pnpm run test:worker:data-transport-install
 
   browser-react:
-    name: Browser (React)
+    name: Browser React (Node ${{ matrix.node-version }})
     needs: checks
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version:
+          - 22.x
+          - 24.x
 
     steps:
       - name: Checkout
@@ -185,7 +194,7 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
         with:
-          node-version: 24.x
+          node-version: ${{ matrix.node-version }}
           npm-version: ${{ env.NPM_VERSION }}
           playwright: "true"
 
@@ -199,9 +208,15 @@ jobs:
         run: pnpm run test:frameworks:react-worker-browser
 
   browser-vue:
-    name: Browser (Vue)
+    name: Browser Vue (Node ${{ matrix.node-version }})
     needs: checks
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version:
+          - 22.x
+          - 24.x
 
     steps:
       - name: Checkout
@@ -210,7 +225,7 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
         with:
-          node-version: 24.x
+          node-version: ${{ matrix.node-version }}
           npm-version: ${{ env.NPM_VERSION }}
           playwright: "true"
 
@@ -224,9 +239,15 @@ jobs:
         run: pnpm run test:frameworks:vue-worker-browser
 
   browser-svelte:
-    name: Browser (Svelte)
+    name: Browser Svelte (Node ${{ matrix.node-version }})
     needs: checks
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version:
+          - 22.x
+          - 24.x
 
     steps:
       - name: Checkout
@@ -235,7 +256,7 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
         with:
-          node-version: 24.x
+          node-version: ${{ matrix.node-version }}
           npm-version: ${{ env.NPM_VERSION }}
           playwright: "true"
 
@@ -249,9 +270,15 @@ jobs:
         run: pnpm run test:svelte:worker-browser
 
   browser-solid:
-    name: Browser (Solid)
+    name: Browser Solid (Node ${{ matrix.node-version }})
     needs: checks
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version:
+          - 22.x
+          - 24.x
 
     steps:
       - name: Checkout
@@ -260,7 +287,7 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
         with:
-          node-version: 24.x
+          node-version: ${{ matrix.node-version }}
           npm-version: ${{ env.NPM_VERSION }}
           playwright: "true"
 
@@ -274,9 +301,15 @@ jobs:
         run: pnpm run test:frameworks:solid-worker-browser
 
   browser-angular:
-    name: Browser (Angular)
+    name: Browser Angular (Node ${{ matrix.node-version }})
     needs: checks
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version:
+          - 22.x
+          - 24.x
 
     steps:
       - name: Checkout
@@ -285,7 +318,7 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
         with:
-          node-version: 24.x
+          node-version: ${{ matrix.node-version }}
           npm-version: ${{ env.NPM_VERSION }}
           playwright: "true"
 
@@ -299,9 +332,15 @@ jobs:
         run: pnpm run test:frameworks:angular-worker-browser
 
   browser-plugins:
-    name: Browser (plugins)
+    name: Browser plugins (Node ${{ matrix.node-version }})
     needs: checks
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version:
+          - 22.x
+          - 24.x
 
     steps:
       - name: Checkout
@@ -310,7 +349,7 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
         with:
-          node-version: 24.x
+          node-version: ${{ matrix.node-version }}
           npm-version: ${{ env.NPM_VERSION }}
           playwright: "true"
 
@@ -333,9 +372,15 @@ jobs:
         run: pnpm run test:plugins:browser
 
   browser-worker:
-    name: Browser (worker)
+    name: Browser worker (Node ${{ matrix.node-version }})
     needs: checks
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version:
+          - 22.x
+          - 24.x
 
     steps:
       - name: Checkout
@@ -344,7 +389,7 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
         with:
-          node-version: 24.x
+          node-version: ${{ matrix.node-version }}
           npm-version: ${{ env.NPM_VERSION }}
           playwright: "true"
 
