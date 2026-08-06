@@ -20,12 +20,6 @@
       "cache": false,
       "persistent": true
     },
-    "format:check": {
-      "outputs": []
-    },
-    "lint": {
-      "outputs": []
-    },
     "test": {
       "dependsOn": ["^build"],
       "outputs": []
