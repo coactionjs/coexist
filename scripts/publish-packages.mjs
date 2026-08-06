@@ -22,32 +22,39 @@ const skipped = [];
 await rm(publishDir, { force: true, recursive: true });
 await mkdir(publishDir, { recursive: true });
 
-for (const pkg of publishablePackages) {
-  const spec = `${pkg.name}@${pkg.version}`;
-  if (await isPublished(spec)) {
-    skipped.push(spec);
-    console.log(`${spec} already exists on npm; skipping.`);
-    continue;
+try {
+  for (const pkg of publishablePackages) {
+    const spec = `${pkg.name}@${pkg.version}`;
+    if (await isPublished(spec)) {
+      skipped.push(spec);
+      console.log(`${spec} already exists on npm; skipping.`);
+      continue;
+    }
+
+    if (dryRun) {
+      console.log(`[dry-run] would publish ${spec} with tag "${releaseTag}".`);
+      continue;
+    }
+
+    const tarball = await packPackage(pkg);
+    await publishPackage(tarball);
+    published.push(spec);
   }
 
-  if (dryRun) {
-    console.log(`[dry-run] would publish ${spec} with tag "${releaseTag}".`);
-    continue;
+  if (published.length > 0) {
+    console.log(`Published ${published.length} package(s): ${published.join(", ")}`);
+  } else {
+    console.log("No unpublished packages found.");
   }
 
-  const tarball = await packPackage(pkg);
-  await publishPackage(tarball);
-  published.push(spec);
-}
-
-if (published.length > 0) {
-  console.log(`Published ${published.length} package(s): ${published.join(", ")}`);
-} else {
-  console.log("No unpublished packages found.");
-}
-
-if (skipped.length > 0) {
-  console.log(`Skipped ${skipped.length} already-published package(s).`);
+  if (skipped.length > 0) {
+    console.log(`Skipped ${skipped.length} already-published package(s).`);
+  }
+} finally {
+  // The staging directory is scratch space for this run. Leaving it behind
+  // makes the publish dry-run smoke refuse to start, and its tarballs match
+  // the *.tgz ignore rule, so it stays invisible to git status while it does.
+  await rm(publishDir, { force: true, recursive: true });
 }
 
 function normalizeRegistry(value) {
