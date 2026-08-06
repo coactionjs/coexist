@@ -404,6 +404,10 @@ jobs:
 
   release-checks:
     name: Release checks
+    # The publish dry run verifies the release plan against the registry, which
+    # only means something for what is about to be released. Running it on every
+    # pull request spends a full install and build to re-check the same plan.
+    if: github.event_name == 'push'
     needs: packaging
     runs-on: ubuntu-latest
 
