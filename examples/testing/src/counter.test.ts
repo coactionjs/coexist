@@ -17,6 +17,7 @@ class MemoryLogger implements Logger {
 
 class Counter {
   count = 0;
+  readonly observed: number[] = [];
 
   constructor(readonly logger: Logger) {}
 
@@ -28,12 +29,19 @@ class Counter {
     this.count += step;
     this.logger.info(`count:${this.count}`);
   }
+
+  // An effect reacts to state; it must not write state, or every commit it
+  // causes would re-trigger it.
+  recordCount(): void {
+    this.observed.push(this.count);
+  }
 }
 
 defineModule(Counter, {
   actions: ["increase"],
   computed: ["double"],
   deps: [Logger],
+  effects: ["recordCount"],
   name: "counter",
   state: ["count"],
 });
@@ -71,5 +79,31 @@ describe("testApp", () => {
         count: 2,
       },
     });
+  });
+
+  it("runs effects after init and again after each committed change", async () => {
+    app = testApp({
+      providers: [Counter, provide(Logger, { useValue: new MemoryLogger() })],
+    });
+
+    const counter = app.getModule(Counter);
+
+    await app.ready;
+    await app.test.flushEffects();
+
+    // Effects run once during initialization, before any action.
+    expect(counter.observed).toEqual([0]);
+
+    counter.increase(2);
+    await app.test.flushEffects();
+
+    expect(counter.observed).toEqual([0, 2]);
+
+    // One action commits once, however many fields it writes.
+    counter.increase(1);
+    counter.increase(1);
+    await app.test.flushEffects();
+
+    expect(counter.observed).toEqual([0, 2, 3, 4]);
   });
 });
