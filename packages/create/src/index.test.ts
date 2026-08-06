@@ -64,6 +64,19 @@ describe("create package", () => {
     expect(manifest.dependencies["@coexist/core"]).toBe(`^${createVersion}`);
   });
 
+  it("creates missing parent directories for a nested target", async () => {
+    const workspace = await mkdtemp(join(tmpdir(), "coexist-create-nested-"));
+    roots.push(workspace);
+    const root = join(workspace, "apps", "web");
+
+    await createCoexistProject({ name: "demo", root });
+
+    await expect(readFile(join(root, "package.json"), "utf8")).resolves.toContain('"name": "demo"');
+    await expect(readFile(join(root, "src/main.ts"), "utf8")).resolves.toContain("createApp");
+    // The staging directory is gone, not left beside the project.
+    await expect(readdir(join(workspace, "apps"))).resolves.toEqual(["web"]);
+  });
+
   it("refuses to overwrite a non-empty target without force", async () => {
     const workspace = await mkdtemp(join(tmpdir(), "coexist-create-guard-"));
     roots.push(workspace);

@@ -42,6 +42,10 @@ export async function createCoexistProject(
   await assertWritableTarget(root, options.force ?? false);
 
   const coreVersion = await readCoreDependencyRange();
+  // The staging directory is a sibling of the target so the final move is a
+  // rename within one filesystem. That requires the parent chain to exist —
+  // `create-coexist apps/web` must still work when `apps` does not.
+  await mkdir(dirname(root), { recursive: true });
   const staging = await mkdtemp(join(dirname(root), ".coexist-create-"));
 
   try {
@@ -98,7 +102,6 @@ async function commitStagedProject(staging: string, root: string): Promise<void>
   const entries = await readTargetEntries(root);
 
   if (entries === undefined) {
-    await mkdir(dirname(root), { recursive: true });
     await rename(staging, root);
     return;
   }

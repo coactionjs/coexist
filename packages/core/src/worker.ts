@@ -381,18 +381,24 @@ interface PendingWorkerResult {
 const maximumArrayIndex = 2 ** 32 - 2;
 
 export function createWorkerApp(options: CreateWorkerAppOptions): WorkerAppHost {
+  // Every worker-only option is named here so `appOptions` carries nothing but
+  // real `createApp` options; a future app option sharing one of these names
+  // would otherwise silently pick up the worker's value.
   const {
     expose,
+    includeErrorStack = false,
+    limits: limitOptions,
+    onDeliveryError,
     onInvalidMessage,
+    serializeError: customSerializeError,
     stateSections,
     sync = "snapshot",
     transport,
     ...appOptions
   } = options;
-  const { includeErrorStack = false, onDeliveryError } = options;
   const serializeError =
-    options.serializeError ?? ((error: unknown) => serializeWorkerError(error, includeErrorStack));
-  const limits = resolveWorkerProtocolLimits(options.limits);
+    customSerializeError ?? ((error: unknown) => serializeWorkerError(error, includeErrorStack));
+  const limits = resolveWorkerProtocolLimits(limitOptions);
   let stateSyncVersion = 0;
   let publishPatches = false;
   // A published version that never reached the peer cannot be the base for the
@@ -465,6 +471,9 @@ export function createWorkerApp(options: CreateWorkerAppOptions): WorkerAppHost 
     stateSyncVersion = version;
     // A host that reports ready must have handed its first snapshot to the
     // transport; awaiting delivery keeps that promise honest for async channels.
+    // Observing it as well means an async failure re-bases the next update and
+    // reaches `onDeliveryError`, exactly as a synchronous one does.
+    observeWorkerDelivery(publication, handleDeliveryFailure);
     await publication.delivery;
     return undefined;
   });
@@ -1717,19 +1726,26 @@ async function handleSync(
     return;
   }
 
-  observeWorkerDelivery(
-    publishState(
-      app,
-      transport,
+  // Nothing here may reject: the caller cannot await this, so an escaping
+  // failure — reading a store that was destroyed while `ready` was awaited,
+  // for one — would become an unhandled rejection instead of a report.
+  try {
+    observeWorkerDelivery(
+      publishState(
+        app,
+        transport,
+        onDeliveryError,
+        [],
+        "snapshot",
+        sections,
+        getStateVersion(),
+        message.id,
+      ),
       onDeliveryError,
-      [],
-      "snapshot",
-      sections,
-      getStateVersion(),
-      message.id,
-    ),
-    onDeliveryError,
-  );
+    );
+  } catch (error) {
+    reportWorkerDeliveryError(onDeliveryError, error, message);
+  }
 }
 
 /**

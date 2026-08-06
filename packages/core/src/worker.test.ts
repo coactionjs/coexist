@@ -2108,6 +2108,44 @@ describe("worker prototype", () => {
     await host.dispose();
   });
 
+  it("reports a failed sync response instead of leaving an unhandled rejection", async () => {
+    const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+    const deliveryErrors: unknown[] = [];
+    const rejections: unknown[] = [];
+    const onUnhandledRejection = (error: unknown) => {
+      rejections.push(error);
+    };
+    const host = createWorkerApp({
+      onDeliveryError(error) {
+        deliveryErrors.push(error);
+      },
+      providers: [WorkerCounter],
+      transport: hostTransport,
+    });
+
+    await host.ready;
+
+    // Stands in for a store that can no longer be read — what a destroyed store
+    // does when a sync request resumes after `await ready`.
+    host.app.store.getPureState = () => {
+      throw new Error("store destroyed");
+    };
+
+    process.on("unhandledRejection", onUnhandledRejection);
+
+    try {
+      clientTransport.post({ id: 1, type: "sync" });
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    } finally {
+      process.off("unhandledRejection", onUnhandledRejection);
+    }
+
+    expect(rejections).toEqual([]);
+    expect(deliveryErrors).toHaveLength(1);
+
+    await host.dispose().catch(() => undefined);
+  });
+
   it("rejects host readiness when the initial snapshot cannot be delivered", async () => {
     const deliveryError = new Error("initial publish failed");
     const host = createWorkerApp({

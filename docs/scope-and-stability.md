@@ -32,7 +32,7 @@ Depend on it for a trusted, reliable transport — a dedicated `Worker`, a `Mess
 
 ### Browsers
 
-Adapters and the worker runtime target browsers with `structuredClone`, `AbortSignal`, `WeakRef`-free modern baselines, and native ES modules — in practice the last two major versions of Chrome, Edge, Firefox, and Safari. Browser smokes run in Chromium.
+Adapters and the worker runtime need native ES modules, `structuredClone`, `AbortSignal`, and `BroadcastChannel` (the last only for the shared-tab transport) — in practice the last two major versions of Chrome, Edge, Firefox, and Safari. Browser smokes run in Chromium.
 
 ### UI frameworks
 
