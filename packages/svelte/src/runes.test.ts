@@ -8,7 +8,7 @@ import {
   defineModule,
 } from "@coexist/core";
 
-import { clearCoexistApp, clearWorkerClient, setCoexistApp } from "./index.js";
+import { clearCoexistApp, clearWorkerClient, setCoexistApp, setWorkerClient } from "./index.js";
 import {
   moduleRune,
   selectedModuleRune,
@@ -117,6 +117,82 @@ describe("Svelte rune helpers", () => {
     await counter.current.increase(4);
 
     expect(count.current).toBe(4);
+
+    client.dispose();
+    await host.dispose();
+  });
+
+  it("exposes current, value, and get() as the same read on every rune", () => {
+    const app = createApp({
+      providers: [RuneCounter],
+    });
+    setCoexistApp(app);
+
+    const counter = moduleRune(RuneCounter);
+    const count = selectorRune((currentApp) => currentApp.getModule(RuneCounter).count);
+    const double = selectedModuleRune(RuneCounter, (module) => module.double);
+
+    expect(counter.value).toBe(counter.current);
+    expect(counter.get()).toBe(counter.current);
+    expect([count.current, count.value, count.get()]).toEqual([0, 0, 0]);
+    expect([double.current, double.value, double.get()]).toEqual([0, 0, 0]);
+
+    counter.current.increase(3);
+
+    expect([count.current, count.value, count.get()]).toEqual([3, 3, 3]);
+    expect([double.current, double.value, double.get()]).toEqual([6, 6, 6]);
+  });
+
+  it("holds a selector rune at its previous value while equals reports no change", () => {
+    const app = createApp({
+      providers: [RuneCounter],
+    });
+    setCoexistApp(app);
+
+    const parity = selectorRune(
+      (currentApp) => ({ even: currentApp.getModule(RuneCounter).count % 2 === 0 }),
+      { equals: (value, previous) => value.even === previous.even },
+    );
+    const first = parity.current;
+
+    app.getModule(RuneCounter).increase(2);
+
+    // Still even, so the rune keeps the identity it already handed out.
+    expect(parity.current).toBe(first);
+
+    app.getModule(RuneCounter).increase(1);
+
+    expect(parity.current).not.toBe(first);
+    expect(parity.current.even).toBe(false);
+  });
+
+  it("resolves worker runes from the registered client when none is passed", async () => {
+    const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+    const client = createWorkerClient({
+      transport: clientTransport,
+    });
+    const host = createWorkerApp({
+      providers: [RuneCounter],
+      sync: "patch",
+      transport: hostTransport,
+    });
+
+    await client.ready;
+    setWorkerClient(client);
+
+    const counter = workerModuleRune<RuneCounter>("svelteRuneCounter");
+    const count = workerSelectorRune(
+      (state) => (state as WorkerRuneCounterState).svelteRuneCounter.count,
+      {},
+    );
+
+    expect(counter.value).toBe(counter.current);
+    expect(counter.get()).toBe(counter.current);
+    expect([count.current, count.value, count.get()]).toEqual([0, 0, 0]);
+
+    await counter.current.increase(2);
+
+    expect([count.current, count.value, count.get()]).toEqual([2, 2, 2]);
 
     client.dispose();
     await host.dispose();

@@ -52,6 +52,15 @@ export default defineConfig({
           lines: 87,
           statements: 87,
         },
+        // Aggregate floors let one weak adapter hide behind the rest, so the
+        // Svelte package carries its own. The rune subscription callbacks only
+        // run inside a Svelte effect, which a plain .ts test cannot open.
+        "packages/svelte/src/**": {
+          branches: 85,
+          functions: 85,
+          lines: 85,
+          statements: 85,
+        },
       },
     },
     environment: "node",
