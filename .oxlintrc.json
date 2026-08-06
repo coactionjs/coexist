@@ -22,13 +22,20 @@
     "eqeqeq": "error",
     "import/no-cycle": "error",
     "no-console": "off",
-    "unicorn/prefer-node-protocol": "error"
+    "unicorn/prefer-node-protocol": "error",
+    "no-undef": "error"
   },
   "overrides": [
     {
       "files": ["**/*.test.ts", "**/*.spec.ts"],
       "env": {
         "vitest": true
+      }
+    },
+    {
+      "files": ["examples/*/src/**", "scripts/**"],
+      "env": {
+        "browser": true
       }
     }
   ]

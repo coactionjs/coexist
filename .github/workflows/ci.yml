@@ -56,6 +56,9 @@ jobs:
       - name: Typecheck
         run: pnpm run typecheck
 
+      - name: Typecheck scripts
+        run: pnpm run typecheck:scripts
+
       - name: Unit tests and coverage thresholds
         run: pnpm run test:coverage
 

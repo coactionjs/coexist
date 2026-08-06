@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  // Scoped to the code whose correctness is not proven by running one smoke
+  // test: the harness every smoke script imports, and the release path. The
+  // smoke scripts themselves are deliberately untyped JS-in-.ts and are held
+  // to `no-undef` through oxlint instead.
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "allowJs": true,
+    "checkJs": true,
+    "lib": ["ES2023"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "noEmit": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "target": "ES2022",
+    "types": ["node"]
+  },
+  "include": [
+    "lib/**/*.ts",
+    "check-steps-sync-smoke.ts",
+    "fix-changelogs.mjs",
+    "publish-packages.mjs"
+  ]
+}
