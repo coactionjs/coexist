@@ -155,21 +155,28 @@ function trimTrailingBlankLines(lines) {
 }
 
 function ensureLatestSection(content, packageName, packageVersion) {
-  const latestSectionMatch = content.match(
-    new RegExp(`^## ${escapeRegExp(packageVersion)}\\n`, "m"),
-  );
+  const latestSectionMatch = content.match(new RegExp(`^## ${escapeRegExp(packageVersion)}$`, "m"));
 
   if (latestSectionMatch) {
     return content;
   }
 
-  const insertion = `\n## ${packageVersion}\n\n### Patch Changes\n\n- ${ALIGNMENT_NOTE}\n`;
+  const section = `## ${packageVersion}\n\n### Patch Changes\n\n- ${ALIGNMENT_NOTE}\n`;
+  const insertion = `\n${section}`;
 
   if (content.trimEnd() === `# ${packageName}`) {
     return `# ${packageName}${insertion}`;
   }
 
-  return `${content.trimEnd()}${insertion}\n`;
+  // Changelogs read newest first, so the reinstated section belongs above the
+  // existing releases rather than appended after the oldest one.
+  const firstReleaseIndex = content.search(/^## /m);
+
+  if (firstReleaseIndex === -1) {
+    return `${content.trimEnd()}${insertion}\n`;
+  }
+
+  return `${content.slice(0, firstReleaseIndex)}${section}\n${content.slice(firstReleaseIndex)}`;
 }
 
 function escapeRegExp(value) {

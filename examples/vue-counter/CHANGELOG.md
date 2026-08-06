@@ -4,10 +4,8 @@
 
 ### Patch Changes
 
-- fix
-- Updated dependencies
-  - @coexist/core@0.2.1
-  - @coexist/vue@0.2.1
+- @coexist/core@0.2.1
+- @coexist/vue@0.2.1
 
 ## 0.1.0
 

@@ -4,9 +4,7 @@
 
 ### Patch Changes
 
-- fix
-- Updated dependencies
-  - @coexist/core@0.2.1
+- @coexist/core@0.2.1
 
 ## 0.2.0
 

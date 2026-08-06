@@ -4,7 +4,7 @@
 
 ### Patch Changes
 
-- fix
+- Version alignment release with no public API changes in this package.
 
 ## 0.2.0
 

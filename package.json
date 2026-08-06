@@ -78,7 +78,7 @@
     "test:worker:install-runtime": "tsx scripts/installed-worker-runtime-smoke.ts",
     "test:worker:state-conflict-install": "tsx scripts/installed-worker-state-conflict-smoke.ts",
     "typecheck": "turbo run typecheck",
-    "version-packages": "changeset version"
+    "version-packages": "changeset version && node scripts/fix-changelogs.mjs"
   },
   "devDependencies": {
     "@changesets/cli": "catalog:",

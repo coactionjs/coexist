@@ -4,17 +4,15 @@
 
 ### Patch Changes
 
-- fix
-- Updated dependencies
-  - @coexist/angular@0.2.1
-  - @coexist/core@0.2.1
-  - @coexist/devtools@0.2.1
-  - @coexist/react@0.2.1
-  - @coexist/router@0.2.1
-  - @coexist/solid@0.2.1
-  - @coexist/storage@0.2.1
-  - @coexist/svelte@0.2.1
-  - @coexist/vue@0.2.1
+- @coexist/angular@0.2.1
+- @coexist/core@0.2.1
+- @coexist/devtools@0.2.1
+- @coexist/react@0.2.1
+- @coexist/router@0.2.1
+- @coexist/solid@0.2.1
+- @coexist/storage@0.2.1
+- @coexist/svelte@0.2.1
+- @coexist/vue@0.2.1
 
 ## 0.1.0
 
