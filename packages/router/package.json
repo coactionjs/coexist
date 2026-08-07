@@ -1,6 +1,6 @@
 {
   "name": "@coexist/router",
-  "version": "0.2.1",
+  "version": "1.0.0",
   "description": "Router integration primitives for Coexist.",
   "license": "MIT",
   "repository": {

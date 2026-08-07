@@ -1,6 +1,6 @@
 {
   "name": "@coexist/solid",
-  "version": "0.2.1",
+  "version": "1.0.0",
   "description": "Solid adapter for Coexist.",
   "license": "MIT",
   "repository": {

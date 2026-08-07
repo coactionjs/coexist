@@ -1,6 +1,6 @@
 {
   "name": "@coexist/svelte",
-  "version": "0.2.1",
+  "version": "1.0.0",
   "description": "Svelte adapter for Coexist.",
   "license": "MIT",
   "repository": {

@@ -1,6 +1,6 @@
 {
   "name": "@coexist/angular",
-  "version": "0.2.1",
+  "version": "1.0.0",
   "description": "Angular adapter for Coexist.",
   "license": "MIT",
   "repository": {

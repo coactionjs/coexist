@@ -1,5 +1,41 @@
 # @coexist/devtools
 
+## 1.0.0
+
+### Minor Changes
+
+- a2e8b0e: Declare `@coexist/core` as a peer dependency instead of an ordinary one. Each adapter and plugin pinned core exactly, so an app on a different core version got a second copy installed under the adapter: `instanceof CoexistError` stopped working across that boundary, two runtimes disagreed on protocol and lifecycle assumptions, and bundles carried the runtime twice. Core is now `peerDependencies: { "@coexist/core": "^<version>" }` plus a workspace devDependency, so one runtime is shared. Installs that already list `@coexist/core` alongside the adapter — as every README instructs — need no change. The pack smoke now fails if a package regresses to depending on core directly.
+- fix
+
+### Patch Changes
+
+- 115fb51: Declare `engines.node` on every published package. The documentation said the Node floor was `>=22.12.0`, "matching the `engines` field" — but only the private workspace root carried one, so nothing reached a consumer: installing on Node 20 produced no warning, and the first sign of trouble was a syntax or API error at runtime. Each package now declares `>=22.12.0` itself, which is the version CI has been testing against all along. If you install on an older Node your package manager will now say so; with `engine-strict` it will refuse, which is the intent.
+
+  The peer-range table and Node floor in `docs/scope-and-stability.md` are also checked against the manifests now (`test:docs-versions`). That page opens by saying it is updated with the code rather than aspirationally, and those two claims were hand-copied numbers that nothing verified.
+
+- Updated dependencies [d0b93d6]
+- Updated dependencies [5b522a4]
+- Updated dependencies [37d4391]
+- Updated dependencies [f4c18eb]
+- Updated dependencies [7a8cf07]
+- Updated dependencies [51a6c65]
+- Updated dependencies [115fb51]
+- Updated dependencies [2b8c134]
+- Updated dependencies [e899066]
+- Updated dependencies [cdb149c]
+- Updated dependencies [7ba4f75]
+- Updated dependencies [88f9b6a]
+- Updated dependencies [9ff9faa]
+- Updated dependencies [6cc87af]
+- Updated dependencies
+- Updated dependencies [de6d263]
+- Updated dependencies [73889f5]
+- Updated dependencies [e634fb6]
+- Updated dependencies [577ae11]
+- Updated dependencies [1641d30]
+- Updated dependencies [8be0a32]
+  - @coexist/core@0.3.0
+
 ## 0.2.1
 
 ### Patch Changes
