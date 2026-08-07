@@ -9,6 +9,7 @@ import { createRuntimeAsyncContext } from "./async-context.js";
 import { createContainer } from "./container.js";
 import { EffectRuntime } from "./effectRuntime.js";
 import { ModuleRegistry } from "./moduleRegistry.js";
+import { MutationScheduler } from "./mutationScheduler.js";
 import { AppLifecycleController } from "./lifecycleController.js";
 import { CoexistError, DuplicateProviderError, InjectContextError } from "./errors.js";
 import {
@@ -663,10 +664,7 @@ class RuntimeApp implements App {
   private readonly synchronousFallbackManagedExecutions: AppManagedExecution[] = [];
   private actionDepth = 0;
   private internalMutationDepth = 0;
-  private storeMutationDepth = 0;
-  private notificationDepth = 0;
-  private flushingMutations = false;
-  private readonly pendingMutations: Array<() => unknown> = [];
+  private readonly mutations = new MutationScheduler(maxQueuedMutations);
   private activeRootDraft: RootState | undefined;
   private detachedDraftContext: DetachedDraftContext | undefined;
   private draftMutationContext:
@@ -845,7 +843,7 @@ class RuntimeApp implements App {
 
     if (typeof callbackOrOptions !== "function") {
       if (this.shouldQueueMutation()) {
-        this.enqueueMutation(() =>
+        this.mutations.enqueue(() =>
           this.runStoreActionCallback(moduleOrCallback as () => T, callbackOrOptions),
         );
         return undefined as T;
@@ -857,7 +855,7 @@ class RuntimeApp implements App {
     const moduleBinding = this.resolveModuleBinding(moduleOrCallback as RunInActionTarget);
 
     if (this.shouldQueueMutation()) {
-      this.enqueueMutation(() =>
+      this.mutations.enqueue(() =>
         this.runActionCallback(
           moduleBinding,
           options.name ?? "runInAction",
@@ -1522,7 +1520,7 @@ class RuntimeApp implements App {
     }
 
     if (this.shouldQueueMutation()) {
-      this.enqueueMutation(() => this.writeModuleState(moduleBinding, property, value));
+      this.mutations.enqueue(() => this.writeModuleState(moduleBinding, property, value));
       return;
     }
 
@@ -1558,7 +1556,7 @@ class RuntimeApp implements App {
     }
 
     if (this.shouldQueueMutation()) {
-      this.enqueueMutation(() => this.runAction(moduleBinding, property, args));
+      this.mutations.enqueue(() => this.runAction(moduleBinding, property, args));
       return undefined;
     }
 
@@ -2165,7 +2163,7 @@ class RuntimeApp implements App {
 
       if (this.shouldQueueMutation()) {
         const queuedArgs = [...args] as Parameters<StoreSetState>;
-        this.enqueueMutation(() => this.store.setState(...queuedArgs));
+        this.mutations.enqueue(() => this.store.setState(...queuedArgs));
         return undefined as never;
       }
 
@@ -2192,7 +2190,7 @@ class RuntimeApp implements App {
       }
 
       const applyUpdate = () =>
-        this.runStoreMutation(() => {
+        this.mutations.runStoreMutation(() => {
           const result = originalSetState(...guardedArgs);
           this.recordMutationResult(result);
 
@@ -2219,11 +2217,11 @@ class RuntimeApp implements App {
 
       if (this.shouldQueueMutation()) {
         const queuedArgs = [...args] as Parameters<StoreApply>;
-        this.enqueueMutation(() => this.store.apply(...queuedArgs));
+        this.mutations.enqueue(() => this.store.apply(...queuedArgs));
         return undefined as ReturnType<StoreApply>;
       }
 
-      return this.runStoreMutation(() => originalApply(...args));
+      return this.mutations.runStoreMutation(() => originalApply(...args));
     }) as StoreApply;
 
     this.store.getState = (() =>
@@ -2258,76 +2256,9 @@ class RuntimeApp implements App {
   }
 
   private shouldQueueMutation(): boolean {
-    return (
-      this.activeRootDraft === undefined &&
-      (this.storeMutationDepth > 0 || this.notificationDepth > 0)
-    );
-  }
-
-  private enqueueMutation(mutation: () => unknown): void {
-    this.pendingMutations.push(mutation);
-  }
-
-  private runStoreMutation<T>(mutation: () => T): T {
-    const pendingStart = this.pendingMutations.length;
-    let completed = false;
-    this.storeMutationDepth += 1;
-
-    try {
-      const result = mutation();
-      completed = true;
-      return result;
-    } catch (error) {
-      this.pendingMutations.splice(pendingStart);
-      throw error;
-    } finally {
-      this.storeMutationDepth -= 1;
-
-      if (completed) {
-        this.flushPendingMutations();
-      }
-    }
-  }
-
-  private flushPendingMutations(): void {
-    if (this.flushingMutations || this.storeMutationDepth > 0 || this.notificationDepth > 0) {
-      return;
-    }
-
-    this.flushingMutations = true;
-
-    try {
-      let iterations = 0;
-
-      while (this.pendingMutations.length > 0) {
-        iterations += 1;
-
-        if (iterations > maxQueuedMutations) {
-          this.pendingMutations.length = 0;
-          throw new CoexistError(
-            `Aborted a mutation cascade after ${maxQueuedMutations} queued mutations; ` +
-              "a watch listener or plugin hook is likely re-triggering itself.",
-          );
-        }
-
-        const mutation = this.pendingMutations.shift();
-
-        if (mutation === undefined) {
-          break;
-        }
-
-        const result = mutation();
-
-        if (isPromiseLike(result)) {
-          void Promise.resolve(result).catch(() => undefined);
-        }
-      }
-    } catch (error) {
-      this.pendingMutations.length = 0;
-      throw error;
-    } finally {
-      this.flushingMutations = false;
-    }
+    // A write made inside a root draft is already part of the commit being
+    // built, so it belongs in that draft rather than in the deferred queue.
+    return this.activeRootDraft === undefined && this.mutations.shouldQueue;
   }
 
   private assertStoreMutationAllowed(operation: "apply" | "setState"): void {
@@ -2405,9 +2336,7 @@ class RuntimeApp implements App {
         this.statePublication = undefined;
 
         if (publish) {
-          this.notificationDepth += 1;
-
-          try {
+          this.mutations.runNotification(() => {
             for (const listener of publication.listeners) {
               try {
                 listener();
@@ -2415,12 +2344,10 @@ class RuntimeApp implements App {
                 this.emitError(error, { phase: "store:subscribe" });
               }
             }
-          } finally {
-            this.notificationDepth -= 1;
-          }
+          });
 
           this.recordMutationResults(publication.mutationResults);
-          this.flushPendingMutations();
+          this.mutations.flush();
         }
       }
     }
