@@ -73,15 +73,26 @@ defineModule(Counter, {
 
 `DefineModuleOptions`:
 
-| Field      | Type               | Description                                                     |
-| ---------- | ------------------ | --------------------------------------------------------------- |
-| `name`     | `string`           | Stable store key for this module's state.                       |
-| `deps`     | `DependencySpec[]` | Constructor dependencies (see [DI](./dependency-injection.md)). |
-| `scope`    | `"singleton"`      | Module provider scope; other scopes are rejected.               |
-| `state`    | `PropertyKey[]`    | Fields that become reactive state.                              |
-| `actions`  | `PropertyKey[]`    | Methods wrapped in a transaction.                               |
-| `computed` | `PropertyKey[]`    | Cached getters.                                                 |
-| `effects`  | `PropertyKey[]`    | Methods that react to state.                                    |
+| Field      | Type                | Description                                                     |
+| ---------- | ------------------- | --------------------------------------------------------------- |
+| `name`     | `string`            | Stable store key for this module's state.                       |
+| `deps`     | `DependencySpec[]`  | Constructor dependencies (see [DI](./dependency-injection.md)). |
+| `scope`    | `"singleton"`       | Module provider scope; other scopes are rejected.               |
+| `state`    | `(keyof T)[]`       | Fields that become reactive state.                              |
+| `actions`  | method names of `T` | Methods wrapped in a transaction.                               |
+| `computed` | `(keyof T)[]`       | Cached getters.                                                 |
+| `effects`  | method names of `T` | Methods that react to state.                                    |
+
+The property lists are typed against the class, so a name the class does not declare is a compile error rather than a silent phantom property, and `actions` / `effects` only accept callable members:
+
+```ts
+defineModule(Counter, {
+  state: ["cout"], // ✗ "cout" is not a member of Counter
+  actions: ["count"], // ✗ "count" is a field, not a method
+});
+```
+
+JavaScript consumers get the same protection one step later: an action or effect naming a non-method still throws during `createApp()`.
 
 `getModuleMetadata(Class)` reads back the merged metadata if you need to inspect it.
 

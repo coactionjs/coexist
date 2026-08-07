@@ -6,11 +6,31 @@ export interface ModuleOptions {
   readonly scope?: "singleton";
 }
 
-export interface DefineModuleOptions extends ModuleOptions {
-  readonly state?: readonly PropertyKey[];
-  readonly actions?: readonly PropertyKey[];
-  readonly computed?: readonly PropertyKey[];
-  readonly effects?: readonly PropertyKey[];
+/** The keys of `T` whose value is callable — what an action or effect may name. */
+export type ModuleMethodKey<T> = {
+  readonly [Key in keyof T]-?: T[Key] extends (...args: any[]) => unknown ? Key : never;
+}[keyof T];
+
+/**
+ * `defineModule()` metadata, bound to the class it describes.
+ *
+ * The property lists name members of the module, so a typo in one is a typo in
+ * the module — but nothing used to say so: `state: ["cout"]` compiled, and at
+ * runtime silently gave the instance a reactive property that reads `undefined`
+ * and writes into the store. Parameterizing the options on the instance type
+ * turns that into a compile error, and restricting `actions`/`effects` to
+ * callable members catches naming a field where a method belongs.
+ *
+ * The default parameter keeps the permissive shape for callers that construct
+ * these options without a class in hand.
+ */
+export interface DefineModuleOptions<
+  TInstance = Record<PropertyKey, unknown>,
+> extends ModuleOptions {
+  readonly state?: readonly (keyof TInstance)[];
+  readonly actions?: readonly ModuleMethodKey<TInstance>[];
+  readonly computed?: readonly (keyof TInstance)[];
+  readonly effects?: readonly ModuleMethodKey<TInstance>[];
 }
 
 export interface ModuleMetadata {
@@ -42,7 +62,7 @@ export interface MetadataContext {
 
 export function defineModule<T extends Constructor>(
   target: T,
-  options: DefineModuleOptions = {},
+  options: DefineModuleOptions<InstanceType<T>> = {},
   context?: MetadataContext,
 ): T {
   const metadata = ensureModuleMetadata(target);

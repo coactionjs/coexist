@@ -540,6 +540,9 @@ describe("app runtime", () => {
     }
 
     defineModule(PartiallyBoundLazyModule, {
+      // TypeScript now rejects an action the class does not declare, so this
+      // exercises the runtime guard that JavaScript consumers still rely on.
+      // @ts-expect-error -- deliberately naming a method that does not exist.
       actions: ["missingAction"],
       name: "partiallyBoundLazyModule",
       state: ["value"],
@@ -2327,6 +2330,7 @@ describe("app runtime", () => {
     }
 
     defineModule(InvalidCreationModule, {
+      // @ts-expect-error -- deliberately naming a method that does not exist.
       actions: ["missingAction"],
       name: "invalidCreationModule",
       state: ["value"],
