@@ -46,7 +46,9 @@ Peer ranges name the majors an adapter is tested against; a future major is not 
 | `@coexist/solid`   | `>=1.9.0 <2`           | Solid 1.9      |
 | `@coexist/angular` | `>=17.0.0 <23`         | Angular 22     |
 
-Both ends of every range are verified. CI exercises the newest version through the unit, integration, and browser suites, and `test:frameworks:min-version` builds a throwaway consumer per adapter that installs exactly the floor of its peer range — Angular 17, React 18.3, Solid 1.9, Svelte 4, Vue 3.5 — then typechecks the adapter's whole export surface against it. The workspace cannot host a second version of a framework (`catalogMode: strict`, one lockfile), so the check runs outside it, and it asserts the resolved version really is the floor rather than trusting the resolver.
+Both ends of every range are verified. CI exercises the newest version through the unit, integration, and browser suites, and `test:frameworks:min-version` builds a throwaway consumer per entry point that installs exactly the floor of its peer range — Angular 17, React 18.3, Solid 1.9, Svelte 4, Vue 3.5 — then typechecks that entry point's export surface against it. The workspace cannot host a second version of a framework (`catalogMode: strict`, one lockfile), so the check runs outside it, and it asserts the resolved version really is the floor rather than trusting the resolver.
+
+An entry point may need more than its package does. `@coexist/svelte` runs on Svelte 4, but `@coexist/svelte/runes` imports `svelte/reactivity` and is therefore checked at Svelte 5 — subpath requirements are stated and verified rather than left to the package range.
 
 Versions between the floor and the newest are not individually built. A break reported on one is treated as a bug.
 

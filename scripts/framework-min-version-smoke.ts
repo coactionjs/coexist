@@ -134,6 +134,34 @@ void [
 `,
   },
   {
+    // The runes subpath imports `svelte/reactivity`, so its floor is higher
+    // than the package's. Testing it at the package floor would fail; not
+    // testing it at all would leave the subpath's own claim unverified.
+    name: "@coexist/svelte",
+    label: "@coexist/svelte/runes",
+    peer: "svelte",
+    peerFloor: "5.0.0",
+    companions: {},
+    source: `import { createApp } from "@coexist/core";
+import {
+  moduleRune,
+  selectedModuleRune,
+  selectorRune,
+  workerModuleRune,
+  workerSelectorRune,
+} from "@coexist/svelte/runes";
+
+void [
+  createApp,
+  moduleRune,
+  selectedModuleRune,
+  selectorRune,
+  workerModuleRune,
+  workerSelectorRune,
+];
+`,
+  },
+  {
     name: "@coexist/vue",
     peer: "vue",
     companions: {},
@@ -174,11 +202,21 @@ try {
   const coreTarball = await packPackage("@coexist/core");
   const verified = [];
 
+  const tarballByName = new Map();
+
   for (const adapter of adapters) {
+    const label = adapter.label ?? adapter.name;
     const range = await readPeerRange(adapter.name, adapter.peer);
-    const minimum = lowestVersionInRange(range);
-    const adapterTarball = await packPackage(adapter.name);
-    const consumerDir = join(tempDir, adapter.name.replace("@coexist/", ""));
+    // An entry point may need more than the package as a whole; `peerFloor`
+    // states that higher floor rather than silently skipping the entry point.
+    const minimum = adapter.peerFloor ?? lowestVersionInRange(range);
+
+    if (!tarballByName.has(adapter.name)) {
+      tarballByName.set(adapter.name, await packPackage(adapter.name));
+    }
+
+    const adapterTarball = tarballByName.get(adapter.name);
+    const consumerDir = join(tempDir, label.replaceAll(/[^a-z0-9]+/g, "-"));
 
     await writeConsumer({ adapter, adapterTarball, catalog, consumerDir, coreTarball, minimum });
     await run(
@@ -189,7 +227,12 @@ try {
     await assertInstalledVersion(consumerDir, adapter.peer, minimum);
     await run(tscBin, ["-p", "tsconfig.json"], consumerDir);
 
-    verified.push(`${adapter.name} against ${adapter.peer}@${minimum} (range ${range})`);
+    verified.push(
+      `${label} against ${adapter.peer}@${minimum}` +
+        (adapter.peerFloor === undefined
+          ? ` (range ${range})`
+          : ` (entry-point floor; package range ${range})`),
+    );
   }
 
   console.log(`Verified ${verified.length} adapter peer-range floor(s):`);
@@ -294,7 +337,7 @@ async function writeConsumer({
     join(consumerDir, "package.json"),
     `${JSON.stringify(
       {
-        name: `coexist-min-version-${adapter.peer.replaceAll(/[^a-z0-9]+/g, "-")}`,
+        name: `coexist-min-version-${(adapter.label ?? adapter.name).replaceAll(/[^a-z0-9]+/g, "-")}`,
         private: true,
         type: "module",
         dependencies: sortObject(dependencies),
