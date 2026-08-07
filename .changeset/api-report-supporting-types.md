@@ -1,0 +1,5 @@
+---
+"@coexist/core": patch
+---
+
+Record the unexported types the public surface is built from. The API report rendered each export's own declaration and stopped there, so a type the package never exports but every consumer depends on was invisible to it — `ClassProvideOptions` and `FactoryProvideOptions` showed only their own fields while inheriting the rest from `ProviderOptionsBase`, `DefineModuleOptions` printed `ModuleMethodKey` without saying what it is, and the five message shapes behind the exported `WorkerMessage` union, which anyone implementing a `WorkerTransport` has to construct and read, appeared nowhere. Changing any of them altered the public API with nothing in the report to review, which is the one thing it exists to prevent. Reports now follow an export's references into the package's own build and render what they find under a marked section, transitively. Types from a dependency or from `lib.d.ts` are still left as bare names — they are not this package's API to report.

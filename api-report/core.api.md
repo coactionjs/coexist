@@ -530,4 +530,43 @@ interface WorkerWatchOptions<T> {
     readonly equals?: (value: T, previous: T) => boolean;
     readonly immediate?: boolean;
 }
+
+// Not exported. Reachable from the surface above, so a change here is an API change.
+interface MetadataContext {
+    readonly metadata?: Record<PropertyKey, unknown> | undefined;
+}
+type ModuleMethodKey<T> = {
+    readonly [Key in keyof T]-?: T[Key] extends ((...args: any[]) => unknown) ? Key : never;
+}[keyof T];
+interface ProviderOptionsBase<T> {
+    readonly scope?: Scope;
+    readonly multi?: boolean;
+    readonly eager?: boolean;
+    readonly leakSafe?: boolean;
+    readonly autoDispose?: boolean;
+    readonly dispose?: (value: T) => void | Promise<void>;
+}
+interface WorkerCallMessage {
+    readonly id: number;
+    readonly type: "call";
+    readonly module: string;
+    readonly method: string;
+    readonly args: readonly unknown[];
+}
+interface WorkerReadyMessage {
+    readonly type: "ready";
+    readonly protocol?: number;
+}
+interface WorkerResultMessage {
+    readonly id: number;
+    readonly type: "result";
+    readonly stateVersion?: number;
+    readonly value?: unknown;
+    readonly error?: SerializedWorkerError;
+}
+interface WorkerSyncMessage {
+    readonly id: number;
+    readonly type: "sync";
+    readonly stateVersion?: number;
+}
 ```

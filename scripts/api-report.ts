@@ -16,7 +16,7 @@
 //
 // Run `pnpm run api-report:update` to accept an intended change.
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
-import { join, relative } from "node:path";
+import { dirname, join, relative } from "node:path";
 
 import ts from "typescript";
 
@@ -159,6 +159,7 @@ function renderEntryPoint(entryPath) {
 
   const printer = ts.createPrinter({ newLine: ts.NewLineKind.LineFeed, removeComments: true });
   const rendered = [];
+  const exportedDeclarations = new Set();
 
   for (const exported of checker
     .getExportsOfModule(moduleSymbol)
@@ -175,11 +176,103 @@ function renderEntryPoint(entryPath) {
     }
 
     for (const declaration of declarations) {
+      exportedDeclarations.add(declaration);
       rendered.push(printDeclaration(printer, declaration, exported.getName()));
     }
   }
 
+  // An exported declaration can be shaped by a type the package never exports —
+  // `ClassProvideOptions extends ProviderOptionsBase`, `DefineModuleOptions`
+  // built from `ModuleMethodKey`. Rendering only the exports would let a change
+  // to one of those alter every signature that inherits from it with nothing in
+  // this file to review, which is the guarantee the report exists to make.
+  const supporting = collectSupportingDeclarations(
+    checker,
+    exportedDeclarations,
+    dirname(entryPath),
+  );
+
+  if (supporting.length > 0) {
+    rendered.push(
+      "",
+      "// Not exported. Reachable from the surface above, so a change here is an API change.",
+    );
+
+    for (const declaration of supporting) {
+      rendered.push(printDeclaration(printer, declaration, nameOfDeclaration(declaration)));
+    }
+  }
+
   return rendered;
+}
+
+/**
+ * The type declarations an exported one reaches, restricted to this package's
+ * own build. A type from a dependency cannot be inlined and is left as the bare
+ * name it already prints as; one from `node_modules` or `lib.d.ts` is not this
+ * package's API to report.
+ */
+function collectSupportingDeclarations(checker, exportedDeclarations, distDir) {
+  const collected = new Map();
+  const queue = [...exportedDeclarations];
+
+  while (queue.length > 0) {
+    const declaration = queue.shift();
+
+    const visit = (node) => {
+      if (ts.isIdentifier(node)) {
+        for (const referenced of typeDeclarationsOf(checker, node, distDir)) {
+          const name = nameOfDeclaration(referenced);
+
+          if (
+            name !== undefined &&
+            !exportedDeclarations.has(referenced) &&
+            !collected.has(referenced)
+          ) {
+            collected.set(referenced, name);
+            queue.push(referenced);
+          }
+        }
+      }
+
+      ts.forEachChild(node, visit);
+    };
+
+    ts.forEachChild(declaration, visit);
+  }
+
+  return [...collected.keys()].toSorted((left, right) =>
+    collected.get(left).localeCompare(collected.get(right)),
+  );
+}
+
+function typeDeclarationsOf(checker, identifier, distDir) {
+  let symbol = checker.getSymbolAtLocation(identifier);
+
+  if (symbol === undefined) {
+    return [];
+  }
+
+  if ((symbol.flags & ts.SymbolFlags.Alias) !== 0) {
+    symbol = checker.getAliasedSymbol(symbol);
+  }
+
+  return (symbol.getDeclarations() ?? []).filter(
+    (declaration) =>
+      // Property and parameter names resolve to symbols too; only a type's own
+      // declaration describes a shape worth reporting.
+      (ts.isInterfaceDeclaration(declaration) ||
+        ts.isTypeAliasDeclaration(declaration) ||
+        ts.isEnumDeclaration(declaration) ||
+        ts.isClassDeclaration(declaration)) &&
+      declaration.getSourceFile().fileName.startsWith(`${distDir}/`),
+  );
+}
+
+function nameOfDeclaration(declaration) {
+  return ts.isVariableDeclaration(declaration) || declaration.name === undefined
+    ? undefined
+    : declaration.name.getText();
 }
 
 /**
