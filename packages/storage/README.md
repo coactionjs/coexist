@@ -73,6 +73,14 @@ await kv.set("draft", { title: "Hello" });
 | `shouldPersist`    | `(event: StateChangeEvent) => boolean` | always             | Skip selected state changes.                                         |
 | `onError`          | `(error, phase) => void`               | —                  | Observe `"hydrate"`, `"persist"`, or `"clear"` failures.             |
 
+`LocalSpaceOptions`, `LocalSpaceInstance`, `LocalSpaceConfig`, `LocalSpacePlugin`, and `PerformanceStats` in that table are localspace's types, and this package does not re-export them — a re-exported type would be part of _this_ package's API, so localspace changing one would break here. Inference covers the common case (`options: { … }` is checked against `LocalSpaceOptions` without naming it); import the name from `localspace` when you need to write it down:
+
+```ts
+import type { LocalSpaceOptions, LocalSpacePlugin } from "localspace";
+```
+
+The drivers and plugins themselves are still re-exported from `@coexist/storage`, so configuring a store needs no second install — only naming their types does.
+
 `StorageToken` resolves a `StorageService` in every UI framework integration:
 
 ```ts
@@ -86,7 +94,7 @@ await storage.setMany([
 ]);
 ```
 
-`StorageService.instance` exposes the underlying localspace instance when you need lower-level APIs or performance stats.
+`StorageService.instance` exposes the underlying localspace instance when you need lower-level APIs or performance stats. It is a raw escape hatch to the library underneath, so what it offers is localspace's contract, not this package's — and it reaches past the plugin's ownership model, so prefer `destroyOnDispose` over calling `instance.destroy()` yourself.
 
 `destroyOnDispose` is the sole ownership switch for the supplied storage service. It defaults to `true` only when the plugin created the service itself; an external `service` or `instance` is retained by default. Setting it explicitly to `true` destroys that resource exactly once during app disposal.
 
@@ -135,7 +143,9 @@ interface StorageLike {
 
 ## Exports
 
-`createLocalSpaceStoragePlugin`, `createLocalSpaceStorage`, `StorageToken`, `createStoragePlugin`, localspace plugin/driver re-exports, and the `StorageService`, `StoragePlugin`, `StoragePluginOptions`, `StorageLike`, `StoragePluginErrorPhase` types.
+`createLocalSpaceStoragePlugin`, `createLocalSpaceStorage`, `StorageToken`, `createStoragePlugin`, the localspace plugin/driver value re-exports (`compressionPlugin`, `encryptionPlugin`, `indexedDBDriver`, `localStorageDriver`, `memoryDriver`, `quotaPlugin`, `syncPlugin`, `ttlPlugin`), and the `StorageService`, `StoragePlugin`, `StoragePluginOptions`, `StorageLike`, `StoragePluginErrorPhase`, `StorageEntry`, `StorageEntries`, `StorageBatchResponse`, `StorageTransactionMode`, `StorageTransactionScope`, `CreateLocalSpaceStorageOptions`, `LocalSpaceStoragePlugin`, `LocalSpaceStoragePluginOptions` types.
+
+No localspace **type** is re-exported: they appear in the signatures above as the external names they are, and are imported from `localspace` directly.
 
 ## License
 

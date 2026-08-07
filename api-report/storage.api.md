@@ -16,98 +16,6 @@ declare function createLocalSpaceStoragePlugin<TState = unknown>(options?: Local
 declare function createStoragePlugin<TState = unknown>(options: StoragePluginOptions<TState>): StoragePlugin;
 declare const encryptionPlugin: (options: EncryptionPluginOptions) => LocalSpacePlugin;
 declare const asyncStorage: Driver;
-export interface LocalSpaceConfig {
-    description?: string;
-    durability?: IDBTransactionOptions['durability'];
-    bucket?: StorageBucketConfig;
-    maxBatchSize?: number;
-    prewarmTransactions?: boolean;
-    connectionIdleMs?: number;
-    maxConcurrentTransactions?: number;
-    coalesceWrites?: boolean;
-    coalesceWindowMs?: number;
-    coalesceMaxBatchSize?: number;
-    coalesceReadConsistency?: 'strong' | 'eventual';
-    coalesceFireAndForget?: boolean;
-    driver?: string | string[];
-    reactNativeAsyncStorage?: ReactNativeAsyncStorage;
-    name?: string;
-    size?: number;
-    storeName?: string;
-    version?: number;
-    compatibilityMode?: boolean;
-    pluginInitPolicy?: 'fail' | 'disable-and-continue';
-    pluginErrorPolicy?: 'strict' | 'lenient';
-}
-export interface LocalSpaceInstance {
-    readonly INDEXEDDB: string;
-    readonly LOCALSTORAGE: string;
-    readonly MEMORY: string;
-    readonly REACTNATIVEASYNCSTORAGE: string;
-    config(options: LocalSpaceConfig): true | Error | Promise<void>;
-    config<K extends keyof LocalSpaceConfig>(key: K): LocalSpaceConfig[K] | undefined;
-    config(): LocalSpaceConfig;
-    createInstance(options?: LocalSpaceOptions): LocalSpaceInstance;
-    use(plugin: LocalSpacePlugin | LocalSpacePlugin[]): LocalSpaceInstance;
-    destroy(): Promise<void>;
-    defineDriver(driver: Driver, callback?: Callback<void> | CompatibilitySuccessCallback<void>, errorCallback?: Callback<Error> | CompatibilityErrorCallback): Promise<void>;
-    driver(): string | null;
-    getDriver(driverName: string, callback?: Callback<Driver>, errorCallback?: Callback<Error>): Promise<Driver>;
-    getSerializer(callback?: Callback<Serializer>): Promise<Serializer>;
-    ready(callback?: Callback<void>): Promise<void>;
-    setDriver(drivers: string | string[], callback?: Callback<void> | CompatibilitySuccessCallback<void>, errorCallback?: Callback<Error> | CompatibilityErrorCallback): Promise<void>;
-    supports(driverName: string): boolean;
-    iterate<T, U>(iteratorCallback: (value: T, key: string, iterationNumber: number) => U, successCallback?: Callback<U>): Promise<U>;
-    getItem<T>(key: string, callback?: Callback<T>): Promise<T | null>;
-    setItem<T>(key: string, value: T, callback?: Callback<T>): Promise<T>;
-    removeItem(key: string, callback?: Callback<void>): Promise<void>;
-    clear(callback?: Callback<void>): Promise<void>;
-    setItems<T>(entries: BatchItems<T>, callback?: Callback<BatchResponse<T>>): Promise<BatchResponse<T>>;
-    getItems<T>(keys: string[], callback?: Callback<BatchResponse<T>>): Promise<BatchResponse<T>>;
-    removeItems(keys: string[], callback?: Callback<void>): Promise<void>;
-    runTransaction<T>(mode: IDBTransactionMode, runner: (scope: TransactionScope) => Promise<T> | T, callback?: Callback<T>): Promise<T>;
-    length(callback?: Callback<number>): Promise<number>;
-    key(keyIndex: number, callback?: Callback<string>): Promise<string | null>;
-    keys(callback?: Callback<string[]>): Promise<string[]>;
-    dropInstance(options?: LocalSpaceConfig, callback?: Callback<void>): Promise<void>;
-    getPerformanceStats?(): PerformanceStats;
-    _initReady?: () => Promise<void>;
-    _ready: boolean | Promise<void> | null;
-    _dbInfo: DbInfo | null;
-    _driver?: string;
-    _driverSet: Promise<void> | null;
-    _initDriver?: (() => Promise<void>) | null;
-    _config: LocalSpaceConfig;
-    _defaultConfig: LocalSpaceConfig;
-    _initStorage?(config: LocalSpaceConfig): Promise<void>;
-    _extend?(methods: Partial<Driver>): void;
-    _getSupportedDrivers?(drivers: string[]): string[];
-    _wrapLibraryMethodsWithReady?(): void;
-}
-export interface LocalSpaceOptions extends LocalSpaceConfig {
-    plugins?: LocalSpacePlugin[];
-}
-export interface LocalSpacePlugin {
-    name: string;
-    version?: string;
-    priority?: number;
-    enabled?: PluginEnabledPredicate;
-    onInit?(context: PluginContext): Promise<void> | void;
-    onDestroy?(context: PluginContext): Promise<void> | void;
-    onError?(error: unknown, info: PluginErrorInfo): Promise<void> | void;
-    beforeSet?<T>(key: string, value: T, context: PluginContext): Promise<T> | T;
-    afterSet?<T>(key: string, value: T, context: PluginContext): Promise<void> | void;
-    beforeGet?(key: string, context: PluginContext): Promise<string> | string;
-    afterGet?<T>(key: string, value: T | null, context: PluginContext): Promise<T | null> | T | null;
-    beforeRemove?(key: string, context: PluginContext): Promise<string> | string;
-    afterRemove?(key: string, context: PluginContext): Promise<void> | void;
-    beforeSetItems?<T>(entries: BatchItems<T>, context: PluginContext): Promise<BatchItems<T>> | BatchItems<T>;
-    afterSetItems?<T>(entries: BatchResponse<T>, context: PluginContext): Promise<BatchResponse<T>> | BatchResponse<T>;
-    beforeGetItems?(keys: string[], context: PluginContext): Promise<string[]> | string[];
-    afterGetItems?<T>(entries: BatchResponse<T>, context: PluginContext): Promise<BatchResponse<T>> | BatchResponse<T>;
-    beforeRemoveItems?(keys: string[], context: PluginContext): Promise<string[]> | string[];
-    afterRemoveItems?(keys: string[], context: PluginContext): Promise<void> | void;
-}
 interface LocalSpaceStoragePlugin extends StoragePlugin {
     readonly storage: StorageService;
 }
@@ -125,29 +33,7 @@ interface LocalSpaceStoragePluginOptions<TState = unknown> extends CreateLocalSp
 }
 declare const localStorageWrapper: Driver;
 declare const memoryStorageWrapper: Driver;
-export interface PerformanceStats {
-    totalWrites: number;
-    coalescedWrites: number;
-    transactionsSaved: number;
-    avgCoalesceSize: number;
-}
 declare const quotaPlugin: (options?: QuotaPluginOptions) => LocalSpacePlugin;
-export interface ReactNativeAsyncStorage {
-    getItem(key: string): Promise<string | null>;
-    setItem(key: string, value: string): Promise<void>;
-    removeItem(key: string): Promise<void>;
-    clear?(): Promise<void>;
-    getAllKeys?(): Promise<string[]>;
-    multiGet?(keys: string[]): Promise<Array<[
-        string,
-        string | null
-    ]>>;
-    multiSet?(keyValuePairs: Array<[
-        string,
-        string
-    ]>): Promise<void>;
-    multiRemove?(keys: string[]): Promise<void>;
-}
 type StorageBatchResponse<T> = Array<{
     readonly key: string;
     readonly value: T | null;

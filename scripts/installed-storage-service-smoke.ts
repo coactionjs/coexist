@@ -93,11 +93,13 @@ async function writeConsumerProject({ catalog, coreTarball, storageTarball }) {
 
 function createTypeConsumerSource() {
   return `import { createApp } from "@coexist/core";
+// localspace types are not this package's API to re-export: they are named from
+// localspace itself, which a consumer configuring a store already installs.
+import type { LocalSpacePlugin } from "localspace";
 import {
   StorageToken,
   createLocalSpaceStorage,
   createLocalSpaceStoragePlugin,
-  type LocalSpacePlugin,
   type StorageService,
   type StorageTransactionScope,
 } from "@coexist/storage";

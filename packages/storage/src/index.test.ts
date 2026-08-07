@@ -2,12 +2,13 @@ import { describe, expect, it, vi } from "vitest";
 
 import { createApp, defineModule } from "@coexist/core";
 
+import type { LocalSpacePlugin } from "localspace";
+
 import {
   StorageToken,
   createLocalSpaceStorage,
   createLocalSpaceStoragePlugin,
   createStoragePlugin,
-  type LocalSpacePlugin,
   type StorageLike,
   type StorageService,
 } from "./index.js";

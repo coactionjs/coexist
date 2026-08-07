@@ -92,7 +92,10 @@ async function writeConsumerProject({ catalog, coreTarball, storageTarball }) {
 }
 
 function createTypeConsumerSource() {
-  return `import {
+  return `// The drivers and plugins are re-exported by @coexist/storage; their types are
+// not, so they are named from localspace, which this consumer already installs.
+import type { LocalSpaceOptions, LocalSpacePlugin, PerformanceStats } from "localspace";
+import {
   compressionPlugin,
   createLocalSpaceStorage,
   encryptionPlugin,
@@ -102,9 +105,6 @@ function createTypeConsumerSource() {
   quotaPlugin,
   syncPlugin,
   ttlPlugin,
-  type LocalSpaceOptions,
-  type LocalSpacePlugin,
-  type PerformanceStats,
   type StorageService,
 } from "@coexist/storage";
 

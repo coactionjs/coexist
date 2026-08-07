@@ -18,11 +18,23 @@ import localspace, {
   type LocalSpaceConfig,
   type LocalSpaceInstance,
   type LocalSpaceOptions,
-  type LocalSpacePlugin,
   type PerformanceStats,
-  type ReactNativeAsyncStorage,
 } from "localspace";
 
+/**
+ * localspace's drivers and plugins pass straight through, so configuring a store
+ * does not need a second install. Their types stay localspace's.
+ *
+ * localspace's *types* are deliberately not re-exported. A re-exported type is
+ * this package's API — localspace changing one would be a breaking change here,
+ * and the report reviewers read would carry it. `LocalSpaceInstance` alone put
+ * some fifty members into that surface, seven of them internals (`_dbInfo`,
+ * `_driverSet`, `_initStorage`, `_config`, `_defaultConfig`, `_ready`,
+ * `_initReady`) that no consumer should hold this package to. That is the same
+ * mistake `AppStore` exists to correct in the core. These types now appear only
+ * as bare names inside the signatures below, exactly as Coaction's `Store` does
+ * inside `AppStore`; import one from `localspace` when you need to name it.
+ */
 export {
   compressionPlugin,
   encryptionPlugin,
@@ -32,15 +44,6 @@ export {
   quotaPlugin,
   syncPlugin,
   ttlPlugin,
-};
-
-export type {
-  LocalSpaceConfig,
-  LocalSpaceInstance,
-  LocalSpaceOptions,
-  LocalSpacePlugin,
-  PerformanceStats,
-  ReactNativeAsyncStorage,
 };
 
 export interface StorageLike {
