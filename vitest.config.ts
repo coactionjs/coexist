@@ -53,13 +53,14 @@ export default defineConfig({
           statements: 89,
         },
         // The collaborators split out of RuntimeApp are small, self-contained,
-        // and directly unit-tested; there is no reason for them to drift back.
+        // and each has its own unit test; there is no reason for them to drift
+        // back. Thresholds apply to the group, not to each file.
         "packages/core/src/{effectRuntime,moduleRegistry,mutationScheduler,lifecycleController}.ts":
           {
-            branches: 84,
-            functions: 87,
-            lines: 93,
-            statements: 93,
+            branches: 94,
+            functions: 98,
+            lines: 96,
+            statements: 96,
           },
         // Aggregate floors let one weak adapter hide behind the rest, so the
         // Svelte package carries its own. The rune subscription callbacks only
