@@ -19,7 +19,7 @@ What Coexist covers, how mature each part is, and what a `0.x` version number pr
 The worker runtime hosts a real app off-thread and mirrors its state, with schema validation, an action allowlist, protocol quotas, bounded readiness, snapshot recovery, and a delivery contract. It is genuinely usable — but "beta" is the honest label, because:
 
 - **Concurrent writes are not merged.** Several peers writing the same state produce last-writer-wins on the host. The client detects that its mirror fell behind and re-syncs a snapshot; it does not reconcile competing writes.
-- **BroadcastChannel coordination is trusted-peer only.** The `authToken` is a routing capability, not authentication — see [`SECURITY.md`](../SECURITY.md).
+- **BroadcastChannel coordination is trusted-peer only.** Any code that can join a same-origin channel observes its traffic, so the `authToken` routes messages rather than authenticating peers — see the worker [trust boundary](./worker-runtime.md#trust-boundary).
 - **Framework worker bootstrapping is yours.** Adapters consume a `WorkerClient`; spawning the worker, bundling its entry, and handling its lifecycle are application concerns.
 
 Depend on it for a trusted, reliable transport — a dedicated `Worker`, a `MessagePort`, a same-origin iframe you control. Treat it as a prototype for unreliable remote transports or multi-writer shared runtimes.
@@ -78,5 +78,5 @@ Coexist does not, and does not plan to, own:
 ## Next
 
 - [Introduction](./introduction.md) — positioning and mental model.
-- [Worker & Shared Runtime](./worker-runtime.md) — what the beta covers in detail.
-- [`SECURITY.md`](../SECURITY.md) — threat model and reporting.
+- [Worker & Shared Runtime](./worker-runtime.md) — what the beta covers, and the trust boundary it enforces.
+- [Contributing](../CONTRIBUTING.md#security) — how to report a vulnerability privately.

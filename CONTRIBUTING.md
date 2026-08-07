@@ -114,7 +114,9 @@ Runtime and tooling versions are pinned in the `catalog:` block of `pnpm-workspa
 
 ## Security
 
-Do not report vulnerabilities through issues or pull requests. [`SECURITY.md`](./SECURITY.md) has the private reporting channel and the threat model — including what is deliberately out of scope, such as treating a BroadcastChannel `authToken` as authentication.
+Do not report vulnerabilities through issues, pull requests, or discussions. Use [GitHub's private vulnerability reporting](https://github.com/coactionjs/coexist/security/advisories/new) instead.
+
+What the packages do and do not defend against is documented where the code lives: the worker protocol's [trust boundary](./docs/worker-runtime.md#trust-boundary) covers message validation, the remote-call allowlist, origin filtering, size quotas, and why a BroadcastChannel `authToken` is a routing capability rather than authentication. [Scope & Stability](./docs/scope-and-stability.md) states which areas carry that guarantee today.
 
 ## Pull requests
 

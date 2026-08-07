@@ -1,11 +1,10 @@
 # Every pull request needs a review from a maintainer.
 * @unadlib
 
-# The release, CI, and security surfaces change what ships to npm, so they are
-# called out separately rather than inheriting the catch-all rule.
+# The release and CI surfaces change what ships to npm, so they are called out
+# separately rather than inheriting the catch-all rule.
 /.github/ @unadlib
 /.changeset/ @unadlib
 /scripts/ @unadlib
-/SECURITY.md @unadlib
 /pnpm-workspace.yaml @unadlib
 /pnpm-lock.yaml @unadlib
