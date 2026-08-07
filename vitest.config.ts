@@ -33,7 +33,17 @@ export default defineConfig({
   plugins: [standardDecoratorFixtures],
   test: {
     coverage: {
-      exclude: ["**/*.config.*", "**/*.d.ts", "**/coverage/**", "**/dist/**", "**/node_modules/**"],
+      exclude: [
+        "**/*.config.*",
+        "**/*.d.ts",
+        // Fixtures exist to be imported by a test, and a test uses the part it
+        // needs. Measuring them reports the fixture's unused half as an
+        // uncovered product path and drags the real number down with it.
+        "**/*.fixture.ts",
+        "**/coverage/**",
+        "**/dist/**",
+        "**/node_modules/**",
+      ],
       provider: "v8",
       reporter: ["text", "json-summary", "html"],
       reportsDirectory: "coverage",
