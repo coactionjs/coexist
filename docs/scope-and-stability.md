@@ -62,6 +62,13 @@ Coexist is pre-1.0 and follows semver as npm interprets it for `0.x`: **a minor 
 
 There is no LTS branch. Security fixes land on the newest release line only.
 
+### Open decisions before 1.0
+
+Two behaviours become compatibility promises the moment `1.0` ships, so they are decisions rather than backlog items:
+
+- **The invalidation model.** One publication signal for the whole app tree. [The options and their costs](./state-and-reactivity.md#why-it-is-one-signal-and-what-would-change-it) are written down and measurable with `pnpm run bench`.
+- **The worker protocol's stability**, below.
+
 ### The worker protocol
 
 The wire protocol between `createWorkerApp` and `createWorkerClient` is **not** a stable public contract while the worker runtime is beta. Both endpoints are expected to come from the same `@coexist/core` version; a protocol change is a minor bump, not a major. Do not implement a third-party peer against it yet.

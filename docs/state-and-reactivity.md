@@ -121,6 +121,25 @@ Cost tracks the number of selectors, not the size of the change: every selector 
 
 The benchmark also contrasts worker sync modes on the same state: a 1,000-item snapshot is ~30 KB, while the patch for renaming one item is under 100 bytes. Prefer `sync: "patch"` for anything but small state.
 
+### Why it is one signal, and what would change it
+
+Publishing one signal for the whole tree is not an implementation shortcut — it is what buys three properties the rest of the design leans on:
+
+- **Cross-module actions commit atomically.** An action touching three modules produces one notification, so no observer ever sees a half-applied change. Per-module signals would need an explicit transaction spanning them to keep that.
+- **Adapters stay uniform.** Every adapter subscribes to one thing. A finer model means adapters must decide _which_ signals a selector depends on, which for React (no tracking during render) means a dependency-collection pass the other four would not need.
+- **Plugins see the whole app.** Persistence, devtools, and worker publication all operate on the complete tree; `onStateChange` and `onPatch` have one coherent meaning.
+
+Before `1.0` fixes this behaviour, the alternatives worth weighing are:
+
+| Option                       | What it buys                                 | What it costs                                                                                                                   |
+| ---------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Keep one signal              | Today's atomicity and uniformity             | Selector cost scales with selector count                                                                                        |
+| Per-module publication token | Only observers of a changed module re-run    | Cross-module atomicity needs an explicit multi-token transaction; adapters must map a selector to its tokens                    |
+| Selector dependency tracking | Precise invalidation without user annotation | Every selector runs inside a tracking scope; React's render-time reads are not trackable, so its adapter needs a different path |
+| Opt-in fine mode per app     | Existing apps unchanged, large apps opt in   | Two invalidation models to maintain and test, and plugins must work under both                                                  |
+
+The measured numbers say this is not urgent: an app with a thousand live selectors spends under a tenth of a millisecond per action. It becomes a real decision somewhere past ten thousand. What must not happen is reaching `1.0` without deciding, because the current behaviour then becomes a compatibility promise. Re-run `pnpm run bench` before arguing either way.
+
 ## Actions and transactions
 
 A method declared as an action wraps its synchronous state writes in a single transaction: multiple writes produce one patch and one notification.
