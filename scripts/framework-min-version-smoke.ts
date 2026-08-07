@@ -134,13 +134,14 @@ void [
 `,
   },
   {
-    // The runes subpath imports `svelte/reactivity`, so its floor is higher
-    // than the package's. Testing it at the package floor would fail; not
-    // testing it at all would leave the subpath's own claim unverified.
+    // The runes subpath imports `createSubscriber` from `svelte/reactivity`,
+    // which Svelte added in 5.7.0 — so its floor is higher than the package's,
+    // and higher than "Svelte 5". Not testing it at all would leave the
+    // subpath's own claim unverified.
     name: "@coexist/svelte",
     label: "@coexist/svelte/runes",
     peer: "svelte",
-    peerFloor: "5.0.0",
+    peerFloor: "5.7.0",
     companions: {},
     source: `import { createApp } from "@coexist/core";
 import {
@@ -226,6 +227,13 @@ try {
     );
     await assertInstalledVersion(consumerDir, adapter.peer, minimum);
     await run(tscBin, ["-p", "tsconfig.json"], consumerDir);
+    // Typechecking alone does not exercise the floor. An adapter's framework
+    // imports survive into its JavaScript but are erased from its declarations
+    // unless a public signature happens to mention them — `runes.js` imports
+    // `svelte/reactivity`, `runes.d.ts` does not — so a subpath that the floor
+    // cannot resolve typechecks clean and then throws on the user's first
+    // import. Loading the entry point is what actually reads the floor.
+    await run("node", ["import.mjs"], consumerDir);
 
     verified.push(
       `${label} against ${adapter.peer}@${minimum}` +
@@ -355,6 +363,16 @@ async function writeConsumer({
       // The floor is the point of the test, so nothing may be hoisted past it.
       "overrides:",
       `  ${JSON.stringify(adapter.peer)}: ${JSON.stringify(minimum)}`,
+      "",
+    ].join("\n"),
+  );
+  // `label` is the entry point under test when one is set — the package's own
+  // name otherwise — so a subpath is loaded as a subpath.
+  await writeFile(
+    join(consumerDir, "import.mjs"),
+    [
+      `await import(${JSON.stringify("@coexist/core")});`,
+      `await import(${JSON.stringify(adapter.label ?? adapter.name)});`,
       "",
     ].join("\n"),
   );

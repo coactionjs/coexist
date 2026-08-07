@@ -1,8 +1,10 @@
 # @coexist/svelte
 
-> Svelte bindings for [Coexist](../../README.md): readable stores (Svelte 4+) and rune-friendly helpers (Svelte 5) for consuming a Coexist app or a worker-hosted app.
+> Svelte bindings for [Coexist](../../README.md): readable stores (Svelte 4+) and rune-friendly helpers (Svelte 5.7+) for consuming a Coexist app or a worker-hosted app.
 
 The package root exports the store-based API, which works in Svelte 4 and 5. A separate `@coexist/svelte/runes` subpath exports Svelte 5 rune helpers, so the main store contract stays unchanged for Svelte 4 users.
+
+The runes subpath needs **Svelte 5.7.0 or newer** — it builds on `createSubscriber` from `svelte/reactivity`, which Svelte added in 5.7.0. That is higher than this package's peer range, which covers the store API the root exports; npm cannot express a per-subpath peer, so the requirement is stated here and verified by `test:frameworks:min-version`. On Svelte 5.0–5.6, importing `@coexist/svelte/runes` fails at load with `does not provide an export named 'createSubscriber'`; use the store API from the package root instead.
 
 ## Installation
 
