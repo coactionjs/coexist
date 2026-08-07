@@ -73,6 +73,8 @@ Two behaviours become compatibility promises the moment `1.0` ships, so they are
 
 The wire protocol between `createWorkerApp` and `createWorkerClient` is **not** a stable public contract while the worker runtime is beta. Both endpoints are expected to come from the same `@coexist/core` version; a protocol change is a minor bump, not a major. Do not implement a third-party peer against it yet.
 
+That expectation is now enforced rather than assumed. The host stamps `workerProtocolVersion` on its `ready` handshake, and a client that sees a different revision rejects `client.ready` with `WorkerProtocolMismatchError` instead of mirroring frames it may misread. A host with no version in its handshake predates versioning and is accepted.
+
 ## What is deliberately out of scope
 
 Coexist does not, and does not plan to, own:

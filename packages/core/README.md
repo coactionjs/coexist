@@ -477,6 +477,7 @@ All errors extend `CoexistError`:
 | `DisposedContainerError`             | A container is used after disposal begins.                            |
 | `InjectContextError`                 | `inject()` is used outside provider resolution.                       |
 | `WorkerReadyTimeoutError`            | No worker snapshot arrived within `readyTimeout`.                     |
+| `WorkerProtocolMismatchError`        | The host announced a different `workerProtocolVersion`.               |
 | `WorkerHostUnavailableError`         | The client signal aborted before the first worker snapshot.           |
 | `WorkerInitialSyncError`             | The client could not post its initial snapshot request.               |
 

@@ -2,6 +2,7 @@ import {
   CoexistError,
   WorkerHostUnavailableError,
   WorkerInitialSyncError,
+  WorkerProtocolMismatchError,
   WorkerReadyTimeoutError,
 } from "./errors.js";
 import { createApp, type App, type CreateAppOptions, type Plugin } from "./app.js";
@@ -158,6 +159,12 @@ export interface WorkerStateMessage {
 
 export interface WorkerReadyMessage {
   readonly type: "ready";
+  /**
+   * The protocol revision the host speaks. Absent from a host published before
+   * the protocol was versioned, which a client accepts rather than refusing to
+   * talk to it.
+   */
+  readonly protocol?: number;
 }
 
 export interface WorkerSyncMessage {
@@ -1107,6 +1114,14 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
     }
 
     if (message.type === "ready") {
+      // A host that speaks a different revision may frame state, patches, or
+      // results differently. Mirroring it would corrupt local state silently,
+      // so refuse the connection instead.
+      if (message.protocol !== undefined && message.protocol !== workerProtocolVersion) {
+        failReady(new WorkerProtocolMismatchError(workerProtocolVersion, message.protocol));
+        return;
+      }
+
       // The host announces itself before publishing. A client that attached
       // after the host's initial snapshot would otherwise never see one.
       requestInitialSnapshot();
@@ -1777,7 +1792,7 @@ function announceReady(
 ): void {
   // The announcement is a hint that lets late clients ask for a snapshot; the
   // snapshot published right after is the signal `host.ready` depends on.
-  postWorkerMessage(transport, { type: "ready" }, onDeliveryError);
+  postWorkerMessage(transport, { protocol: workerProtocolVersion, type: "ready" }, onDeliveryError);
 }
 
 function observeWorkerDelivery(
@@ -2126,6 +2141,15 @@ function createMemoryWorkerTransport(
   };
 }
 
+/**
+ * The wire revision `createWorkerApp` and `createWorkerClient` speak. It is
+ * announced in the `ready` handshake so a version mismatch fails loudly at
+ * connection time rather than as corrupted state later. While the worker
+ * runtime is beta this bumps on any breaking wire change — which is a minor
+ * release, not a major one.
+ */
+export const workerProtocolVersion = 1;
+
 const workerMessageTypes = ["call", "result", "state", "sync", "ready"] as const;
 const defaultWorkerRequestTimeout = 30_000;
 const defaultWorkerReadyTimeout = 30_000;
@@ -2278,7 +2302,7 @@ function isWorkerMessage(message: unknown): message is WorkerMessage {
       return isWorkerMessageId(message.id) && isOptionalWorkerStateVersion(message.stateVersion);
 
     case "ready":
-      return true;
+      return message.protocol === undefined || isWorkerStateVersion(message.protocol);
 
     default:
       return false;

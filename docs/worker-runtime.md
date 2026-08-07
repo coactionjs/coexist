@@ -91,6 +91,8 @@ RPC calls default to a 30-second timeout (`requestTimeout` on `createWorkerClien
 
 Every inbound protocol envelope is runtime-validated: call IDs, module/method names, argument arrays, result errors, state versions/sections, sync fields, and patch operations/paths must match the complete message schema. Malformed input is dropped and can be observed with `onInvalidMessage`. Unsafe patch path segments such as `__proto__` are rejected.
 
+The host also stamps `workerProtocolVersion` on its `ready` handshake. A client seeing a different revision rejects `client.ready` with `WorkerProtocolMismatchError` rather than mirroring frames it may misread — both endpoints must come from the same `@coexist/core` version. A handshake with no version predates versioning and is accepted.
+
 Schema validation says nothing about size, so both endpoints also enforce quotas. Tune them with `limits` on `createWorkerApp` / `createWorkerClient`:
 
 | Limit                  | Default | Enforced by | Effect when exceeded                                        |

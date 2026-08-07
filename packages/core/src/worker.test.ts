@@ -20,7 +20,9 @@ import {
   type WorkerStateMessage,
   WorkerHostUnavailableError,
   WorkerInitialSyncError,
+  WorkerProtocolMismatchError,
   WorkerReadyTimeoutError,
+  workerProtocolVersion,
 } from "./index.js";
 
 class WorkerCounter {
@@ -2333,6 +2335,72 @@ describe("worker prototype", () => {
     expect(() => createWorkerClient({ resync: { delay: -1 }, transport: clientTransport })).toThrow(
       "resync.delay must be a finite, non-negative number.",
     );
+  });
+
+  it("announces the protocol version and refuses a host that speaks another", async () => {
+    const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+    const stopHost = hostTransport.subscribe(() => undefined);
+    const client = createWorkerClient({
+      readyTimeout: 0,
+      requestInitialSync: false,
+      transport: clientTransport,
+    });
+
+    client.subscribe(() => undefined);
+    hostTransport.post({ protocol: workerProtocolVersion + 1, type: "ready" });
+
+    await expect(client.ready).rejects.toBeInstanceOf(WorkerProtocolMismatchError);
+    await expect(client.ready).rejects.toThrow(
+      `Worker host speaks protocol ${workerProtocolVersion + 1}, but this client speaks ${workerProtocolVersion}.`,
+    );
+
+    client.dispose();
+    stopHost();
+  });
+
+  it("accepts a host that predates protocol versioning", async () => {
+    const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+    const syncRequests: WorkerMessage[] = [];
+    const stopHost = hostTransport.subscribe((message) => {
+      if (message.type === "sync") {
+        syncRequests.push(message);
+      }
+    });
+    const client = createWorkerClient({
+      readyTimeout: 0,
+      requestInitialSync: false,
+      transport: clientTransport,
+    });
+
+    // No `protocol` field: a host built before the handshake carried one.
+    hostTransport.post({ type: "ready" });
+    await Promise.resolve();
+
+    expect(syncRequests).toHaveLength(1);
+
+    client.dispose();
+    stopHost();
+  });
+
+  it("stamps the protocol version on the host handshake", async () => {
+    const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+    const announced: WorkerMessage[] = [];
+    const stopClient = clientTransport.subscribe((message) => {
+      if (message.type === "ready") {
+        announced.push(message);
+      }
+    });
+    const host = createWorkerApp({
+      providers: [WorkerCounter],
+      transport: hostTransport,
+    });
+
+    await host.ready;
+
+    expect(announced).toEqual([{ protocol: workerProtocolVersion, type: "ready" }]);
+
+    stopClient();
+    await host.dispose();
   });
 
   it("rejects client readiness when no host answers within the ready timeout", async () => {

@@ -93,6 +93,16 @@ export class WorkerHostUnavailableError extends CoexistError {
   }
 }
 
+export class WorkerProtocolMismatchError extends CoexistError {
+  constructor(expected: number, received: number) {
+    super(
+      `Worker host speaks protocol ${received}, but this client speaks ${expected}. ` +
+        "Both endpoints must come from the same @coexist/core version.",
+    );
+    this.name = "WorkerProtocolMismatchError";
+  }
+}
+
 export class WorkerInitialSyncError extends CoexistError {
   constructor(cause: unknown) {
     super("Worker client could not request an initial state snapshot from its host.", { cause });

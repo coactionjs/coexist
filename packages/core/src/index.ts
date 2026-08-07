@@ -11,6 +11,7 @@ export {
   MissingProviderError,
   WorkerHostUnavailableError,
   WorkerInitialSyncError,
+  WorkerProtocolMismatchError,
   WorkerReadyTimeoutError,
 } from "./errors.js";
 export { createContainer } from "./container.js";
@@ -78,6 +79,7 @@ export {
   createPostMessageWorkerTransport,
   createWorkerApp,
   createWorkerClient,
+  workerProtocolVersion,
   type BroadcastChannelLike,
   type BroadcastMessageEventLike,
   type BroadcastWorkerMessageEnvelope,
