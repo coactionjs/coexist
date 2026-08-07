@@ -46,7 +46,9 @@ Peer ranges name the majors an adapter is tested against; a future major is not 
 | `@coexist/solid`   | `>=1.9.0 <2`           | Solid 1.9      |
 | `@coexist/angular` | `>=17.0.0 <23`         | Angular 22     |
 
-CI currently tests the newest version in each range. A declared-but-untested lower bound is a compatibility claim backed by API stability, not by a green build — report a break on one and it is treated as a bug.
+Both ends of every range are verified. CI exercises the newest version through the unit, integration, and browser suites, and `test:frameworks:min-version` builds a throwaway consumer per adapter that installs exactly the floor of its peer range — Angular 17, React 18.3, Solid 1.9, Svelte 4, Vue 3.5 — then typechecks the adapter's whole export surface against it. The workspace cannot host a second version of a framework (`catalogMode: strict`, one lockfile), so the check runs outside it, and it asserts the resolved version really is the floor rather than trusting the resolver.
+
+Versions between the floor and the newest are not individually built. A break reported on one is treated as a bug.
 
 ### Core and adapters
 

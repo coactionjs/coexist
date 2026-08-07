@@ -158,6 +158,9 @@ jobs:
       - name: Smoke framework adapters install
         run: pnpm run test:frameworks:install
 
+      - name: Smoke framework peer-range floors
+        run: pnpm run test:frameworks:min-version
+
       - name: Smoke framework worker adapters install
         run: pnpm run test:frameworks:worker-install
 

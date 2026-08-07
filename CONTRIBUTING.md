@@ -56,6 +56,8 @@ pnpm run check        # format:check + lint + typecheck + coverage + build + smo
 
 Coverage thresholds are floors, enforced by `test:coverage` and therefore by `check` and CI. `packages/core/src/**` is held to a higher bar than the rest. A project that finds no test files fails rather than passing, so a suite cannot disappear unnoticed.
 
+Raising an adapter's peer range means raising the floor `test:frameworks:min-version` installs — it reads each range from the package manifest, so the check follows the claim automatically. Lowering a range without checking it is how an adapter ends up promising a version it cannot run on.
+
 `pnpm run bench` measures how selector count, module count, deep mutations, and worker payload sizes scale. It is not part of `check` — timings are machine-dependent — but it is the baseline to compare against before changing the invalidation model.
 
 Every UI adapter is held to one shared behaviour contract in `packages/integration/src/adapterConformance.ts`. Adding an adapter means supplying a binding for it, not writing a new set of tests; changing what an adapter does means changing the contract, so the five cannot drift apart quietly.
