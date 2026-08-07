@@ -146,7 +146,11 @@ class Counter {
   }
 }
 
-defineModule(Counter, { deps: [Logger], name: "counter", actions: ["increase"] });
+defineModule(Counter, {
+  deps: [Logger],
+  name: "counter",
+  actions: ["increase"],
+});
 
 const app = createApp({
   providers: [Counter, provide(Logger, { useValue: console })],

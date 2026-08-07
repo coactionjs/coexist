@@ -100,7 +100,9 @@ import { Component } from "@angular/core";
 import { bootstrapApplication } from "@angular/platform-browser";
 import { injectModule, injectSignal, provideCoexist } from "@coexist/angular";
 
-@Component({ template: `<button (click)="counter.increase()">{{ count() }}</button>` })
+@Component({
+  template: `<button (click)="counter.increase()">{{ count() }}</button>`,
+})
 class CounterView {
   readonly counter = injectModule(Counter);
   readonly count = injectSignal(Counter, (m) => m.count); // Signal<T>

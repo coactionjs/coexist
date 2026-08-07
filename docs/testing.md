@@ -47,7 +47,12 @@ class Counter {
     this.logger.info(`count:${this.count}`);
   }
 }
-defineModule(Counter, { actions: ["increase"], deps: [Logger], name: "counter", state: ["count"] });
+defineModule(Counter, {
+  actions: ["increase"],
+  deps: [Logger],
+  name: "counter",
+  state: ["count"],
+});
 
 const logger = new MemoryLogger();
 const app = testApp({

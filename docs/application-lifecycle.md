@@ -121,7 +121,11 @@ class AdminCounter {
     this.count += 1;
   }
 }
-defineModule(AdminCounter, { actions: ["increase"], name: "adminCounter", state: ["count"] });
+defineModule(AdminCounter, {
+  actions: ["increase"],
+  name: "adminCounter",
+  state: ["count"],
+});
 
 const app = createApp();
 

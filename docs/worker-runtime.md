@@ -52,7 +52,10 @@ await host.dispose();
 ```ts
 interface WorkerClient {
   readonly ready: Promise<void>; // resolves after the first snapshot
-  readonly state: { readonly version: number; readonly status: WorkerSyncStatus };
+  readonly state: {
+    readonly version: number;
+    readonly status: WorkerSyncStatus;
+  };
   getState(): unknown;
   select<T>(selector): T; // read derived state synchronously
   watch<T>(selector, listener, opts?): () => void; // subscribe (equals/immediate)
@@ -131,7 +134,9 @@ createWorkerApp({
 });
 
 // main.ts
-const worker = new Worker(new URL("./worker.ts", import.meta.url), { type: "module" });
+const worker = new Worker(new URL("./worker.ts", import.meta.url), {
+  type: "module",
+});
 const client = createWorkerClient({
   transport: createPostMessageWorkerTransport(worker),
 });
@@ -234,7 +239,13 @@ const client = createWorkerClient({
 ```ts
 const client = createWorkerClient({
   transport: clientTransport,
-  resync: { delay: 100, backoffFactor: 2, maxDelay: 5000, maxAttempts: 5, timeout: 10_000 },
+  resync: {
+    delay: 100,
+    backoffFactor: 2,
+    maxDelay: 5000,
+    maxAttempts: 5,
+    timeout: 10_000,
+  },
   onResync(event) {
     console.warn(event.status, event.reason, event.attempt);
   },
