@@ -94,6 +94,24 @@ defineModule(Counter, {
 
 JavaScript consumers get the same protection one step later: an action or effect naming a non-method still throws during `createApp()`.
 
+### Named members have to be public
+
+The check reads `keyof`, and `keyof` omits `private` and `protected` members — so a field you list in `state` has to be public. That is the right default rather than a limitation to route around: module state is written into the shared app store, where persistence, devtools, and worker sync all see it, and an adapter selector cannot read a non-public field either. `private` hides a field from TypeScript, not from anything at runtime.
+
+Where a module genuinely must keep one non-public, widen the target through a shape interface. The names stay checked — against that shape instead of the class:
+
+```ts
+interface CartShape {
+  items: Item[];
+  add(item: Item): void;
+}
+
+defineModule(Cart as unknown as Constructor<CartShape>, {
+  actions: ["add"],
+  state: ["items"],
+});
+```
+
 `getModuleMetadata(Class)` reads back the merged metadata if you need to inspect it.
 
 ## How metadata is stored

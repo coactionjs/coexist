@@ -60,6 +60,27 @@ export interface MetadataContext {
   readonly metadata?: Record<PropertyKey, unknown> | undefined;
 }
 
+/**
+ * The property lists are checked against the class, so a name it does not
+ * declare is a compile error rather than a phantom reactive property.
+ *
+ * That check reads `keyof`, which omits `private` and `protected` members, so
+ * a member named here has to be public. Prefer making it public: module state
+ * is written into the shared app store, where persistence, devtools, and
+ * worker sync all see it, and an adapter selector cannot read a non-public
+ * field either — `private` hides it from TypeScript, not from anything at
+ * runtime. Where a module genuinely must keep one non-public, widen the target
+ * through a shape interface, which keeps the names checked against that shape:
+ *
+ * ```ts
+ * interface CartShape { items: Item[]; add(item: Item): void }
+ *
+ * defineModule(Cart as unknown as Constructor<CartShape>, {
+ *   actions: ["add"],
+ *   state: ["items"],
+ * });
+ * ```
+ */
 export function defineModule<T extends Constructor>(
   target: T,
   options: DefineModuleOptions<InstanceType<T>> = {},
