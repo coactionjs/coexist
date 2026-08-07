@@ -47,5 +47,8 @@
   "peerDependencies": {
     "@coexist/core": "workspace:^",
     "svelte": "^4.0.0 || ^5.0.0"
+  },
+  "engines": {
+    "node": ">=22.12.0"
   }
 }

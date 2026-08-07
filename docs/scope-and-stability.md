@@ -28,7 +28,7 @@ Depend on it for a trusted, reliable transport — a dedicated `Worker`, a `Mess
 
 ### Node.js
 
-`>=22.12.0`, matching the `engines` field. CI verifies every package on Node 22 and 24, including installed-tarball smokes. The packages are **ESM-only**: a consuming project needs `"type": "module"` (or `.mjs` / `.mts`) or a bundler.
+`>=22.12.0`. Every published package declares that in its own `engines` field — not just the workspace root — so a consumer on an older Node is told by their package manager instead of finding out at runtime. CI verifies every package on Node 22 and 24, including installed-tarball smokes, and `test:docs-versions` checks the numbers on this page against the manifests so the table below and this floor cannot drift from what the packages actually declare. The packages are **ESM-only**: a consuming project needs `"type": "module"` (or `.mjs` / `.mts`) or a bundler.
 
 ### Browsers
 

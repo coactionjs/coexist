@@ -47,6 +47,9 @@ jobs:
       - name: Verify check and CI step lists
         run: pnpm run test:check-steps
 
+      - name: Verify documented versions
+        run: pnpm run test:docs-versions
+
       - name: Verify smoke harness importers
         run: pnpm run test:harness-imports
 

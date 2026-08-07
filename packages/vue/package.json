@@ -44,5 +44,8 @@
   "peerDependencies": {
     "@coexist/core": "workspace:^",
     "vue": ">=3.5.0 <4"
+  },
+  "engines": {
+    "node": ">=22.12.0"
   }
 }
