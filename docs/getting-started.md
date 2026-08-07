@@ -99,6 +99,8 @@ console.log(app.store.getPureState()); // { counter: { count: 1 } }
 
 Pick the tab for your framework. Each adapter only provides context and subscription helpers — you keep your framework's normal mount API.
 
+Every example splits the same way: **the module is for calling actions, the selector is for rendering state**. Resolving a module does not subscribe the view, so reading state off the facade renders once and then goes stale with no warning — see [Module access does not subscribe](./ui-adapters.md#module-access-does-not-subscribe).
+
 ### React
 
 ```tsx

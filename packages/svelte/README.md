@@ -40,9 +40,11 @@ const count = selectedModuleStore(Counter, (module) => module.count);
 | `setCoexistApp(app)` / `clearCoexistApp()` | `App`              | Set/clear the module-global app.           |
 | `setCoexistContext(app)`                   | `App`              | Provide the app via Svelte context.        |
 | `getCoexistApp()`                          | `App`              | Resolve the active app (context → global). |
-| `moduleStore(token, app?)`                 | `Readable<T>`      | Store of the bound module facade.          |
+| `moduleStore(token, app?)`                 | `Readable<T>`      | Store of the module facade. Emits once.    |
 | `selectorStore(fn, opts?)`                 | `Readable<T>`      | Store of `fn(app)`.                        |
 | `selectedModuleStore(token, fn, opts?)`    | `Readable<TValue>` | Store of `fn(module, app)`.                |
+
+`moduleStore` holds the module facade, whose identity never changes — so the store emits once and never again. `$counter.count` therefore renders correctly on first paint and then goes stale, silently. Call actions through `$counter`; render state through `selectedModuleStore`.
 
 Selector stores accept `{ equals, app }`; `getCoexistApp()` throws a `CoexistError` if no app was set.
 
@@ -60,6 +62,8 @@ const count = selectedModuleRune(Counter, (module) => module.count, { app });
 ```
 
 Runes expose `.current`, `.value`, and `.get()` (all equivalent). When `app` is omitted they fall back to `getCoexistApp()`. `selectorRune`, `moduleRune`, and `selectedModuleRune` accept `{ app, equals }`.
+
+`moduleRune` carries the module facade the same way `moduleStore` does: its value never changes, so `counter.current.count` goes stale after first paint. Read rendered state through `selectedModuleRune`.
 
 ## Worker-hosted state
 

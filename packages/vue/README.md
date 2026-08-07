@@ -45,13 +45,15 @@ createVueApp(CounterView).use(coexistPlugin(app)).mount("#app");
 
 ## Composables
 
-| Composable                      | Returns            | Description                         |
-| ------------------------------- | ------------------ | ----------------------------------- |
-| `useApp()` / `useCoexist()`     | `App`              | The provided app.                   |
-| `useModule(token)`              | `T`                | The bound module facade.            |
-| `useSelector(fn, opts?)`        | `Readonly<Ref<T>>` | Reactive ref for `fn(app)`.         |
-| `useSelector(token, fn, opts?)` | `Readonly<Ref<T>>` | Reactive ref for `fn(module, app)`. |
-| `useComputed(...)`              | `Readonly<Ref<T>>` | Alias of `useSelector`, both forms. |
+| Composable                      | Returns            | Description                               |
+| ------------------------------- | ------------------ | ----------------------------------------- |
+| `useApp()` / `useCoexist()`     | `App`              | The provided app.                         |
+| `useModule(token)`              | `T`                | The bound module facade. No subscription. |
+| `useSelector(fn, opts?)`        | `Readonly<Ref<T>>` | Reactive ref for `fn(app)`.               |
+| `useSelector(token, fn, opts?)` | `Readonly<Ref<T>>` | Reactive ref for `fn(module, app)`.       |
+| `useComputed(...)`              | `Readonly<Ref<T>>` | Alias of `useSelector`, both forms.       |
+
+`useModule` resolves the module and nothing else — it registers no subscription, and a facade read is not tracked by Vue's reactivity. Reading state off it from a template or a Vue `computed()` (`useModule(Counter).count`) renders correctly once and then goes stale, silently. Call actions through the facade; render state through `useSelector` / `useComputed`, which re-read on every committed change — that is why the quick start above can close over `counter` inside the selector.
 
 ```ts
 const count = useSelector(Counter, (counter) => counter.count);

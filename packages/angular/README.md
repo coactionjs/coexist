@@ -41,13 +41,15 @@ bootstrapApplication(CounterView, {
 
 ## API
 
-| Function                         | Returns                | Description                     |
-| -------------------------------- | ---------------------- | ------------------------------- |
-| `provideCoexist(app)`            | `EnvironmentProviders` | Register the app for DI.        |
-| `injectCoexistApp()`             | `App`                  | Inject the app.                 |
-| `injectModule(token)`            | `T`                    | Inject the bound module facade. |
-| `injectSignal(fn, opts?)`        | `Signal<T>`            | Signal for `fn(app)`.           |
-| `injectSignal(token, fn, opts?)` | `Signal<TValue>`       | Signal for `fn(module, app)`.   |
+| Function                         | Returns                | Description                               |
+| -------------------------------- | ---------------------- | ----------------------------------------- |
+| `provideCoexist(app)`            | `EnvironmentProviders` | Register the app for DI.                  |
+| `injectCoexistApp()`             | `App`                  | Inject the app.                           |
+| `injectModule(token)`            | `T`                    | The bound module facade. No subscription. |
+| `injectSignal(fn, opts?)`        | `Signal<T>`            | Signal for `fn(app)`.                     |
+| `injectSignal(token, fn, opts?)` | `Signal<TValue>`       | Signal for `fn(module, app)`.             |
+
+`injectModule` resolves the module and nothing else — it creates no signal, and a facade read is not tracked by Angular's reactivity. Reading state off it in a template (`injectModule(Counter).count`) renders correctly once and then goes stale, silently. Call actions through the facade; render state through `injectSignal`.
 
 `injectSignal` accepts `{ equals }` (defaults to `Object.is`) and unsubscribes automatically through `DestroyRef`. It must run in an injection context.
 

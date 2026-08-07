@@ -342,6 +342,8 @@ Actions and writes triggered synchronously from `watch` listeners or plugin stat
 
 Coexist does not own rendering. There is no `ViewModule`, root component base class, or `render()` abstraction. UI packages only provide context and subscription helpers.
 
+Note the split in every example below: **module access is for calling actions, selectors are for rendering state**. Resolving a module does not subscribe the view — reading state off the facade renders once and then goes stale, silently. See [Module access does not subscribe](./docs/ui-adapters.md#module-access-does-not-subscribe).
+
 React:
 
 ```tsx

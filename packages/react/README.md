@@ -63,12 +63,14 @@ createRoot(document.getElementById("root")!).render(
 
 ## Hooks
 
-| Hook                        | Returns  | Description                                     |
-| --------------------------- | -------- | ----------------------------------------------- |
-| `useApp()` / `useCoexist()` | `App`    | The app from the nearest provider.              |
-| `useModule(token)`          | `T`      | The bound module facade. Methods stay callable. |
-| `useSelector(selector)`     | `T`      | Subscribe to `selector(app)`.                   |
-| `useSelector(token, fn)`    | `TValue` | Subscribe to `fn(module, app)` for a module.    |
+| Hook                        | Returns  | Description                                  |
+| --------------------------- | -------- | -------------------------------------------- |
+| `useApp()` / `useCoexist()` | `App`    | The app from the nearest provider.           |
+| `useModule(token)`          | `T`      | The bound module facade. Does not subscribe. |
+| `useSelector(selector)`     | `T`      | Subscribe to `selector(app)`.                |
+| `useSelector(token, fn)`    | `TValue` | Subscribe to `fn(module, app)` for a module. |
+
+`useModule` resolves the module and nothing else — it registers no subscription. Reading state off the returned facade (`useModule(Counter).count`) renders correctly once and then goes stale, silently. Call actions through the facade; render state through `useSelector`.
 
 `useSelector` accepts a `{ equals }` option (defaults to `Object.is`) to control re-renders.
 

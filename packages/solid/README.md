@@ -35,12 +35,14 @@ function CounterView() {
 
 ## API
 
-| Function                        | Returns            | Description                     |
-| ------------------------------- | ------------------ | ------------------------------- |
-| `useApp()`                      | `App`              | The app from `CoexistProvider`. |
-| `useModule(token)`              | `T`                | The bound module facade.        |
-| `useComputed(fn, opts?)`        | `Accessor<T>`      | Signal for `fn(app)`.           |
-| `useComputed(token, fn, opts?)` | `Accessor<TValue>` | Signal for `fn(module, app)`.   |
+| Function                        | Returns            | Description                               |
+| ------------------------------- | ------------------ | ----------------------------------------- |
+| `useApp()`                      | `App`              | The app from `CoexistProvider`.           |
+| `useModule(token)`              | `T`                | The bound module facade. No subscription. |
+| `useComputed(fn, opts?)`        | `Accessor<T>`      | Signal for `fn(app)`.                     |
+| `useComputed(token, fn, opts?)` | `Accessor<TValue>` | Signal for `fn(module, app)`.             |
+
+`useModule` resolves the module and nothing else — it creates no signal, and a facade read inside a tracking scope is not tracked by Solid. Reading state off it (`useModule(Counter).count`) renders correctly once and then goes stale, silently. Call actions through the facade; render state through `useComputed`.
 
 Both `useComputed` overloads accept `{ equals }` (defaults to `Object.is`) and clean up with `onCleanup`.
 

@@ -25,7 +25,7 @@ app.watch(read, listener, opts); // subscribe to a derived value
 
 | Capability         | What it returns                                                         |
 | ------------------ | ----------------------------------------------------------------------- |
-| **Module access**  | The bound module facade — call its actions, read computed/state.        |
+| **Module access**  | The bound module facade — call its actions. Not a subscription.         |
 | **Selected state** | A reactive value (`fn(module \| app)`) that updates the view on change. |
 
 Selectors accept an `{ equals }` option (default `Object.is`) to control when the view updates.
@@ -35,6 +35,22 @@ Those two capabilities are not a convention — they are a contract every adapte
 Selecting through a module token — `useSelector(Counter, (m) => m.count)` rather than `(app) => app.getModule(Counter).count` — is part of that contract, not a per-adapter convenience. An adapter that only offered the app form would push its users back to the shape adapters exist to remove.
 
 The [worker helpers](#consuming-worker-hosted-state) are held to the same contract — mirrored state follows a remote action, a disposed scope stops mirroring, and a missing client raises an error. They are the half most likely to drift: used less often, mirroring state rather than owning it, and backed by a runtime that is still beta.
+
+### Module access does not subscribe
+
+The two capabilities do not overlap: module access resolves, selectors subscribe. Resolving a module hands you the facade the app owns, and subscribes the view to nothing. Reading state off it renders the value at that moment and then never updates again — in all five frameworks:
+
+```tsx
+const counter = useModule(Counter); // ✅ for calling actions
+const count = useSelector(Counter, (m) => m.count); // ✅ for rendering state
+
+<button onClick={() => counter.increase()}>{count}</button>;
+// ❌ {counter.count} renders the right number once, then goes stale.
+```
+
+This fails silently, and the first render is correct — so it reads as "the action did not run" rather than "the view was never subscribed". Call actions through the facade; read anything you render through a selector.
+
+The reason is the same everywhere: module state lives in a Coaction store with its own signal, which no framework's tracker follows. A facade read is not tracked by Vue's reactivity, Solid's, or Angular's, and React does not track reads at all. Svelte's `moduleStore` reaches the same place from the other direction — it is a real store, but the facade's identity never changes, so under the default `Object.is` equality it emits once and never again. The selector helpers are the bridge, which is why every adapter has one.
 
 ## React — [`@coexist/react`](../packages/react/README.md)
 
