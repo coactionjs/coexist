@@ -71,6 +71,20 @@ interface WorkerClient {
 
 Disposal is terminal on both sides. `host.dispose()` first starts app disposal, which aborts plugin setup through `PluginContext.signal`, and only then waits for startup to settle; this prevents initialization/disposal deadlocks. Repeated host disposal shares one promise. If disposal wins the race with initial state publication, `host.ready` rejects instead of reporting a host that never became observable as ready. `client.dispose()` rejects pending calls and all later `call()` / module-proxy requests immediately instead of posting work that can no longer receive a response.
 
+### The option surface
+
+`createWorkerClient` takes ten options and `createWorkerApp` nine, which grew one reliability or safety fix at a time. Only `transport` is required; everything else has a default tuned for a trusted, reliable channel — a dedicated `Worker`, a `MessagePort`, a same-origin iframe you control. Reach past `transport` when one of these concerns applies, not before:
+
+| Concern                      | Client                                                           | Host                                            |
+| ---------------------------- | ---------------------------------------------------------------- | ----------------------------------------------- |
+| **Connect**                  | `transport`, `signal`                                            | `transport`, plus every `createApp` option      |
+| **Timeouts and recovery**    | `requestTimeout`, `readyTimeout`, `requestInitialSync`, `resync` | —                                               |
+| **What is reachable**        | —                                                                | `expose`, `stateSections`, `sync`               |
+| **What a peer may cost you** | `limits`                                                         | `limits`, `includeErrorStack`, `serializeError` |
+| **Observers**                | `onConflict`, `onResync`, `onInvalidMessage`                     | `onInvalidMessage`, `onDeliveryError`           |
+
+Observers never alter protocol handling: throwing from one is contained and cannot change what the endpoint does with a message.
+
 ### Client readiness
 
 `client.ready` never stays pending indefinitely. Three controls settle it:
