@@ -111,6 +111,97 @@ describe("router package", () => {
     expect(pluginRouter.current.path).toBe("/plugin");
   });
 
+  it("normalizes empty paths in both directions", () => {
+    expect(parseLocation("")).toEqual({ hash: "", path: "/", search: "" });
+    expect(parseLocation("?tab=1")).toEqual({ hash: "", path: "/", search: "?tab=1" });
+    expect(parseLocation("#top")).toEqual({ hash: "#top", path: "/", search: "" });
+    expect(formatLocation({ hash: "", path: "", search: "" })).toBe("/");
+    expect(formatLocation({ hash: "#top", path: "", search: "?tab=1" })).toBe("/?tab=1#top");
+  });
+
+  it("requires a browser window when none is supplied", () => {
+    const globalWithWindow = globalThis as { window?: unknown };
+    const original = Object.hasOwn(globalWithWindow, "window")
+      ? globalWithWindow.window
+      : undefined;
+
+    delete globalWithWindow.window;
+
+    try {
+      expect(() => createBrowserRouter()).toThrow(
+        "createBrowserRouter() requires a browser window.",
+      );
+    } finally {
+      if (original !== undefined) {
+        globalWithWindow.window = original;
+      }
+    }
+  });
+
+  it("reads the ambient window when one exists", () => {
+    const globalWithWindow = globalThis as { window?: unknown };
+    const browserWindow = createMockBrowserWindow("/ambient");
+
+    globalWithWindow.window = browserWindow;
+
+    try {
+      expect(createBrowserRouter().current.path).toBe("/ambient");
+    } finally {
+      delete globalWithWindow.window;
+    }
+  });
+
+  it("normalizes an empty browser pathname to the root", () => {
+    const browserWindow = createMockBrowserWindow("/");
+    Object.defineProperty(browserWindow, "location", {
+      get: () => ({ hash: "", pathname: "", search: "" }),
+    });
+
+    expect(createBrowserRouter({ window: browserWindow }).current.path).toBe("/");
+  });
+
+  it("accepts a route location object as a navigation target", () => {
+    const router = createMemoryRouter({ initialPath: "/" });
+    const seen: string[] = [];
+
+    router.subscribe((location) => {
+      seen.push(formatLocation(location));
+    });
+    router.navigate({ hash: "#top", path: "/settings", search: "?tab=1" });
+
+    expect(router.current.path).toBe("/settings");
+    expect(seen).toEqual(["/settings?tab=1#top"]);
+  });
+
+  it("swallows a rejected async error observer", async () => {
+    const router = createMemoryRouter({
+      initialPath: "/",
+      // An observer returning a rejected promise must not become an unhandled
+      // rejection: it is the terminal reporter, with nowhere left to report.
+      onError: () => Promise.reject(new Error("observer rejected")) as never,
+    });
+    const rejections: unknown[] = [];
+    const onUnhandledRejection = (error: unknown) => {
+      rejections.push(error);
+    };
+
+    router.subscribe(() => {
+      throw new Error("subscriber failed");
+    });
+
+    process.on("unhandledRejection", onUnhandledRejection);
+
+    try {
+      router.navigate("/settings");
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    } finally {
+      process.off("unhandledRejection", onUnhandledRejection);
+    }
+
+    expect(rejections).toEqual([]);
+    expect(router.current.path).toBe("/settings");
+  });
+
   it("keeps notifying subscribers after one of them throws", () => {
     const errors: unknown[] = [];
     const listenerError = new Error("subscriber failed");

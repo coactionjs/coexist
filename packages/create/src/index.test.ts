@@ -186,4 +186,90 @@ describe("create package", () => {
       "console.log(app.store.getPureState())",
     );
   });
+
+  it("reports a scaffold failure as a message and a non-zero exit code", async () => {
+    const workspace = await mkdtemp(join(tmpdir(), "coexist-create-cli-fail-"));
+    roots.push(workspace);
+    const target = "occupied";
+    await mkdir(join(workspace, target), { recursive: true });
+    await writeFile(join(workspace, target, "package.json"), '{ "name": "keep-me" }\n');
+
+    const result = await runCli(workspace, [target]);
+
+    // A stack trace would bury the one thing the caller can act on.
+    expect(result.exitCode).toBe(1);
+    expect(result.errors.flat().join(" ")).toContain("is not empty");
+    expect(result.logs).toEqual([]);
+    await expect(readFile(join(workspace, target, "package.json"), "utf8")).resolves.toContain(
+      "keep-me",
+    );
+  });
+
+  it("overwrites an occupied target when --force is passed", async () => {
+    const workspace = await mkdtemp(join(tmpdir(), "coexist-create-cli-force-"));
+    roots.push(workspace);
+    const target = "occupied";
+    await mkdir(join(workspace, target), { recursive: true });
+    await writeFile(join(workspace, target, "package.json"), '{ "name": "replace-me" }\n');
+
+    const result = await runCli(workspace, [target, "--force"]);
+
+    expect(result.exitCode).toBeUndefined();
+    expect(result.errors).toEqual([]);
+    await expect(readFile(join(workspace, target, "package.json"), "utf8")).resolves.toContain(
+      '"name": "occupied"',
+    );
+  });
+
+  it("falls back to the default target name when none is given", async () => {
+    const workspace = await mkdtemp(join(tmpdir(), "coexist-create-cli-default-"));
+    roots.push(workspace);
+
+    const result = await runCli(workspace, ["--force"]);
+
+    expect(result.exitCode).toBeUndefined();
+    await expect(
+      readFile(join(workspace, "coexist-app", "package.json"), "utf8"),
+    ).resolves.toContain('"name": "coexist-app"');
+  });
 });
+
+/**
+ * Runs the CLI entrypoint in-process. The module is side-effecting, so each run
+ * needs a fresh module registry as well as a fresh argv and cwd.
+ */
+async function runCli(
+  workspace: string,
+  args: readonly string[],
+): Promise<{
+  readonly exitCode: number | string | undefined;
+  readonly logs: unknown[][];
+  readonly errors: unknown[][];
+}> {
+  const logs: unknown[][] = [];
+  const errors: unknown[][] = [];
+  const cwd = vi.spyOn(process, "cwd").mockReturnValue(workspace);
+  const log = vi.spyOn(console, "log").mockImplementation((...values: unknown[]) => {
+    logs.push(values);
+  });
+  const error = vi.spyOn(console, "error").mockImplementation((...values: unknown[]) => {
+    errors.push(values);
+  });
+  const originalArgv = process.argv;
+  const originalExitCode = process.exitCode;
+
+  process.argv = [process.execPath, "create-coexist", ...args];
+  process.exitCode = undefined;
+  vi.resetModules();
+
+  try {
+    await import("./cli.js");
+    return { errors, exitCode: process.exitCode, logs };
+  } finally {
+    process.argv = originalArgv;
+    process.exitCode = originalExitCode;
+    cwd.mockRestore();
+    log.mockRestore();
+    error.mockRestore();
+  }
+}

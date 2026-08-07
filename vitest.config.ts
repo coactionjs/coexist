@@ -41,17 +41,26 @@ export default defineConfig({
       // change is not blocked by a rounding difference, but close enough that
       // deleting a test suite fails the build instead of passing quietly.
       thresholds: {
-        branches: 78,
-        functions: 88,
-        lines: 85,
-        statements: 85,
+        branches: 83,
+        functions: 92,
+        lines: 89,
+        statements: 89,
         // The runtime everything else depends on is held to a higher bar.
         "packages/core/src/**": {
-          branches: 80,
-          functions: 90,
-          lines: 87,
-          statements: 87,
+          branches: 83,
+          functions: 93,
+          lines: 89,
+          statements: 89,
         },
+        // The collaborators split out of RuntimeApp are small, self-contained,
+        // and directly unit-tested; there is no reason for them to drift back.
+        "packages/core/src/{effectRuntime,moduleRegistry,mutationScheduler,lifecycleController}.ts":
+          {
+            branches: 84,
+            functions: 87,
+            lines: 93,
+            statements: 93,
+          },
         // Aggregate floors let one weak adapter hide behind the rest, so the
         // Svelte package carries its own. The rune subscription callbacks only
         // run inside a Svelte effect, which a plain .ts test cannot open.

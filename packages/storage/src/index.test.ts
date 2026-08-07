@@ -539,6 +539,63 @@ describe("localspace storage plugin", () => {
     await app.dispose();
   });
 
+  it("delegates every storage service method to the localspace instance", async () => {
+    // `StorageToken` resolves this service in application code, so each
+    // delegation is public API — an unforwarded argument would only surface in
+    // a consumer's app.
+    const service = createLocalSpaceStorage({
+      options: createMemoryLocalSpaceOptions("service-surface"),
+    });
+
+    await service.ready();
+
+    expect(typeof service.driver()).toBe("string");
+    expect(service.instance).toBeDefined();
+
+    await expect(service.set("theme", "dark")).resolves.toBe("dark");
+    await expect(service.get<string>("theme")).resolves.toBe("dark");
+    await expect(service.keys()).resolves.toContain("theme");
+    await expect(service.length()).resolves.toBe(1);
+
+    await service.setMany([
+      { key: "a", value: 1 },
+      { key: "b", value: 2 },
+    ]);
+
+    await expect(service.getMany<number>(["a", "b"])).resolves.toEqual([
+      { key: "a", value: 1 },
+      { key: "b", value: 2 },
+    ]);
+
+    await expect(
+      service.transaction("readwrite", async (scope) => {
+        await scope.set("inside", "transaction");
+        return scope.get<string>("inside");
+      }),
+    ).resolves.toBe("transaction");
+
+    await service.removeMany(["a", "b"]);
+
+    await expect(service.getMany<number>(["a", "b"])).resolves.toEqual([
+      { key: "a", value: null },
+      { key: "b", value: null },
+    ]);
+
+    await service.remove("theme");
+
+    await expect(service.get("theme")).resolves.toBeNull();
+
+    // Optional on the driver, so it must be forwarded without assuming it exists.
+    expect(() => service.getPerformanceStats()).not.toThrow();
+
+    await service.clear();
+
+    await expect(service.length()).resolves.toBe(0);
+
+    await service.dropInstance();
+    await service.destroy();
+  });
+
   it("honors destroyOnDispose for externally supplied storage services", async () => {
     const events: string[] = [];
 
