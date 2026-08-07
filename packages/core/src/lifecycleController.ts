@@ -8,13 +8,12 @@
  * `isDisposed` without `isDisposing` cleared, say — and every new branch had to
  * re-derive which combinations were legal.
  *
- * Here the same machine is one object with a named `phase`, so an invariant is
- * checked once rather than re-argued at each call site, and the sequencing
- * rules (concurrent starts share a promise, opposite requests reconcile in
- * order, disposal is terminal) are readable in isolation.
+ * Here the same machine is one object. Each fact the runtime actually asks for
+ * has one accessor that derives it, so an invariant is checked once rather than
+ * re-argued at each call site, and the sequencing rules (concurrent starts
+ * share a promise, opposite requests reconcile in order, disposal is terminal)
+ * are readable in isolation.
  */
-export type AppPhase = "created" | "disposed" | "disposing" | "started" | "starting" | "stopping";
-
 export interface AppLifecycleHandlers {
   /** Runs module `onStart` hooks. Resolves once the app is started. */
   start(): Promise<void>;
@@ -40,22 +39,6 @@ export class AppLifecycleController {
 
   constructor(handlers: AppLifecycleHandlers) {
     this.#handlers = handlers;
-  }
-
-  get phase(): AppPhase {
-    if (this.#disposal !== undefined) {
-      return this.#disposal === "finished" ? "disposed" : "disposing";
-    }
-
-    if (this.#startPromise !== undefined) {
-      return "starting";
-    }
-
-    if (this.#stopPromise !== undefined) {
-      return "stopping";
-    }
-
-    return this.#started ? "started" : "created";
   }
 
   get started(): boolean {
