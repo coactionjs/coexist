@@ -92,6 +92,9 @@ jobs:
       - name: Build
         run: pnpm run build
 
+      - name: Verify public API report
+        run: pnpm run test:api-report
+
       - name: Smoke package exports
         run: pnpm run test:exports
 

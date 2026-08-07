@@ -56,6 +56,8 @@ pnpm run check        # format:check + lint + typecheck + coverage + build + smo
 
 Coverage thresholds are floors, enforced by `test:coverage` and therefore by `check` and CI. `packages/core/src/**` is held to a higher bar than the rest. A project that finds no test files fails rather than passing, so a suite cannot disappear unnoticed.
 
+Every package's public surface is recorded in [`api-report/`](./api-report), generated from the built declarations and checked by `test:api-report`. A change to an exported signature fails the build until the report is regenerated with `pnpm run api-report:update` — which is the moment to check that the changeset says what changed, and that a removal or a narrowed parameter is described as breaking. Review the report diff the way you would review the API.
+
 Raising an adapter's peer range means raising the floor `test:frameworks:min-version` installs — it reads each range from the package manifest, so the check follows the claim automatically. Lowering a range without checking it is how an adapter ends up promising a version it cannot run on.
 
 `pnpm run bench` measures how selector count, module count, deep mutations, and worker payload sizes scale. It is not part of `check` — timings are machine-dependent — but it is the baseline to compare against before changing the invalidation model.

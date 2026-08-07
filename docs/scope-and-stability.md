@@ -58,6 +58,7 @@ Versions between the floor and the newest are not individually built. A break re
 
 Coexist is pre-1.0 and follows semver as npm interprets it for `0.x`: **a minor bump may contain a breaking change**, a patch never intentionally does.
 
+- Every package's public surface is committed under [`api-report/`](../api-report) and verified in CI, so a signature cannot change without the change appearing in a reviewable diff.
 - Every user-facing change ships with a [changeset](../CONTRIBUTING.md#changesets-and-releases) stating its bump and the reason.
 - Breaking changes are described in the changeset in terms of what breaks and what to do about it — not just what changed.
 - Deprecations, where practical, keep the old path working for one minor with a runtime warning before removal.

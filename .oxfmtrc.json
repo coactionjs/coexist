@@ -1,7 +1,14 @@
 {
   "bracketSpacing": true,
   "endOfLine": "lf",
-  "ignorePatterns": [".turbo/**", "coverage/**", "dist/**", "node_modules/**", "pnpm-lock.yaml"],
+  "ignorePatterns": [
+    ".turbo/**",
+    "api-report/**",
+    "coverage/**",
+    "dist/**",
+    "node_modules/**",
+    "pnpm-lock.yaml"
+  ],
   "insertFinalNewline": true,
   "printWidth": 100,
   "semi": true,
