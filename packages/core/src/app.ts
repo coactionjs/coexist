@@ -64,11 +64,29 @@ export interface AppScope {
   readonly container: Container;
 }
 
+/** The whole app state tree: one plain slice per module, keyed by module name. */
+export type AppRootState = Record<string, Record<PropertyKey, unknown>>;
+
+/**
+ * The store surface an app promises.
+ *
+ * `App.store` used to be the underlying Coaction `Store` in full, which put an
+ * external package's entire type — `destroy()`, `getInitialState()`, `name`,
+ * `share`, `transport`, `patch`, `trace` — inside Coexist's own contract. That
+ * made every Coaction change a potential Coexist change, and let application
+ * code destroy the store the runtime owns. These five members are what plugins
+ * and tooling actually use, and the only ones the runtime stands behind.
+ */
+export type AppStore = Pick<
+  Store<AppRootState>,
+  "apply" | "getPureState" | "getState" | "setState" | "subscribe"
+>;
+
 export interface App {
   readonly ready: Promise<void>;
   readonly state: AppState;
   readonly started: boolean;
-  readonly store: Store<RootState>;
+  readonly store: AppStore;
 
   get<T>(token: InjectionToken<T>): T;
   getAsync<T>(token: InjectionToken<T>): Promise<T>;
@@ -183,7 +201,7 @@ export interface MutableTestInspector extends TestAppInspector {
   setFlushEffects(callback: () => Promise<void>): void;
 }
 
-type RootState = Record<string, Record<PropertyKey, unknown>>;
+type RootState = AppRootState;
 type StoreSetState = Store<RootState>["setState"];
 type StoreApply = Store<RootState>["apply"];
 
