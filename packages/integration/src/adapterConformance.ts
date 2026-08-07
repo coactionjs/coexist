@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { createApp, defineModule, type App } from "@coexist/core";
+import {
+  createApp,
+  createMemoryWorkerTransportPair,
+  createWorkerApp,
+  createWorkerClient,
+  defineModule,
+  type App,
+  type WorkerClient,
+} from "@coexist/core";
 
 /**
  * A behaviour contract every UI adapter must satisfy.
@@ -34,16 +42,32 @@ export interface AdapterObservation {
   dispose(): void;
 }
 
+export interface WorkerAdapterObservation {
+  /** The async method proxy the adapter resolved. */
+  readonly module: { increase(step?: number): Promise<unknown> };
+  /** The most recent value the adapter's worker selector produced. */
+  read(): number;
+  dispose(): void;
+}
+
 export interface AdapterBinding {
   readonly name: string;
   /** Part of the error message raised when no app is available. */
   readonly missingAppMessage: string;
+  /** Part of the error message raised when no worker client is available. */
+  readonly missingClientMessage: string;
   /** Binds the adapter to `app` and starts observing `counter.count`. */
   observe(app: App): AdapterObservation;
   /** Resolves a module with no app registered. Must throw. */
   readWithoutApp(): unknown;
+  /** Binds the adapter to `client` and starts observing the mirrored count. */
+  observeWorker(client: WorkerClient): WorkerAdapterObservation;
+  /** Resolves a worker module with no client registered. Must throw. */
+  readWithoutClient(): unknown;
   /** Wraps a state change so the framework can flush its own scheduling. */
   runAction?(action: () => void): void;
+  /** Awaits framework work scheduled by a resolved worker call. */
+  flush?(): Promise<void>;
 }
 
 export function describeAdapterConformance(binding: AdapterBinding): void {
@@ -130,5 +154,72 @@ export function describeAdapterConformance(binding: AdapterBinding): void {
     it("reports a missing app instead of returning undefined", () => {
       expect(() => binding.readWithoutApp()).toThrow(binding.missingAppMessage);
     });
+
+    // The worker helpers are the half most likely to drift: they are used less,
+    // they mirror state instead of owning it, and the runtime behind them is
+    // still beta. Holding them to the same contract is what keeps one adapter
+    // from quietly diverging while its app-side helpers stay correct.
+    it("mirrors worker state and follows remote actions", async () => {
+      const worker = await startWorkerHost();
+      const observation = binding.observeWorker(worker.client);
+
+      try {
+        expect(observation.read()).toBe(0);
+
+        await observation.module.increase(3);
+        await binding.flush?.();
+
+        expect(observation.read()).toBe(3);
+      } finally {
+        observation.dispose();
+        await worker.dispose();
+      }
+    });
+
+    it("stops mirroring worker state once its scope is disposed", async () => {
+      const worker = await startWorkerHost();
+      const observation = binding.observeWorker(worker.client);
+
+      observation.dispose();
+
+      try {
+        await worker.client.module<ConformanceCounter>("adapterConformanceCounter").increase(5);
+        await binding.flush?.();
+
+        expect(observation.read()).toBe(0);
+      } finally {
+        await worker.dispose();
+      }
+    });
+
+    it("reports a missing worker client instead of returning undefined", () => {
+      expect(() => binding.readWithoutClient()).toThrow(binding.missingClientMessage);
+    });
   });
+}
+
+interface ConformanceWorker {
+  readonly client: WorkerClient;
+  dispose(): Promise<void>;
+}
+
+async function startWorkerHost(): Promise<ConformanceWorker> {
+  const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+  const client = createWorkerClient({ transport: clientTransport });
+  const host = createWorkerApp({
+    providers: [ConformanceCounter],
+    transport: hostTransport,
+  });
+
+  // Worker selectors read the mirror synchronously, so nothing may bind before
+  // the first snapshot has arrived.
+  await client.ready;
+
+  return {
+    client,
+    async dispose() {
+      client.dispose();
+      await host.dispose();
+    },
+  };
 }

@@ -19,8 +19,10 @@ import {
   useComputed,
   useModule,
   useSelector,
+  useWorkerComputed,
   useWorkerModule,
   useWorkerSelector,
+  workerClientPlugin,
 } from "./index.js";
 
 class Counter {
@@ -173,6 +175,57 @@ describe("Vue adapter", () => {
 
     client.dispose();
     await host.dispose();
+  });
+
+  it("provides the worker client through the Vue plugin", async () => {
+    const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+    const client = createWorkerClient({ transport: clientTransport });
+    const host = createWorkerApp({
+      providers: [Counter],
+      transport: hostTransport,
+    });
+
+    await client.ready;
+
+    let selected: Readonly<Ref<number>> | undefined;
+    const Consumer = defineComponent({
+      setup() {
+        // useWorkerComputed is the documented alias for useWorkerSelector; it
+        // must resolve the same client the plugin installed.
+        selected = useWorkerComputed((state) => (state as WorkerCounterState).vueCounter.count);
+        return () => h("span", selected?.value);
+      },
+    });
+    const vueApp = createSSRApp(Consumer);
+    vueApp.use(workerClientPlugin(client));
+
+    await expect(renderToString(vueApp)).resolves.toBe("<span>0</span>");
+    expect(selected?.value).toBe(0);
+
+    client.dispose();
+    await host.dispose();
+  });
+
+  it("reports a missing app or worker client instead of returning undefined", async () => {
+    const MissingApp = defineComponent({
+      setup() {
+        useApp();
+        return () => null;
+      },
+    });
+    const MissingClient = defineComponent({
+      setup() {
+        useWorkerModule<Counter>("vueCounter");
+        return () => null;
+      },
+    });
+
+    await expect(renderToString(createSSRApp(MissingApp))).rejects.toThrow(
+      "Missing provideCoexist(app).",
+    );
+    await expect(renderToString(createSSRApp(MissingClient))).rejects.toThrow(
+      "Missing provideWorkerClient(client).",
+    );
   });
 });
 
