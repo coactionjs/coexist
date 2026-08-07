@@ -2,8 +2,10 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   // Scoped to the code whose correctness is not proven by running one smoke
   // test: the harness every smoke script imports, and the release path. The
-  // smoke scripts themselves are deliberately untyped JS-in-.ts and are held
-  // to `no-undef` through oxlint instead.
+  // smoke scripts themselves are deliberately untyped JS-in-.ts; oxlint's
+  // `no-undef` covers their own identifiers, and `test:harness-imports` covers
+  // what they import from the harness — the one cross-file contract that
+  // neither of those would otherwise catch until a script actually ran.
   "compilerOptions": {
     "allowImportingTsExtensions": true,
     "allowJs": true,
