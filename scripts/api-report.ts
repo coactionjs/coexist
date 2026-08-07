@@ -284,8 +284,10 @@ function printDeclaration(printer, declaration, name) {
   const sourceFile = declaration.getSourceFile();
 
   if (ts.isVariableDeclaration(declaration)) {
-    const statement = declaration.parent.parent;
-    const kind = statement.declarationList.flags & ts.NodeFlags.Const ? "const" : "let";
+    // A `.d.ts` only ever declares variables as statements, but the parent of a
+    // declaration list is also a `for` head in the general grammar — read the
+    // flags off the list itself rather than assuming which statement holds it.
+    const kind = declaration.parent.flags & ts.NodeFlags.Const ? "const" : "let";
 
     return `declare ${kind} ${printer.printNode(ts.EmitHint.Unspecified, declaration, sourceFile)};`;
   }
