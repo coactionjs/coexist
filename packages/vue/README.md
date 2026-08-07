@@ -45,16 +45,18 @@ createVueApp(CounterView).use(coexistPlugin(app)).mount("#app");
 
 ## Composables
 
-| Composable                  | Returns            | Description                 |
-| --------------------------- | ------------------ | --------------------------- |
-| `useApp()` / `useCoexist()` | `App`              | The provided app.           |
-| `useModule(token)`          | `T`                | The bound module facade.    |
-| `useSelector(fn, opts?)`    | `Readonly<Ref<T>>` | Reactive ref for `fn(app)`. |
-| `useComputed(fn, opts?)`    | `Readonly<Ref<T>>` | Alias of `useSelector`.     |
+| Composable                      | Returns            | Description                         |
+| ------------------------------- | ------------------ | ----------------------------------- |
+| `useApp()` / `useCoexist()`     | `App`              | The provided app.                   |
+| `useModule(token)`              | `T`                | The bound module facade.            |
+| `useSelector(fn, opts?)`        | `Readonly<Ref<T>>` | Reactive ref for `fn(app)`.         |
+| `useSelector(token, fn, opts?)` | `Readonly<Ref<T>>` | Reactive ref for `fn(module, app)`. |
+| `useComputed(...)`              | `Readonly<Ref<T>>` | Alias of `useSelector`, both forms. |
 
 ```ts
-const count = useSelector((app) => app.getModule(Counter).count);
-const double = useComputed((app) => app.getModule(Counter).double);
+const count = useSelector(Counter, (counter) => counter.count);
+const double = useComputed(Counter, (counter) => counter.double);
+const version = useSelector((app) => app.state.version);
 ```
 
 Selectors accept `{ equals }` to control updates and clean up automatically via `onScopeDispose`.
@@ -87,7 +89,7 @@ createVueApp(WorkerCounterView).use(workerClientPlugin(client)).mount("#app");
 
 ## Exports
 
-`coexistPlugin`, `workerClientPlugin`, `provideCoexist`, `provideWorkerClient`, the `CoexistKey` / `WorkerClientKey` injection keys, `useApp`, `useCoexist`, `useModule`, `useSelector`, `useComputed`, `useWorkerClient`, `useWorkerModule`, `useWorkerSelector`, `useWorkerComputed`, and the `UseSelectorOptions` / `AppSelector` types. The `use*` composables throw a `CoexistError` when the app or client was never provided.
+`coexistPlugin`, `workerClientPlugin`, `provideCoexist`, `provideWorkerClient`, the `CoexistKey` / `WorkerClientKey` injection keys, `useApp`, `useCoexist`, `useModule`, `useSelector`, `useComputed`, `useWorkerClient`, `useWorkerModule`, `useWorkerSelector`, `useWorkerComputed`, and the `UseSelectorOptions` / `AppSelector` / `ModuleSelector` types. The `use*` composables throw a `CoexistError` when the app or client was never provided.
 
 ## License
 

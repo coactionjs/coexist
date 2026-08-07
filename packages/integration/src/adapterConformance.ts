@@ -58,6 +58,13 @@ export interface AdapterBinding {
   readonly missingClientMessage: string;
   /** Binds the adapter to `app` and starts observing `counter.count`. */
   observe(app: App): AdapterObservation;
+  /**
+   * The same observation, but selecting through the module token rather than
+   * reaching for the app. Every adapter must offer this form: without it a
+   * caller has to write `(app) => app.getModule(Token).field`, which is the
+   * shape adapters exist to remove.
+   */
+  observeSelectedModule(app: App): AdapterObservation;
   /** Resolves a module with no app registered. Must throw. */
   readWithoutApp(): unknown;
   /** Binds the adapter to `client` and starts observing the mirrored count. */
@@ -147,6 +154,26 @@ export function describeAdapterConformance(binding: AdapterBinding): void {
         // A disposed scope must have unsubscribed; the last value it saw stands.
         expect(observation.read()).toBe(0);
       } finally {
+        await app.dispose();
+      }
+    });
+
+    it("selects through a module token, not only through the app", async () => {
+      const app = createApp({ providers: [ConformanceCounter] });
+      const counter = app.getModule(ConformanceCounter);
+      const observation = binding.observeSelectedModule(app);
+
+      try {
+        expect(observation.module).toBe(counter);
+        expect(observation.read()).toBe(0);
+
+        runAction(() => {
+          counter.increase(6);
+        });
+
+        expect(observation.read()).toBe(6);
+      } finally {
+        observation.dispose();
         await app.dispose();
       }
     });

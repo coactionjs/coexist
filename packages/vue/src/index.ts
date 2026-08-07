@@ -24,6 +24,7 @@ export interface UseSelectorOptions<T> {
 }
 
 export type AppSelector<T> = (app: App) => T;
+export type ModuleSelector<TModule, TValue> = (module: TModule, app: App) => TValue;
 
 export const CoexistKey: InjectionKey<App> = Symbol("Coexist");
 export const WorkerClientKey: InjectionKey<WorkerClient> = Symbol("Coexist WorkerClient");
@@ -120,10 +121,26 @@ export function useWorkerComputed<T>(
 
 export function useSelector<T>(
   selector: AppSelector<T>,
-  options: UseSelectorOptions<T> = {},
-): Readonly<Ref<T>> {
+  options?: UseSelectorOptions<T>,
+): Readonly<Ref<T>>;
+export function useSelector<TModule, TValue>(
+  token: InjectionToken<TModule>,
+  selector: ModuleSelector<TModule, TValue>,
+  options?: UseSelectorOptions<TValue>,
+): Readonly<Ref<TValue>>;
+export function useSelector<TModule, TValue>(
+  first: AppSelector<TValue> | InjectionToken<TModule>,
+  second?: ModuleSelector<TModule, TValue> | UseSelectorOptions<TValue>,
+  third?: UseSelectorOptions<TValue>,
+): Readonly<Ref<TValue>> {
   const app = useCoexist();
-  const value = shallowRef(selector(app)) as Ref<T>;
+  const selector =
+    typeof second === "function"
+      ? (currentApp: App) =>
+          second(currentApp.getModule(first as InjectionToken<TModule>), currentApp)
+      : (first as AppSelector<TValue>);
+  const options = (typeof second === "function" ? third : second) ?? {};
+  const value = shallowRef(selector(app)) as Ref<TValue>;
   const watchOptions =
     options.equals === undefined
       ? undefined
@@ -140,12 +157,26 @@ export function useSelector<T>(
 
   onScopeDispose(unsubscribe);
 
-  return readonly(value) as Readonly<Ref<T>>;
+  return readonly(value) as Readonly<Ref<TValue>>;
 }
 
 export function useComputed<T>(
   selector: AppSelector<T>,
-  options: UseSelectorOptions<T> = {},
-): Readonly<Ref<T>> {
-  return useSelector(selector, options);
+  options?: UseSelectorOptions<T>,
+): Readonly<Ref<T>>;
+export function useComputed<TModule, TValue>(
+  token: InjectionToken<TModule>,
+  selector: ModuleSelector<TModule, TValue>,
+  options?: UseSelectorOptions<TValue>,
+): Readonly<Ref<TValue>>;
+export function useComputed<TModule, TValue>(
+  first: AppSelector<TValue> | InjectionToken<TModule>,
+  second?: ModuleSelector<TModule, TValue> | UseSelectorOptions<TValue>,
+  third?: UseSelectorOptions<TValue>,
+): Readonly<Ref<TValue>> {
+  return useSelector(
+    first as InjectionToken<TModule>,
+    second as ModuleSelector<TModule, TValue>,
+    third,
+  );
 }

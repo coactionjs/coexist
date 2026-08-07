@@ -105,6 +105,31 @@ const reactBinding: AdapterBinding = {
       read: () => value,
     };
   },
+  observeSelectedModule(app: App): AdapterObservation {
+    let module: ConformanceCounter | undefined;
+    let value = Number.NaN;
+    let renderer: ReactTestRenderer | undefined;
+
+    function View() {
+      module = useReactModule(ConformanceCounter);
+      value = useReactSelector(ConformanceCounter, (counter) => counter.count);
+      return null;
+    }
+
+    act(() => {
+      renderer = create(createElement(ReactCoexistProvider, { app }, createElement(View)));
+    });
+
+    return {
+      module: module as ConformanceCounter,
+      dispose() {
+        act(() => {
+          renderer?.unmount();
+        });
+      },
+      read: () => value,
+    };
+  },
   readWithoutApp() {
     act(() => {
       create(createElement(ReactViewWithoutProvider));
@@ -176,6 +201,28 @@ const vueBinding: AdapterBinding = {
       read: () => value?.value ?? Number.NaN,
     };
   },
+  observeSelectedModule(app: App): AdapterObservation {
+    const vueApp = createSSRApp({ render: () => null });
+    vueApp.use(vueCoexistPlugin(app));
+    const scope = effectScope();
+    let module: ConformanceCounter | undefined;
+    let value: Readonly<Ref<number>> | undefined;
+
+    scope.run(() => {
+      vueApp.runWithContext(() => {
+        module = useVueModule(ConformanceCounter);
+        value = useVueComputed(ConformanceCounter, (counter) => counter.count);
+      });
+    });
+
+    return {
+      module: module as ConformanceCounter,
+      dispose() {
+        scope.stop();
+      },
+      read: () => value?.value ?? Number.NaN,
+    };
+  },
   readWithoutApp() {
     const vueApp = createSSRApp({ render: () => null });
     return vueApp.runWithContext(() => useVueModule(ConformanceCounter));
@@ -215,6 +262,40 @@ const solidBinding: AdapterBinding = {
   name: "solid",
   missingAppMessage: "Missing Solid CoexistProvider.",
   observe(app: App): AdapterObservation {
+    let dispose: (() => void) | undefined;
+    let module: ConformanceCounter | undefined;
+    let value: Accessor<number> | undefined;
+
+    createRoot((disposeRoot) => {
+      dispose = disposeRoot;
+      SolidCoexistProvider({
+        app,
+        get children() {
+          const owner = getOwner();
+
+          if (owner === null) {
+            throw new Error("Missing Solid owner.");
+          }
+
+          runWithOwner(owner, () => {
+            module = useSolidModule(ConformanceCounter);
+            value = useSolidComputed(ConformanceCounter, (counter) => counter.count);
+          });
+
+          return undefined;
+        },
+      });
+    });
+
+    return {
+      module: module as ConformanceCounter,
+      dispose() {
+        dispose?.();
+      },
+      read: () => value?.() ?? Number.NaN,
+    };
+  },
+  observeSelectedModule(app: App): AdapterObservation {
     let dispose: (() => void) | undefined;
     let module: ConformanceCounter | undefined;
     let value: Accessor<number> | undefined;
@@ -324,6 +405,22 @@ const svelteBinding: AdapterBinding = {
       read: () => value,
     };
   },
+  observeSelectedModule(app: App): AdapterObservation {
+    const module = get(svelteModuleStore(ConformanceCounter, app));
+    const store = selectedSvelteModuleStore(ConformanceCounter, (counter) => counter.count, {
+      app,
+    });
+    let value = Number.NaN;
+    const unsubscribe = store.subscribe((next) => {
+      value = next;
+    });
+
+    return {
+      module,
+      dispose: unsubscribe,
+      read: () => value,
+    };
+  },
   readWithoutApp() {
     clearCoexistApp();
     return get(svelteModuleStore(ConformanceCounter));
@@ -355,6 +452,27 @@ const angularBinding: AdapterBinding = {
   // requires that resolution fails loudly rather than yielding undefined.
   missingAppMessage: "No provider found for `InjectionToken Coexist App`",
   observe(app: App): AdapterObservation {
+    const injector = createEnvironmentInjector(
+      [provideAngularCoexist(app)],
+      null as unknown as EnvironmentInjector,
+    );
+    let module: ConformanceCounter | undefined;
+    let value: Signal<number> | undefined;
+
+    runInInjectionContext(injector, () => {
+      module = injectAngularModule(ConformanceCounter);
+      value = injectAngularSignal(ConformanceCounter, (counter) => counter.count);
+    });
+
+    return {
+      module: module as ConformanceCounter,
+      dispose() {
+        injector.destroy();
+      },
+      read: () => value?.() ?? Number.NaN,
+    };
+  },
+  observeSelectedModule(app: App): AdapterObservation {
     const injector = createEnvironmentInjector(
       [provideAngularCoexist(app)],
       null as unknown as EnvironmentInjector,
