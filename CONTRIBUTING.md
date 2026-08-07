@@ -125,4 +125,6 @@ What the packages do and do not defend against is documented where the code live
 3. Run `pnpm run check`.
 4. Open a PR with a clear description of the motivation and approach.
 
+CI runs as several jobs whose names carry their Node version and suite, and a final `CI` job that passes only when all of them did. **`CI` is the only status check branch protection should require** — the jobs behind it are free to split or be renamed without anyone editing the protected-branch configuration, and a required check that stops reporting blocks every pull request indefinitely.
+
 By contributing, you agree that your contributions are licensed under the [MIT License](./LICENSE).

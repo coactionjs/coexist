@@ -429,3 +429,42 @@ jobs:
 
       - name: Smoke publish dry run
         run: pnpm run test:publish-dry-run
+
+  # One status check for branch protection to require. Job names carry their
+  # Node version and their suite, so every split, rename, or added framework
+  # would otherwise mean editing the protected-branch configuration — and a
+  # required check that no longer reports blocks every pull request forever.
+  # This job's name is the contract; the jobs behind it are free to change.
+  ci:
+    name: CI
+    if: always()
+    needs:
+      - checks
+      - packaging
+      - browser-react
+      - browser-vue
+      - browser-svelte
+      - browser-solid
+      - browser-angular
+      - browser-plugins
+      - browser-worker
+      - release-checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Verify every job succeeded
+        shell: bash
+        env:
+          # `always()` also runs this job when a dependency was skipped, which
+          # is the normal case for release checks on a pull request.
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          set -euo pipefail
+          echo "Job results: ${RESULTS}"
+          for result in ${RESULTS}; do
+            if [ "${result}" != "success" ] && [ "${result}" != "skipped" ]; then
+              echo "::error::A required CI job reported '${result}'."
+              exit 1
+            fi
+          done
+          echo "All required CI jobs succeeded."
