@@ -19,13 +19,25 @@ const publishablePackages = sortPackages(await readWorkspacePackages());
 const published = [];
 const skipped = [];
 
+// Publishing is a loop of independent `npm publish` calls with no transaction
+// behind it, so the first failure leaves every package after it unpublished —
+// a release that is half on npm and half not, with the adapters pinned to a
+// core version that never shipped. That is not hypothetical: a release died on
+// a version number that had been unpublished (npm never lets one be reused),
+// and the three packages ahead of it in dependency order went out alone.
+//
+// Every predictable reason a publish would be rejected is knowable before the
+// first one runs, so check them all first and refuse the whole release rather
+// than discover the problem a third of the way through it.
+const plan = await planRelease(publishablePackages);
+
 await rm(publishDir, { force: true, recursive: true });
 await mkdir(publishDir, { recursive: true });
 
 try {
   for (const pkg of publishablePackages) {
     const spec = `${pkg.name}@${pkg.version}`;
-    if (await isPublished(spec)) {
+    if (plan.get(spec) === "published") {
       skipped.push(spec);
       console.log(`${spec} already exists on npm; skipping.`);
       continue;
@@ -50,6 +62,19 @@ try {
   if (skipped.length > 0) {
     console.log(`Skipped ${skipped.length} already-published package(s).`);
   }
+} catch (error) {
+  // The pre-flight removes the predictable failures, not network or auth ones.
+  // npm has no rollback, so name what did go out — otherwise the operator has
+  // to reconstruct a partly-released state from the registry by hand.
+  if (published.length > 0) {
+    console.error(
+      `Release stopped after publishing ${published.length} package(s): ${published.join(", ")}. ` +
+        `The remaining packages were not published. Re-run once the cause is fixed; the ` +
+        `packages above are skipped as already published.`,
+    );
+  }
+
+  throw error;
 } finally {
   // The staging directory is scratch space for this run. Leaving it behind
   // makes the publish dry-run smoke refuse to start, and its tarballs match
@@ -153,22 +178,82 @@ function sortPackages(workspacePackages) {
   return sorted;
 }
 
-async function isPublished(spec) {
-  const result = await run("npm", ["view", spec, "version", "--registry", registry], {
+/**
+ * Classifies every package as `new`, `published`, or `burned` before anything
+ * is sent, and refuses the release if any is `burned`.
+ *
+ * A version npm has ever held is recorded in the packument's `time` map for
+ * good, while `versions` lists only what is still installable. A version in
+ * `time` but not in `versions` was unpublished, and npm rejects republishing it
+ * — permanently. Publishing into that is the one failure that cannot be
+ * retried, so it must not be discovered mid-loop.
+ */
+async function planRelease(packages) {
+  const classified = new Map();
+  const burned = [];
+
+  for (const pkg of packages) {
+    const spec = `${pkg.name}@${pkg.version}`;
+    const registryVersions = await readRegistryVersions(pkg.name);
+
+    if (registryVersions.available.has(pkg.version)) {
+      classified.set(spec, "published");
+      continue;
+    }
+
+    if (registryVersions.everPublished.has(pkg.version)) {
+      classified.set(spec, "burned");
+      burned.push(spec);
+      continue;
+    }
+
+    classified.set(spec, "new");
+  }
+
+  if (burned.length > 0) {
+    throw new Error(
+      `${burned.length} version(s) were published and then unpublished, and npm will not accept ` +
+        `them again: ${burned.join(", ")}. Nothing was published. Bump each to a version npm has ` +
+        `never held — and keep every package on that same version, which ` +
+        `\`pnpm run test:docs-versions\` checks.`,
+    );
+  }
+
+  return classified;
+}
+
+async function readRegistryVersions(name) {
+  const result = await run("npm", ["view", name, "time", "--json", "--registry", registry], {
     capture: true,
     allowFailure: true,
   });
 
-  if (result.code === 0) {
-    return result.stdout.trim().length > 0;
+  if (result.code !== 0) {
+    const output = `${result.stdout}\n${result.stderr}`;
+
+    if (/E404|404 Not Found|No match found|not found/i.test(output)) {
+      return { available: new Set(), everPublished: new Set() };
+    }
+
+    throw new Error(`Failed to check ${name} on npm:\n${output.trim()}`);
   }
 
-  const output = `${result.stdout}\n${result.stderr}`;
-  if (/E404|404 Not Found|No match found|not found/i.test(output)) {
-    return false;
-  }
+  const time = JSON.parse(result.stdout.trim() || "{}");
+  // `created` and `modified` are packument metadata, not releases.
+  const everPublished = new Set(
+    Object.keys(time).filter((key) => key !== "created" && key !== "modified"),
+  );
+  const versions = await run("npm", ["view", name, "versions", "--json", "--registry", registry], {
+    capture: true,
+    allowFailure: true,
+  });
+  const parsed = versions.code === 0 ? JSON.parse(versions.stdout.trim() || "[]") : [];
 
-  throw new Error(`Failed to check ${spec} on npm:\n${output.trim()}`);
+  return {
+    // A package with exactly one version prints it as a bare string, not an array.
+    available: new Set(Array.isArray(parsed) ? parsed : [parsed]),
+    everPublished,
+  };
 }
 
 async function packPackage(pkg) {
