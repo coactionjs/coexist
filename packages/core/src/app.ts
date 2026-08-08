@@ -36,7 +36,22 @@ import type {
 } from "./types.js";
 
 export interface EngineOptions {
+  /**
+   * Generate patches for each committed change. A plugin declaring `onPatch`
+   * turns this on by itself unless the option is set explicitly.
+   */
   readonly patches?: boolean;
+  /**
+   * Handed to the underlying Coaction store untouched.
+   *
+   * `unknown` is the type on purpose. The runtime never reads this value — it
+   * forwards it — so the shape that belongs here is Coaction's contract, not
+   * Coexist's. Naming Coaction's transport type would put an external package's
+   * type inside this one's public API, which is the coupling `AppStore` exists
+   * to avoid; a cast at the call site keeps that dependency where it belongs.
+   * Prefer the [worker runtime](../../../docs/worker-runtime.md), which is a
+   * supported Coexist API, over reaching for this.
+   */
   readonly transport?: unknown;
 }
 
