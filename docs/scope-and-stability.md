@@ -1,6 +1,6 @@
 # Scope and Stability
 
-What Coexist covers, how mature each part is, and what a `0.x` version number promises. Everything below describes the current release line; it is updated with the code, not aspirationally.
+What Coexist covers, how mature each part is, and what a `1.x` version number promises. Everything below describes the current release line; it is updated with the code, not aspirationally.
 
 ## Maturity by area
 
@@ -56,25 +56,32 @@ Versions between the floor and the newest are not individually built. A break re
 
 ### Core and adapters
 
-`@coexist/core` is a **peer dependency** of every adapter and plugin, so an application shares exactly one runtime copy. All `@coexist/*` packages are released together at the same version, and an adapter's peer range is `^<its own version>`. Mixing an adapter with a core from a different minor is expected to work within a `0.x` line but is not tested; keep them in step.
+`@coexist/core` is a **peer dependency** of every adapter and plugin, so an application shares exactly one runtime copy. All `@coexist/*` packages are released together at the same version, and an adapter's peer range is `^<that shared version>`. Mixing an adapter with a core from a different minor of the same major is expected to work but is not tested; keep them in step.
+
+Lockstep is enforced, not just intended: `test:docs-versions` fails when the published packages do not all carry one version, and `publish:packages` refuses the whole release — before sending anything — if any version is one npm has already held. Both checks exist because the invariant broke in practice, and the failure mode was a release that went out half-published with adapters pointing at a core version that never shipped.
 
 ## Versioning
 
-Coexist is pre-1.0 and follows semver as npm interprets it for `0.x`: **a minor bump may contain a breaking change**, a patch never intentionally does.
+Coexist is `1.x` and follows semver as npm interprets it: **a major bump may break, a minor and a patch never intentionally do.** That is a stronger promise than the `0.x` line it replaces, where a minor was allowed to break.
 
-- Every package's public surface is committed under [`api-report/`](../api-report) and verified in CI, so a signature cannot change without the change appearing in a reviewable diff.
+- Every package's public surface is committed under [`api-report/`](../api-report) and verified in CI, so a signature cannot change without the change appearing in a reviewable diff. That report is what the promise is measured against.
 - Every user-facing change ships with a [changeset](../CONTRIBUTING.md#changesets-and-releases) stating its bump and the reason.
 - Breaking changes are described in the changeset in terms of what breaks and what to do about it — not just what changed.
 - Deprecations, where practical, keep the old path working for one minor with a runtime warning before removal.
 
 There is no LTS branch. Security fixes land on the newest release line only.
 
-### Open decisions before 1.0
+Two exclusions are named rather than implied, because a promise with silent holes is worse than a narrower one:
 
-Two behaviours become compatibility promises the moment `1.0` ships, so they are decisions rather than backlog items:
+- **The worker wire protocol**, [below](#the-worker-protocol-is-outside-the-compatibility-promise).
+- **Maturity is not the same as the semver line.** The table at the top describes how much of a surface is finished and supported; `1.x` describes what may change without a major. A **Beta** area still gets the compatibility promise for its exported API — `@coexist/create`'s generated template is not an API surface, so it may change between minors — while the worker protocol is excluded explicitly and by name.
 
-- **The invalidation model.** One publication signal for the whole app tree. [The options and their costs](./state-and-reactivity.md#why-it-is-one-signal-and-what-would-change-it) are written down and measurable with `pnpm run bench`.
-- **The worker protocol's stability**, below.
+### Decisions this release line locks in
+
+These were open questions before `1.0`. They are settled, and changing either now requires a major:
+
+- **The invalidation model** — one publication signal for the whole app tree. Decided to keep, on the measured cost in [State & Reactivity](./state-and-reactivity.md#why-it-is-one-signal-and-what-it-would-take-to-change-it). An opt-in fine-grained mode remains additive and could still land in a minor.
+- **The worker protocol's stability** — decided to exclude from the promise, [below](#the-worker-protocol-is-outside-the-compatibility-promise).
 
 ### The worker protocol is outside the compatibility promise
 

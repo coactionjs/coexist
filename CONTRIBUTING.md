@@ -108,7 +108,7 @@ Releasing is automated but maintainer-triggered at both ends:
 
 You generally only need to add a changeset; a maintainer drives steps 1 and 3.
 
-Which bump to pick is described in [Scope & Stability](./docs/scope-and-stability.md#versioning): pre-1.0, a minor may break, a patch may not.
+Which bump to pick is described in [Scope & Stability](./docs/scope-and-stability.md#versioning): on the `1.x` line, only a major may break — a minor and a patch may not.
 
 ## Dependencies
 

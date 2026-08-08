@@ -55,7 +55,7 @@ The DI container does not use `reflect-metadata` or `emitDecoratorMetadata`, doe
 
 ### One observable store
 
-All module state lives in a single Coaction store, keyed by module name. App-level patches, persistence, devtools, and selectors all operate over the whole app at once. One store means one invalidation signal, so selector cost scales with the number of selectors rather than the size of a change — a measured trade-off with a documented decision path in [State & Reactivity](./state-and-reactivity.md#why-it-is-one-signal-and-what-would-change-it), to be settled before `1.0` freezes the behaviour.
+All module state lives in a single Coaction store, keyed by module name. App-level patches, persistence, devtools, and selectors all operate over the whole app at once. One store means one invalidation signal, so selector cost scales with the number of selectors rather than the size of a change — a measured trade-off, weighed against the alternatives and [settled for the `1.x` line](./state-and-reactivity.md#why-it-is-one-signal-and-what-it-would-take-to-change-it) on the numbers `pnpm run bench` produces.
 
 ### Single composition entry
 
