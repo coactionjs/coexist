@@ -19,10 +19,5 @@
     "target": "ES2022",
     "types": ["node"]
   },
-  "include": [
-    "lib/**/*.ts",
-    "check-steps-sync-smoke.ts",
-    "fix-changelogs.mjs",
-    "publish-packages.mjs"
-  ]
+  "include": ["lib/**/*.ts", "check-steps-sync-smoke.ts", "publish-packages.mjs"]
 }

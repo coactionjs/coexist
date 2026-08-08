@@ -32,7 +32,7 @@ This is a [pnpm workspace](https://pnpm.io/workspaces) monorepo with strict, cat
 | [Oxlint](https://oxc.rs/) + Oxfmt | Fast linting and formatting.                       |
 | [Vitest](https://vitest.dev/)     | Unit tests with V8 coverage.                       |
 | [tsdown](https://tsdown.dev/)     | Library builds powered by Rolldown.                |
-| Changesets                        | Versioning and changelog generation.               |
+| Changesets                        | Versioning and release-note authoring.             |
 | Commitizen / cz-git / commitlint  | Conventional commit authoring and validation.      |
 | Husky + lint-staged               | Pre-commit formatting/linting and commit-msg lint. |
 
@@ -103,8 +103,8 @@ pnpm changeset
 Releasing is automated but maintainer-triggered at both ends:
 
 1. Merged changesets are collected into a version PR by the `Version Packages` workflow, which a maintainer dispatches manually.
-2. Merging that PR updates versions and changelogs on `main`. It does **not** publish.
-3. A maintainer publishes by pushing the matching `v*` tag (or dispatching `Publish Packages`). The workflow refuses to run while any changeset is still pending, then verifies the repo before publishing with npm Trusted Publisher OIDC.
+2. Merging that PR updates versions on `main`. It does **not** publish, and it does not write per-package changelogs — the changeset text is the release note, and `changelog: false` keeps thirteen near-identical `CHANGELOG.md` files from being regenerated on every lockstep bump.
+3. A maintainer publishes by pushing the matching `v*` tag (or dispatching `Publish Packages`). The workflow **fails** while any changeset is still pending — rather than skipping its steps and reporting success — then verifies the repo before publishing with npm Trusted Publisher OIDC.
 
 You generally only need to add a changeset; a maintainer drives steps 1 and 3.
 

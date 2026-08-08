@@ -84,7 +84,7 @@
     "test:worker:state-conflict-install": "tsx scripts/installed-worker-state-conflict-smoke.ts",
     "typecheck": "turbo run typecheck",
     "typecheck:scripts": "tsc -p scripts/tsconfig.json",
-    "version-packages": "changeset version && node scripts/fix-changelogs.mjs"
+    "version-packages": "changeset version"
   },
   "devDependencies": {
     "@changesets/cli": "catalog:",
