@@ -121,7 +121,7 @@ Cost tracks the number of selectors, not the size of the change: every selector 
 
 The benchmark also contrasts worker sync modes on the same state: a 1,000-item snapshot is ~30 KB, while the patch for renaming one item is under 100 bytes. Prefer `sync: "patch"` for anything but small state.
 
-### Why it is one signal, and what would change it
+### Why it is one signal, and what it would take to change it
 
 Publishing one signal for the whole tree is not an implementation shortcut — it is what buys three properties the rest of the design leans on:
 
@@ -129,16 +129,20 @@ Publishing one signal for the whole tree is not an implementation shortcut — i
 - **Adapters stay uniform.** Every adapter subscribes to one thing. A finer model means adapters must decide _which_ signals a selector depends on, which for React (no tracking during render) means a dependency-collection pass the other four would not need.
 - **Plugins see the whole app.** Persistence, devtools, and worker publication all operate on the complete tree; `onStateChange` and `onPatch` have one coherent meaning.
 
-Before `1.0` fixes this behaviour, the alternatives worth weighing are:
+**This was decided before `1.0`, and the decision was to keep it.** One publication signal for the whole tree is the behaviour `1.0` promises, not an unsettled default that happened to ship. These were the alternatives weighed:
 
-| Option                       | What it buys                                 | What it costs                                                                                                                   |
-| ---------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| Keep one signal              | Today's atomicity and uniformity             | Selector cost scales with selector count                                                                                        |
-| Per-module publication token | Only observers of a changed module re-run    | Cross-module atomicity needs an explicit multi-token transaction; adapters must map a selector to its tokens                    |
-| Selector dependency tracking | Precise invalidation without user annotation | Every selector runs inside a tracking scope; React's render-time reads are not trackable, so its adapter needs a different path |
-| Opt-in fine mode per app     | Existing apps unchanged, large apps opt in   | Two invalidation models to maintain and test, and plugins must work under both                                                  |
+| Option                         | What it buys                                 | What it costs                                                                                                                   |
+| ------------------------------ | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| **Keep one signal** — _chosen_ | Today's atomicity and uniformity             | Selector cost scales with selector count                                                                                        |
+| Per-module publication token   | Only observers of a changed module re-run    | Cross-module atomicity needs an explicit multi-token transaction; adapters must map a selector to its tokens                    |
+| Selector dependency tracking   | Precise invalidation without user annotation | Every selector runs inside a tracking scope; React's render-time reads are not trackable, so its adapter needs a different path |
+| Opt-in fine mode per app       | Existing apps unchanged, large apps opt in   | Two invalidation models to maintain and test, and plugins must work under both                                                  |
 
-The measured numbers say this is not urgent: an app with a thousand live selectors spends under a tenth of a millisecond per action. It becomes a real decision somewhere past ten thousand. What must not happen is reaching `1.0` without deciding, because the current behaviour then becomes a compatibility promise. Re-run `pnpm run bench` before arguing either way.
+The measured numbers carried the decision: an app with a thousand live selectors spends under a tenth of a millisecond per action, which is not a cost worth paying two invalidation models to avoid. The three properties above — atomic cross-module commits, uniform adapters, whole-app plugins — are load-bearing for the rest of the design, and every alternative gives up at least one of them.
+
+What would reopen it is evidence, not preference: an app past roughly ten thousand live selectors where `pnpm run bench` shows per-action cost becoming visible in a frame budget. Because the current behaviour is now a compatibility promise, moving to any of the other rows is a major-version change — with one exception. Adding an **opt-in** fine mode is additive, so it could land in a minor: apps that never enable it keep exactly today's semantics. That is the path a future change would most likely take, and the reason the row is kept here rather than deleted.
+
+Re-run `pnpm run bench` before arguing either way.
 
 ## Actions and transactions
 
