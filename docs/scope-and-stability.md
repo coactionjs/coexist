@@ -76,11 +76,24 @@ Two behaviours become compatibility promises the moment `1.0` ships, so they are
 - **The invalidation model.** One publication signal for the whole app tree. [The options and their costs](./state-and-reactivity.md#why-it-is-one-signal-and-what-would-change-it) are written down and measurable with `pnpm run bench`.
 - **The worker protocol's stability**, below.
 
-### The worker protocol
+### The worker protocol is outside the compatibility promise
 
-The wire protocol between `createWorkerApp` and `createWorkerClient` is **not** a stable public contract while the worker runtime is beta. Both endpoints are expected to come from the same `@coexist/core` version; a protocol change is a minor bump, not a major. Do not implement a third-party peer against it yet.
+`@coexist/core` is `1.x`, but the worker runtime inside it is beta, and the two cannot honestly make the same promise. So the exclusion is stated rather than left implied:
 
-That expectation is now enforced rather than assumed. The host stamps `workerProtocolVersion` on its `ready` handshake, and a client that sees a different revision rejects `client.ready` with `WorkerProtocolMismatchError` instead of mirroring frames it may misread. A host with no version in its handshake predates versioning and is accepted.
+> The wire protocol between `createWorkerApp` and `createWorkerClient` is **not** covered by this package's compatibility promise, and may change in any minor release. Everything else `@coexist/core` exports is covered.
+
+Being explicit is the point. "A protocol change is a minor bump, not a major" was coherent under `0.x`, where a minor was allowed to break. Under `1.x` it would contradict itself, because a minor may not break anything the package stands behind. Naming the exclusion keeps `1.0` meaning exactly what it says everywhere else.
+
+| Surface                                                                          | Covered by `1.x`? |
+| -------------------------------------------------------------------------------- | ----------------- |
+| `createWorkerApp` / `createWorkerClient` signatures, options, and returned types | Yes               |
+| `WorkerClient` members and their documented behaviour                            | Yes               |
+| The frames exchanged on the wire between a host and a client                     | **No**            |
+| `workerProtocolVersion` and the member shapes of `WorkerMessage`                 | **No**            |
+
+Build against the worker **API** freely — it is ordinary `1.x` API, held to the same report and the same deprecation cycle. Do not implement a third-party host or client against the **frames**, and do not persist or bridge them, until the runtime leaves beta.
+
+Both endpoints must come from the same `@coexist/core` version, and that is enforced rather than assumed. The host stamps `workerProtocolVersion` on its `ready` handshake, and a client that sees a different revision rejects `client.ready` with `WorkerProtocolMismatchError` instead of mirroring frames it may misread. A host with no version in its handshake predates versioning and is accepted.
 
 ## What is deliberately out of scope
 
