@@ -111,7 +111,7 @@ function CounterView() {
 }
 ```
 
-`useComputed` returns a Solid `Accessor<T>` — call it (`count()`).
+`useComputed` returns a Solid `Accessor<T>` — call it (`count()`). `useSelector` is the same function under the name the other adapters use, so code moving between adapters does not have to learn which one Solid chose.
 
 ## Angular — [`@coexist/angular`](../packages/angular/README.md)
 
@@ -139,7 +139,7 @@ bootstrapApplication(CounterView, { providers: [provideCoexist(app)] });
 | Vue            | `coexistPlugin` / `provideCoexist`    | `useModule`    | `useSelector` / `useComputed` | `Readonly<Ref<T>>`          |
 | Svelte         | `setCoexistApp` / `setCoexistContext` | `moduleStore`  | `selectedModuleStore`         | `Readable<T>`               |
 | Svelte 5 runes | (same)                                | `moduleRune`   | `selectedModuleRune`          | `{ current, value, get() }` |
-| Solid          | `<CoexistProvider app>`               | `useModule`    | `useComputed`                 | `Accessor<T>`               |
+| Solid          | `<CoexistProvider app>`               | `useModule`    | `useComputed` / `useSelector` | `Accessor<T>`               |
 | Angular        | `provideCoexist`                      | `injectModule` | `injectSignal`                | `Signal<T>`                 |
 
 ## Consuming worker-hosted state

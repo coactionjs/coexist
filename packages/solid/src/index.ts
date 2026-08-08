@@ -145,3 +145,29 @@ export function useComputed<TModule, TValue>(
 
   return value;
 }
+
+/**
+ * `useComputed` under the name every other adapter uses for app state.
+ *
+ * Solid was the one adapter where the app selector and the worker selector
+ * disagreed: worker state could be read as `useWorkerSelector` *or*
+ * `useWorkerComputed`, while app state was `useComputed` only. Someone moving
+ * between adapters — the thing this project is for — reached for `useSelector`
+ * and found it missing on exactly one of the five.
+ */
+export function useSelector<T>(
+  selector: AppSelector<T>,
+  options?: UseComputedOptions<T>,
+): Accessor<T>;
+export function useSelector<TModule, TValue>(
+  token: InjectionToken<TModule>,
+  selector: ModuleSelector<TModule, TValue>,
+  options?: UseComputedOptions<TValue>,
+): Accessor<TValue>;
+export function useSelector<TModule, TValue>(
+  first: AppSelector<TValue> | InjectionToken<TModule>,
+  second?: ModuleSelector<TModule, TValue> | UseComputedOptions<TValue>,
+  third?: UseComputedOptions<TValue>,
+): Accessor<TValue> {
+  return (useComputed as (...args: readonly unknown[]) => Accessor<TValue>)(first, second, third);
+}

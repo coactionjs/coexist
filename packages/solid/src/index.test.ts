@@ -16,6 +16,7 @@ import {
   useApp,
   useComputed,
   useModule,
+  useSelector,
   useWorkerModule,
   useWorkerSelector,
 } from "./index.js";
@@ -67,6 +68,47 @@ describe("Solid adapter", () => {
             counter.increase(2);
 
             expect(double()).toBe(4);
+            verified = true;
+          });
+
+          return undefined;
+        },
+      });
+
+      dispose();
+    });
+
+    expect(verified).toBe(true);
+  });
+
+  it("exposes useSelector as the useComputed name the other adapters share", () => {
+    const app = createApp({
+      providers: [Counter],
+    });
+    let verified = false;
+
+    createRoot((dispose) => {
+      CoexistProvider({
+        app,
+        get children() {
+          const owner = getOwner();
+
+          if (owner === null) {
+            throw new Error("Missing Solid owner.");
+          }
+
+          runWithOwner(owner, () => {
+            const counter = useModule(Counter);
+            const moduleForm = useSelector(Counter, (module) => module.count);
+            const appForm = useSelector((currentApp) => currentApp.getModule(Counter).double);
+
+            expect(moduleForm()).toBe(0);
+            expect(appForm()).toBe(0);
+
+            counter.increase(3);
+
+            expect(moduleForm()).toBe(3);
+            expect(appForm()).toBe(6);
             verified = true;
           });
 

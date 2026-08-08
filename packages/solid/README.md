@@ -41,6 +41,7 @@ function CounterView() {
 | `useModule(token)`              | `T`                | The bound module facade. No subscription. |
 | `useComputed(fn, opts?)`        | `Accessor<T>`      | Signal for `fn(app)`.                     |
 | `useComputed(token, fn, opts?)` | `Accessor<TValue>` | Signal for `fn(module, app)`.             |
+| `useSelector(...)`              | `Accessor<T>`      | Alias of `useComputed`, both forms.       |
 
 `useModule` resolves the module and nothing else — it creates no signal, and a facade read inside a tracking scope is not tracked by Solid. Reading state off it (`useModule(Counter).count`) renders correctly once and then goes stale, silently. Call actions through the facade; render state through `useComputed`.
 
@@ -78,7 +79,7 @@ function WorkerCounterView() {
 
 ## Exports
 
-`CoexistProvider`, `WorkerClientProvider`, the `CoexistContext` / `WorkerClientContext` contexts, `useApp`, `useModule`, `useComputed`, `useWorkerClient`, `useWorkerModule`, `useWorkerComputed`, `useWorkerSelector`, and the `CoexistProviderProps`, `WorkerClientProviderProps`, `UseComputedOptions`, `AppSelector`, `ModuleSelector` types. Hooks throw a `CoexistError` when the matching provider is missing.
+`CoexistProvider`, `WorkerClientProvider`, the `CoexistContext` / `WorkerClientContext` contexts, `useApp`, `useModule`, `useComputed`, `useSelector`, `useWorkerClient`, `useWorkerModule`, `useWorkerComputed`, `useWorkerSelector`, and the `CoexistProviderProps`, `WorkerClientProviderProps`, `UseComputedOptions`, `AppSelector`, `ModuleSelector` types. Hooks throw a `CoexistError` when the matching provider is missing.
 
 ## License
 

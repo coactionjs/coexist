@@ -20,6 +20,8 @@ interface UseComputedOptions<T> {
     readonly equals?: (value: T, previous: T) => boolean;
 }
 declare function useModule<T>(token: InjectionToken<T>): T;
+declare function useSelector<T>(selector: AppSelector<T>, options?: UseComputedOptions<T>): Accessor<T>;
+declare function useSelector<TModule, TValue>(token: InjectionToken<TModule>, selector: ModuleSelector<TModule, TValue>, options?: UseComputedOptions<TValue>): Accessor<TValue>;
 declare function useWorkerClient(): WorkerClient;
 declare function useWorkerComputed<T>(selector: WorkerStateSelector<T>, options?: UseComputedOptions<T>): Accessor<T>;
 declare function useWorkerModule<T extends object>(name: string): AsyncMethodProxy<T>;
