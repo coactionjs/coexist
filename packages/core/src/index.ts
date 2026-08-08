@@ -132,7 +132,11 @@ export type {
   InjectionToken,
   Provider,
   ProviderInput,
-  ResolvedDeps as ResolvedDependencyTuple,
+  // `ResolvedDeps` is exported from `./provider.js` above. It was also aliased
+  // here as `ResolvedDependencyTuple`, so one type reached consumers under two
+  // names — both of which `1.x` would then have to keep. The type is named
+  // `ResolvedDeps` where it is declared and in every signature that uses it,
+  // so that is the name kept.
   Scope,
   ScopeOptions,
   Token,

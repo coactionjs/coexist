@@ -375,9 +375,6 @@ type ProviderInput = Constructor<any> | Provider<any, readonly DependencySpec<an
 type ResolvedDeps<TDeps extends readonly DependencySpec[]> = {
     [Index in keyof TDeps]: DependencyValue<TDeps[Index]>;
 };
-type ResolvedDeps<TDeps extends readonly DependencySpec[]> = {
-    [Index in keyof TDeps]: DependencyValue<TDeps[Index]>;
-};
 declare function runInAction<T>(module: object, callback: () => T, options?: RunInActionOptions): T;
 interface RunInActionOptions {
     readonly name?: string;
