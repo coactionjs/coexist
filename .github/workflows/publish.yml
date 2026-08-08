@@ -27,26 +27,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Detect pending changesets
-        id: changesets
+      # A pending changeset means the versions in the tree are not the versions
+      # meant to ship, so publishing has to stop. It used to stop by disabling
+      # every later step, which left the job green: pushing a release tag with
+      # a changeset still pending reported success and published nothing, and
+      # the tag looked released. Fail instead — a release that did not happen
+      # must not look like one that did.
+      - name: Refuse to publish with pending changesets
         shell: bash
         run: |
           set -euo pipefail
-          if find .changeset -maxdepth 1 -type f -name '*.md' ! -name 'README.md' | grep -q .; then
-            echo "pending=true" >> "$GITHUB_OUTPUT"
-            echo "Pending changesets found; publish waits for the version PR to merge."
-          else
-            echo "pending=false" >> "$GITHUB_OUTPUT"
+          pending="$(find .changeset -maxdepth 1 -type f -name '*.md' ! -name 'README.md')"
+          if [ -n "$pending" ]; then
+            echo "::error::Pending changesets found; run Version Packages and merge the release PR before publishing."
+            echo "$pending"
+            exit 1
           fi
 
       - name: Setup pnpm
-        if: steps.changesets.outputs.pending != 'true'
         uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
         with:
           version: 11.8.0
 
       - name: Setup Node
-        if: steps.changesets.outputs.pending != 'true'
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: 24.x
@@ -54,25 +57,20 @@ jobs:
           registry-url: https://registry.npmjs.org
 
       - name: Install pinned npm CLI
-        if: steps.changesets.outputs.pending != 'true'
         run: npm install -g npm@${{ env.NPM_VERSION }}
 
       - name: Install dependencies
-        if: steps.changesets.outputs.pending != 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Install Playwright browser
-        if: steps.changesets.outputs.pending != 'true'
         run: |
           pnpm exec playwright install --with-deps chromium
           echo "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=$(node -e 'const { chromium } = require(\"playwright\"); console.log(chromium.executablePath())')" >> "$GITHUB_ENV"
 
       - name: Verify
-        if: steps.changesets.outputs.pending != 'true'
         run: pnpm run ci
 
       - name: Publish to npm
-        if: steps.changesets.outputs.pending != 'true'
         run: pnpm run publish:packages
         env:
           NPM_CONFIG_PROVENANCE: true
