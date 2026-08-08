@@ -1,5 +1,5 @@
 import { createAppInternal, type MutableTestInspector } from "./app.js";
-import type { ActionEvent, CreateAppOptions, TestAppInspector } from "./app.js";
+import type { ActionEvent, App, CreateAppOptions, TestAppInspector } from "./app.js";
 import type { ProviderInput } from "./types.js";
 
 export interface TestAppOptions extends Omit<CreateAppOptions, "providers"> {
@@ -9,7 +9,18 @@ export interface TestAppOptions extends Omit<CreateAppOptions, "providers"> {
   readonly strictActions?: boolean;
 }
 
-export interface TestApp extends ReturnType<typeof createAppInternal> {
+/**
+ * `App` plus the inspector, written as `App` rather than as the return type of
+ * the internal factory that builds it.
+ *
+ * `extends ReturnType<typeof createAppInternal>` resolved to the same thing,
+ * but it made the declaration reference `createAppInternal` — so the emitted
+ * `.d.ts` had to declare that function, and `InternalCreateAppOptions` and
+ * `MutableTestInspector` behind it, none of which the package exports. A
+ * consumer's type resolution then depended on the shape of internals, and
+ * changing an internal option changed the published declarations.
+ */
+export interface TestApp extends App {
   readonly test: TestAppInspector;
 }
 

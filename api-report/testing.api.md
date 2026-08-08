@@ -13,7 +13,7 @@ interface ManualTestAppOptions extends Omit<TestAppOptions, "autoStart"> {
 }
 declare function testApp(options: AutoStartedTestAppOptions): Promise<TestApp>;
 declare function testApp(options?: ManualTestAppOptions): TestApp;
-interface TestApp extends ReturnType<typeof createAppInternal> {
+interface TestApp extends App {
     readonly test: TestAppInspector;
 }
 interface TestAppOptions extends Omit<CreateAppOptions, "providers"> {
