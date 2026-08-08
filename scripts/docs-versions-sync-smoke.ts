@@ -28,6 +28,7 @@ const documentedRanges = new Map(
 );
 
 const dirs = await readdir(packagesDir);
+const releaseVersions = new Map();
 let comparedRanges = 0;
 let comparedEngines = 0;
 
@@ -38,6 +39,8 @@ for (const dir of dirs) {
   if (manifest === undefined || manifest.private === true) {
     continue;
   }
+
+  releaseVersions.set(manifest.name, manifest.version);
 
   const frameworkPeers = Object.entries(manifest.peerDependencies ?? {}).filter(
     ([name]) => !name.startsWith("@coexist/"),
@@ -86,6 +89,31 @@ if (!doc.includes(`\`${nodeFloor}\``)) {
   );
 }
 
+// "All `@coexist/*` packages are released together at the same version" was
+// prose that nothing checked, and it broke twice: once when a peer-dependency
+// changeset carried nine packages to 1.0.0 while core stayed at 0.3.0, and
+// again when a hand-written lockstep bump missed `@coexist/devtools`. Both
+// times the publish script's skip-if-published branch would have reported
+// success while leaving a package behind on an incompatible peer range, which
+// is the failure this assertion exists to make loud.
+const distinctVersions = new Set(releaseVersions.values());
+
+if (distinctVersions.size > 1) {
+  const grouped = [...distinctVersions].toSorted().map((version) => {
+    const names = [...releaseVersions]
+      .filter(([, value]) => value === version)
+      .map(([name]) => name)
+      .toSorted();
+
+    return `${version} (${names.join(", ")})`;
+  });
+
+  problems.push(
+    `Published packages must share one version, but ${distinctVersions.size} are in use: ` +
+      `${grouped.join("; ")}.`,
+  );
+}
+
 if (problems.length > 0) {
   for (const problem of problems) {
     console.error(problem);
@@ -105,6 +133,6 @@ async function readManifest(path) {
 }
 
 console.log(
-  `Verified ${comparedRanges} documented peer range(s) and ${comparedEngines} engines field(s) ` +
-    `against the manifests.`,
+  `Verified ${comparedRanges} documented peer range(s), ${comparedEngines} engines field(s), and ` +
+    `${releaseVersions.size} package(s) sharing version ${[...distinctVersions][0]}.`,
 );
