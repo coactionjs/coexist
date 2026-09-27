@@ -1,8 +1,8 @@
 import { createReactiveTracker } from "coaction/adapter";
 
 /**
- * Bookkeeping for running module effects: their reactive trackers, their
- * teardown order, and the async runs still in flight.
+ * Bookkeeping for running module effects: their commit subscriptions or
+ * reactive trackers, teardown order, and async runs still in flight.
  *
  * `RuntimeApp` still decides what running one effect means — the managed
  * execution context, the injection scope, the error phase — but it no longer
@@ -17,6 +17,8 @@ export interface EffectRunner {
   /** Reports a failure the effect could not handle itself. */
   reportError(error: unknown, phase: string): void;
 }
+
+export type EffectSubscription = (listener: () => void) => () => void;
 
 export class EffectRuntime {
   readonly #disposers: (() => void)[] = [];
@@ -33,12 +35,12 @@ export class EffectRuntime {
   }
 
   /**
-   * Starts one effect and tracks it. A failure during the first run tears the
-   * tracker down before rethrowing, so a half-subscribed effect is never left
-   * behind.
+   * Starts one effect and subscribes to either whole-app commits or tracked
+   * paths. A failure during the first run releases the subscription before
+   * rethrowing, so a half-subscribed effect is never left behind.
    */
-  start(runner: EffectRunner): void {
-    const tracker = createReactiveTracker();
+  start(runner: EffectRunner, subscribe?: EffectSubscription): void {
+    const tracker = subscribe === undefined ? createReactiveTracker() : undefined;
     let disposed = false;
 
     const run = () => {
@@ -47,16 +49,20 @@ export class EffectRuntime {
       }
 
       try {
-        tracker.track(() => {
+        if (tracker === undefined) {
           this.#track(runner);
-        });
+        } else {
+          tracker.track(() => {
+            this.#track(runner);
+          });
+        }
       } catch (error) {
         runner.reportError(error, "effect");
         throw error;
       }
     };
 
-    const unsubscribe = tracker.subscribe(() => {
+    const unsubscribe = (subscribe ?? tracker!.subscribe.bind(tracker))(() => {
       try {
         run();
       } catch {
@@ -67,7 +73,7 @@ export class EffectRuntime {
     const dispose = () => {
       disposed = true;
       unsubscribe();
-      tracker.dispose();
+      tracker?.dispose();
     };
 
     try {

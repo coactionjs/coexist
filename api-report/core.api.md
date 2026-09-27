@@ -219,6 +219,7 @@ declare function Effect<This extends object, Args extends unknown[], Return>(_va
 interface EngineOptions {
     readonly patches?: boolean;
     readonly transport?: unknown;
+    readonly effectInvalidation?: "commit" | "path";
 }
 interface ErrorContext {
     readonly phase: string;

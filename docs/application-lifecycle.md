@@ -15,13 +15,13 @@ const app = createApp({
 });
 ```
 
-| Option       | Type                              | Description                                                   |
-| ------------ | --------------------------------- | ------------------------------------------------------------- |
-| `providers`  | `(ProviderInput \| LazyModule)[]` | Modules, plain providers, and lazy-module entries.            |
-| `plugins`    | `Plugin[]`                        | Lifecycle/observability plugins. See [Plugins](./plugins.md). |
-| `parent`     | `App \| Container`                | Parent container for hierarchical DI.                         |
-| `devOptions` | `{ strictActions?: boolean }`     | Enforce action boundaries for all writes.                     |
-| `engine`     | `{ patches?: boolean }`           | Enable patch generation on the store.                         |
+| Option       | Type                                            | Description                                                      |
+| ------------ | ----------------------------------------------- | ---------------------------------------------------------------- |
+| `providers`  | `(ProviderInput \| LazyModule)[]`               | Modules, plain providers, and lazy-module entries.               |
+| `plugins`    | `Plugin[]`                                      | Lifecycle/observability plugins. See [Plugins](./plugins.md).    |
+| `parent`     | `App \| Container`                              | Parent container for hierarchical DI.                            |
+| `devOptions` | `{ strictActions?: boolean }`                   | Enforce action boundaries for all writes.                        |
+| `engine`     | `{ patches?, transport?, effectInvalidation? }` | Configure patches, transport, and optional effect path tracking. |
 
 `createApp()` only creates the application runtime. It does not accept a root view, render function, DOM container, or framework component — rendering is always done by the host framework after the app exists.
 

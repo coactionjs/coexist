@@ -54,6 +54,11 @@ export interface EngineOptions {
    * supported Coexist API, over reaching for this.
    */
   readonly transport?: unknown;
+  /**
+   * Module effects run after every app commit by default, as they did in 1.0.
+   * Opt into Coaction 4's state-path tracking with "path".
+   */
+  readonly effectInvalidation?: "commit" | "path";
 }
 
 export interface AppDevOptions {
@@ -408,6 +413,7 @@ export function createAppInternal(options: InternalCreateAppOptions = {}): App {
     app = new RuntimeApp({
       container,
       devOptions: options.devOptions ?? {},
+      effectInvalidation: options.engine?.effectInvalidation ?? "commit",
       lazyModules,
       modules,
       ...(parentApp === undefined ? {} : { parentApp }),
@@ -666,6 +672,7 @@ class RuntimeApp implements App {
 
   readonly #container: Container;
   private readonly devOptions: AppDevOptions;
+  private readonly effectInvalidation: "commit" | "path";
   private readonly registry: ModuleRegistry<ModuleBinding>;
   private readonly pendingLazyModules: LazyModule[];
   private readonly pluginRecords: readonly PluginRecord[];
@@ -703,6 +710,7 @@ class RuntimeApp implements App {
   constructor(options: {
     readonly container: Container;
     readonly devOptions: AppDevOptions;
+    readonly effectInvalidation: "commit" | "path";
     readonly lazyModules: readonly LazyModule[];
     readonly modules: ModuleBinding[];
     readonly parentApp?: RuntimeApp;
@@ -714,6 +722,7 @@ class RuntimeApp implements App {
   }) {
     this.#container = options.container;
     this.devOptions = options.devOptions;
+    this.effectInvalidation = options.effectInvalidation;
     this.pendingLazyModules = [...options.lazyModules];
     this.registry = new ModuleRegistry(options.modules);
     this.parentApp = options.parentApp;
@@ -1879,17 +1888,20 @@ class RuntimeApp implements App {
   ): void {
     const method = getMethod(moduleBinding.instance, property);
 
-    this.effects.start({
-      reportError: (error, phase) => {
-        this.emitError(error, {
-          phase: phase === "run" ? `effect:${moduleBinding.name}.${String(property)}` : "effect",
-        });
+    this.effects.start(
+      {
+        reportError: (error, phase) => {
+          this.emitError(error, {
+            phase: phase === "run" ? `effect:${moduleBinding.name}.${String(property)}` : "effect",
+          });
+        },
+        run: () =>
+          this.runWithManagedExecution("effect", () =>
+            this.runWithAppInjectContext(() => method.call(moduleBinding.instance), container),
+          ),
       },
-      run: () =>
-        this.runWithManagedExecution("effect", () =>
-          this.runWithAppInjectContext(() => method.call(moduleBinding.instance), container),
-        ),
-    });
+      this.effectInvalidation === "commit" ? this.store.subscribe.bind(this.store) : undefined,
+    );
   }
 
   private async disposePlugins(): Promise<void> {

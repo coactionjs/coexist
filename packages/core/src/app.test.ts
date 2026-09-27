@@ -2081,7 +2081,7 @@ describe("app runtime", () => {
     expect(calls).toBe(2);
   });
 
-  it("tracks effect reads by path while computed getters still refresh on commits", async () => {
+  it("preserves per-commit effects by default and offers path-tracked effects", async () => {
     let computedCalls = 0;
     const effectValues: number[] = [];
 
@@ -2115,7 +2115,23 @@ describe("app runtime", () => {
       state: ["count", "other"],
     });
 
-    const app = createApp({ providers: [GranularityProbe] });
+    const defaultApp = createApp({ providers: [GranularityProbe] });
+    await defaultApp.ready;
+    const defaultProbe = defaultApp.getModule(GranularityProbe);
+
+    expect(effectValues).toEqual([0]);
+    defaultProbe.changeOther();
+    expect(effectValues).toEqual([0, 0]);
+    defaultProbe.changeCount();
+    expect(effectValues).toEqual([0, 0, 1]);
+    await defaultApp.dispose();
+
+    effectValues.length = 0;
+    computedCalls = 0;
+    const app = createApp({
+      engine: { effectInvalidation: "path" },
+      providers: [GranularityProbe],
+    });
     await app.ready;
     const probe = app.getModule(GranularityProbe);
 

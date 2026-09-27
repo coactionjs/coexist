@@ -80,20 +80,21 @@ Each committed store mutation is one notification source. A selector that return
 
 ## Invalidation granularity
 
-The app publishes one committed state transition to `subscribe`, `watch`, plugins, and UI adapters. Their selectors run on each commit and use equality to decide whether to notify. Coaction 4 also tracks paths read by module effects:
+The app publishes one committed state transition to `subscribe`, `watch`, plugins, UI adapters, and module effects by default. Selectors run on each commit and use equality to decide whether to notify. Coaction 4's path tracking is available for effects as an opt-in:
 
 - A **computed** getter is memoized between commits. Repeated reads with no committed change in between evaluate it once. Any committed change anywhere in the app invalidates the cache, so the next read re-evaluates even if the state the getter read is unchanged.
-- An **effect** runs after initialization, then re-runs when a state path it read on its last run changes. A write to an unrelated field does not re-run it. An effect that reads no reactive state has only its initial run.
+- An **effect** runs after initialization, then re-runs after every committed change by default. This preserves the `1.0` behavior, including effects that read no reactive state.
+- With `engine: { effectInvalidation: "path" }`, an effect re-runs when a state path it read on its last run changes. An unrelated write does not re-run it. An effect that reads no reactive state only runs initially.
 
 Two things keep this cheap in practice:
 
-- **Actions batch.** An action's synchronous writes commit once, so an affected effect re-runs once for that action.
+- **Actions batch.** An action's synchronous writes commit once, so an effect re-runs once for that action.
 - **Unchanged writes do not commit.** Assigning the value a field already holds produces no commit and therefore no invalidation.
 
 When you need value-level granularity, put the equality check where it is observable — `watch(read, listener, { equals })` and every UI adapter selector only notify when the selected value actually changes:
 
 ```ts
-// Re-runs when this.rows changes.
+// Re-runs on every app commit by default; with path tracking, when this.rows changes.
 class Report {
   expensive(): void {
     buildReport(this.rows);
@@ -107,7 +108,7 @@ app.watch(
 );
 ```
 
-Keep effects cheap and read the state they depend on during each run. Use `watch(read, listener, { equals })` when you want a selected value comparison after every app commit.
+Keep default effects cheap. With path tracking, read their dependencies during each run. Use `watch(read, listener, { equals })` when you want a selected value comparison after every app commit.
 
 ### What that costs
 
@@ -142,7 +143,7 @@ Publishing each committed transition to all app watches and adapters buys three 
 | Selector dependency tracking            | Precise invalidation without user annotation | Every selector runs inside a tracking scope; React's render-time reads are not trackable, so its adapter needs a different path |
 | Opt-in fine mode per app                | Existing apps unchanged, large apps opt in   | Two invalidation models to maintain and test, and plugins must work under both                                                  |
 
-The measured selector cost and the three properties above — atomic cross-module commits, uniform adapters, whole-app plugins — carried the decision. Coaction's path tracking inside an effect is separate from this public `watch` and adapter publication model.
+The measured selector cost and the three properties above — atomic cross-module commits, uniform adapters, whole-app plugins — carried the decision. Optional effect path tracking is separate from this public `watch` and adapter publication model.
 
 What would reopen it is evidence, not preference: an app past roughly ten thousand live selectors where `pnpm run bench` shows per-action cost becoming visible in a frame budget. Because the current behaviour is now a compatibility promise, moving to any of the other rows is a major-version change — with one exception. Adding an **opt-in** fine mode is additive, so it could land in a minor: apps that never enable it keep exactly today's semantics. That is the path a future change would most likely take, and the reason the row is kept here rather than deleted.
 

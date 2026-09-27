@@ -137,7 +137,7 @@ class Counter {
 }
 ```
 
-`@Computed` getters are cached through Coaction's signal-backed computed runtime and refresh after app commits. `@Effect` methods run after app initialization and re-run when a state path they read changes — see [State, actions, computed, and effects](#state-actions-computed-and-effects).
+`@Computed` getters are cached through Coaction's signal-backed computed runtime and refresh after app commits. `@Effect` methods run after app initialization and each committed change by default; `engine: { effectInvalidation: "path" }` enables path tracking — see [State, actions, computed, and effects](#state-actions-computed-and-effects).
 
 ## Creating an app
 
@@ -222,9 +222,9 @@ When sync resolution discovers async work, the container still tracks that pendi
 - **State** fields become the module's slice in the store. Reads go through the reactive store.
 - **Actions** wrap writes in a transaction. In `strictActions` mode, writes outside an action throw, including deep object/array mutations and direct `store.setState()` / `store.apply()` calls; plain snapshots from `store.getPureState()` are detached and recursively frozen.
 - **Computed** getters are memoized between committed state changes.
-- **Effects** run once after init and re-run when a state path they read changes. Effects are torn down on `dispose()`.
+- **Effects** run once after init and again after every committed change by default. Effects are torn down on `dispose()`.
 
-Computed caches refresh after app commits. Coaction 4 tracks the state paths read by each effect, so an unrelated field change does not re-run that effect. App watches and UI adapter selectors still evaluate on each commit and compare the selected value before notifying. Actions batch — an action writing ten fields commits once — and assigning an unchanged value does not commit at all. See [State & Reactivity](../../docs/state-and-reactivity.md#invalidation-granularity).
+Computed caches refresh after app commits. Opt into Coaction 4's effect path tracking with `engine: { effectInvalidation: "path" }`; then an unrelated field change does not re-run the effect. App watches and UI adapter selectors still evaluate on each commit and compare the selected value before notifying. Actions batch — an action writing ten fields commits once — and assigning an unchanged value does not commit at all. See [State & Reactivity](../../docs/state-and-reactivity.md#invalidation-granularity).
 
 Mutations dispatched synchronously from a `watch` listener or plugin state hook are queued until the current store notification finishes. They drain before the triggering mutation returns; a self-triggering cascade aborts after 1000 queued mutations.
 

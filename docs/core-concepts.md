@@ -108,14 +108,14 @@ Declare it in `defineModule({ computed: ["count"] })` or with `@Computed`.
 
 ## Effects
 
-An effect is a method that runs once after the app initializes, then re-runs when a state path it read changes. Effects are torn down on `app.dispose()`.
+An effect is a method that runs once after the app initializes, then after every committed change by default. Effects are torn down on `app.dispose()`.
 
 ```ts
 class Counter {
   count = 0;
 
   logCount(): void {
-    console.log("count is", this.count); // re-runs when count changes
+    console.log("count is", this.count); // re-runs after each app commit by default
   }
 }
 
@@ -128,7 +128,7 @@ defineModule(Counter, {
 
 Use effects for reactions to state — logging, syncing to external systems, triggering follow-up work — not for deriving values (that is what computed is for).
 
-Computed caches refresh after every app commit. Coaction 4 tracks effect reads by state path, so unrelated writes do not re-run an effect. `app.watch(read, listener, { equals })` evaluates on every commit and notifies when its selected value changes. See [Invalidation granularity](./state-and-reactivity.md#invalidation-granularity).
+Computed caches refresh after every app commit. Set `engine: { effectInvalidation: "path" }` when effects should re-run only after a state path they read changes. `app.watch(read, listener, { equals })` evaluates on every commit and notifies when its selected value changes. See [Invalidation granularity](./state-and-reactivity.md#invalidation-granularity).
 
 ## Providers and dependency injection
 

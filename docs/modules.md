@@ -135,9 +135,9 @@ When `createApp()` instantiates a `@Module` provider, it binds the instance to t
 - **State** fields become a slice keyed by `name`. Reading a state field goes through the reactive store; writing it goes through the store so subscribers are notified.
 - **Actions** are wrapped so their synchronous writes run inside one transaction and emit a single coherent update (and an `ActionEvent` to plugins).
 - **Computed** getters are backed by Coaction's cached computed runtime: reads are memoized between committed state changes.
-- **Effects** are started after init and re-run when a state path they read changes; they are disposed with the app.
+- **Effects** are started after init and re-run after each app commit by default; they are disposed with the app.
 
-Computed caches refresh after each commit, while effects track the state paths they read — see [Invalidation granularity](./state-and-reactivity.md#invalidation-granularity).
+Computed caches refresh after each commit. Effects can track the state paths they read when `engine.effectInvalidation` is `"path"` — see [Invalidation granularity](./state-and-reactivity.md#invalidation-granularity).
 
 You still interact with the module as a normal object:
 
