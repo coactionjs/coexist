@@ -58,7 +58,7 @@ Versions between the floor and the newest are not individually built. A break re
 
 `@coexist/core` is a **peer dependency** of every adapter and plugin, so an application shares exactly one runtime copy. All `@coexist/*` packages are released together at the same version, and an adapter's peer range is `^<that shared version>`. Mixing an adapter with a core from a different minor of the same major is expected to work but is not tested; keep them in step.
 
-Lockstep is enforced, not just intended: `test:docs-versions` fails when the published packages do not all carry one version, and `publish:packages` refuses the whole release — before sending anything — if any version is one npm has already held. Both checks exist because the invariant broke in practice, and the failure mode was a release that went out half-published with adapters pointing at a core version that never shipped.
+Lockstep is enforced at planning, versioning, and publishing: Changesets keeps the eleven public packages in one fixed group; `test:release-plan` checks core-only patch, minor, and major changesets in isolated workspaces and checks the pending plan; `test:docs-versions` fails when the packages in the repository do not all carry one version; and `publish:packages` refuses the release before sending anything if a version has been used and unpublished on npm. These checks exist because the invariant broke in practice, leaving adapters pointing at a core version that never shipped.
 
 ## Versioning
 

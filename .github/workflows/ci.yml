@@ -50,6 +50,9 @@ jobs:
       - name: Verify documented versions
         run: pnpm run test:docs-versions
 
+      - name: Verify lockstep release planning
+        run: pnpm run test:release-plan
+
       - name: Verify smoke harness importers
         run: pnpm run test:harness-imports
 

@@ -4,8 +4,25 @@
   "baseBranch": "main",
   "changelog": false,
   "commit": false,
-  "fixed": [],
+  "fixed": [
+    [
+      "@coexist/angular",
+      "@coexist/core",
+      "@coexist/create",
+      "@coexist/devtools",
+      "@coexist/react",
+      "@coexist/router",
+      "@coexist/solid",
+      "@coexist/storage",
+      "@coexist/svelte",
+      "@coexist/testing",
+      "@coexist/vue"
+    ]
+  ],
   "ignore": [],
   "linked": [],
-  "updateInternalDependencies": "patch"
+  "updateInternalDependencies": "patch",
+  "___experimentalUnsafeOptions_WILL_CHANGE_IN_PATCH": {
+    "onlyUpdatePeerDependentsWhenOutOfRange": true
+  }
 }

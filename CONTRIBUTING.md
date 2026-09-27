@@ -106,7 +106,7 @@ Releasing is automated but maintainer-triggered at both ends:
 2. Merging that PR updates versions on `main`. It does **not** publish, and it does not write per-package changelogs — the changeset text is the release note, and `changelog: false` keeps thirteen near-identical `CHANGELOG.md` files from being regenerated on every lockstep bump.
 3. A maintainer publishes by pushing the matching `v*` tag (or dispatching `Publish Packages`). The workflow **fails** while any changeset is still pending — rather than skipping its steps and reporting success — then verifies the repo before publishing with npm Trusted Publisher OIDC.
 
-You generally only need to add a changeset; a maintainer drives steps 1 and 3.
+The eleven public packages form one Changesets fixed group. A changeset for one package advances the group to one version; `pnpm run test:release-plan` verifies this for patch, minor, and major bumps before the version PR is generated. You generally only need to add a changeset; a maintainer drives steps 1 and 3.
 
 Which bump to pick is described in [Scope & Stability](./docs/scope-and-stability.md#versioning): on the `1.x` line, only a major may break — a minor and a patch may not.
 
