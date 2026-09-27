@@ -568,3 +568,333 @@ interface WorkerSyncMessage {
     readonly stateVersion?: number;
 }
 ```
+
+## @coexist/core/local
+
+```ts
+declare function Action<This extends object, Args extends unknown[], Return>(_value: (this: This, ...args: Args) => Return, context: ClassMethodDecoratorContext<This, (this: This, ...args: Args) => Return>): void;
+interface ActionEvent {
+    readonly module: string;
+    readonly method: string;
+    readonly args: readonly unknown[];
+    readonly startedAt: number;
+    readonly endedAt?: number;
+    readonly error?: unknown;
+}
+declare class AmbiguousProviderError extends CoexistError {
+    constructor(token: string);
+}
+interface App {
+    readonly ready: Promise<void>;
+    readonly state: AppState;
+    readonly started: boolean;
+    readonly store: AppStore;
+    get<T>(token: InjectionToken<T>): T;
+    getAsync<T>(token: InjectionToken<T>): Promise<T>;
+    getAll<T>(token: InjectionToken<T>): T[];
+    getModule<T>(token: InjectionToken<T>): T;
+    getModuleByName<T = unknown>(name: string): T;
+    watch<T>(read: () => T, listener: (value: T, previous: T) => void, options?: WatchOptions<T>): () => void;
+    runInAction<T>(callback: () => T, options?: RunInActionOptions): T;
+    runInAction<T>(module: RunInActionTarget, callback: () => T, options?: RunInActionOptions): T;
+    start(): Promise<void>;
+    stop(): Promise<void>;
+    dispose(): Promise<void>;
+    createScope(options?: ScopeOptions): AppScope;
+    load(module: LazyModule): Promise<LazyModuleLoadResult>;
+    load(): Promise<readonly LazyModuleLoadResult[]>;
+}
+interface AppDevOptions {
+    readonly strictActions?: boolean;
+}
+type AppProviderInput = ProviderInput | LazyModule;
+type AppRootState = Record<string, Record<PropertyKey, unknown>>;
+interface AppScope {
+    readonly container: Container;
+}
+interface AppState {
+    readonly version: number;
+}
+type AppStore = Pick<Store<AppRootState>, "apply" | "getPureState" | "getState" | "setState" | "subscribe">;
+declare class AsyncProviderInSyncResolutionError extends CoexistError {
+    constructor(token: string);
+}
+interface BuildOptions {
+    readonly deps?: readonly DependencySpec[];
+}
+declare class CircularDependencyError extends CoexistError {
+    constructor(path: readonly string[]);
+}
+interface ClassProvideOptions<T> extends ProviderOptionsBase<T> {
+    readonly useClass: Constructor<T>;
+    readonly deps?: readonly DependencySpec[];
+}
+interface ClassProvider<T = unknown> {
+    readonly provide: InjectionToken<T>;
+    readonly useClass: Constructor<T>;
+    readonly deps?: readonly DependencySpec[];
+    readonly scope?: Scope;
+    readonly multi?: boolean;
+    readonly eager?: boolean;
+    readonly leakSafe?: boolean;
+    readonly autoDispose?: boolean;
+    readonly dispose?: (value: T) => void | Promise<void>;
+}
+type ClassToken<T = any> = abstract new (...args: any[]) => T;
+declare class CoexistError extends Error {
+    constructor(message: string, options?: ErrorOptions);
+}
+declare function Computed<This extends object, Value>(_value: (this: This) => Value, context: ClassGetterDecoratorContext<This, Value>): void;
+type Constructor<T = unknown> = new (...args: any[]) => T;
+interface Container {
+    get<T>(token: InjectionToken<T>): T;
+    get<T>(token: InjectionToken<T>, options: {
+        readonly optional: true;
+    }): T | undefined;
+    getAll<T>(token: InjectionToken<T>): T[];
+    getAsync<T>(token: InjectionToken<T>): Promise<T>;
+    has(token: InjectionToken): boolean;
+    provide(provider: ProviderInput): void;
+    override(provider: ProviderInput): void;
+    createScope(options?: ScopeOptions): Container;
+    build<T>(target: Constructor<T>, options?: BuildOptions): T;
+    buildAsync<T>(target: Constructor<T>, options?: BuildOptions): Promise<T>;
+    freeze(): void;
+    dispose(): Promise<void>;
+}
+interface ContainerOptions {
+    readonly parent?: Container;
+    readonly strictScopes?: boolean;
+}
+declare function createApp(options?: CreateLocalAppOptions): App;
+declare function createContainer(options?: ContainerOptions): Container;
+type CreateLocalAppOptions = Omit<CreateAppOptions, "engine"> & {
+    readonly engine?: Omit<EngineOptions, "transport"> & {
+        readonly transport?: never;
+    };
+};
+declare function createLoggerPlugin(options?: LoggerPluginOptions): Plugin;
+declare function defineModule<T extends Constructor>(target: T, options?: DefineModuleOptions<InstanceType<T>>, context?: MetadataContext): T;
+interface DefineModuleOptions<TInstance = Record<PropertyKey, unknown>> extends ModuleOptions {
+    readonly state?: readonly (keyof TInstance)[];
+    readonly actions?: readonly ModuleMethodKey<TInstance>[];
+    readonly computed?: readonly (keyof TInstance)[];
+    readonly effects?: readonly ModuleMethodKey<TInstance>[];
+}
+type DependencySpec<T = any> = InjectionToken<T> | {
+    readonly token: InjectionToken<T>;
+    readonly optional?: boolean;
+    readonly many?: boolean;
+};
+type DependencyValue<TDep> = TDep extends {
+    readonly token: infer TToken;
+    readonly many: true;
+} ? TokenValue<TToken>[] : TDep extends {
+    readonly token: infer TToken;
+    readonly optional: true;
+} ? TokenValue<TToken> | undefined : TDep extends {
+    readonly token: infer TToken;
+} ? TokenValue<TToken> : TokenValue<TDep>;
+declare class DisposedContainerError extends CoexistError {
+    constructor();
+}
+declare class DuplicateProviderError extends CoexistError {
+    constructor(token: string);
+}
+declare function Effect<This extends object, Args extends unknown[], Return>(_value: (this: This, ...args: Args) => Return, context: ClassMethodDecoratorContext<This, (this: This, ...args: Args) => Return>): void;
+interface EngineOptions {
+    readonly patches?: boolean;
+    readonly transport?: unknown;
+    readonly effectInvalidation?: "commit" | "path";
+}
+interface ErrorContext {
+    readonly phase: string;
+}
+interface ExistingProvideOptions<T> {
+    readonly useExisting: InjectionToken<T>;
+    readonly multi?: boolean;
+    readonly leakSafe?: boolean;
+}
+interface ExistingProvider<T = unknown> {
+    readonly provide: InjectionToken<T>;
+    readonly useExisting: InjectionToken<T>;
+    readonly multi?: boolean;
+    readonly leakSafe?: boolean;
+}
+interface FactoryProvideOptions<T, TDeps extends readonly DependencySpec[] = readonly [
+]> extends ProviderOptionsBase<T> {
+    readonly deps?: TDeps;
+    readonly useFactory: (...deps: ResolvedDeps<TDeps>) => T | Promise<T>;
+}
+interface FactoryProvider<T = unknown, TDeps extends readonly DependencySpec[] = readonly DependencySpec[]> {
+    readonly provide: InjectionToken<T>;
+    readonly useFactory: (...deps: ResolvedDeps<TDeps>) => T | Promise<T>;
+    readonly deps?: TDeps;
+    readonly scope?: Scope;
+    readonly multi?: boolean;
+    readonly eager?: boolean;
+    readonly leakSafe?: boolean;
+    readonly autoDispose?: boolean;
+    readonly dispose?: (value: T) => void | Promise<void>;
+}
+declare class FrozenContainerError extends CoexistError {
+    constructor();
+}
+declare function getAppCreationCleanup(error: unknown): Promise<void> | undefined;
+declare function getModuleMetadata(target: Function): ModuleMetadata | undefined;
+declare function inject<TToken extends InjectionToken>(token: TToken): TokenValue<TToken>;
+declare class InjectContextError extends CoexistError {
+    constructor(token: string);
+}
+type InjectionToken<T = any> = Token<T> | ClassToken<T> | string | symbol;
+declare function lazyModule(load: () => LazyModuleLoadInput | Promise<LazyModuleLoadInput>): LazyModule;
+interface LazyModule {
+    readonly kind: "lazyModule";
+    load(): LazyModuleLoadInput | Promise<LazyModuleLoadInput>;
+}
+interface LazyModuleExports {
+    readonly default?: ProviderInput | readonly ProviderInput[];
+    readonly providers?: readonly ProviderInput[];
+}
+type LazyModuleLoadInput = ProviderInput | readonly ProviderInput[] | LazyModuleExports;
+interface LazyModuleLoadResult {
+    readonly scope: AppScope;
+    readonly modules: readonly ModuleCreatedEvent[];
+}
+declare class LifetimeLeakError extends CoexistError {
+    constructor(parent: string, parentScope: string, child: string, childScope: string);
+}
+interface LoggerPluginLogger {
+    info(message: string, details?: unknown): void;
+    error(message: string, details?: unknown): void;
+}
+interface LoggerPluginOptions {
+    readonly logger?: LoggerPluginLogger;
+}
+declare class MissingProviderError extends CoexistError {
+    constructor(token: string, path: readonly string[]);
+}
+declare function Module(options?: ModuleOptions): <T extends Constructor>(target: T, context?: ClassDecoratorContext<T>) => T;
+interface ModuleCreatedEvent {
+    readonly name: string;
+    readonly token: InjectionToken;
+    readonly instance: unknown;
+}
+interface ModuleLifecycleContext {
+    readonly app: App;
+    inject<TToken extends InjectionToken>(token: TToken): TokenValue<TToken>;
+}
+interface ModuleMetadata {
+    readonly kind: "module";
+    name?: string;
+    deps?: readonly DependencySpec[];
+    scope?: Scope;
+    readonly state: Set<PropertyKey>;
+    readonly actions: Set<PropertyKey>;
+    readonly computed: Set<PropertyKey>;
+    readonly effects: Set<PropertyKey>;
+}
+interface ModuleOptions {
+    readonly name?: string;
+    readonly deps?: readonly DependencySpec[];
+    readonly scope?: "singleton";
+}
+interface PatchEvent {
+    readonly patches: readonly unknown[];
+    readonly inversePatches: readonly unknown[];
+}
+interface Plugin {
+    readonly name?: string;
+    readonly providers?: readonly ProviderInput[];
+    setup?(app: App, context: PluginContext): void | Promise<void>;
+    onModuleCreated?(event: ModuleCreatedEvent, context: PluginContext): void;
+    onActionStart?(event: ActionEvent, context: PluginContext): void;
+    onActionEnd?(event: ActionEvent, context: PluginContext): void;
+    onPatch?(event: PatchEvent, context: PluginContext): void;
+    onStateChange?(event: StateChangeEvent, context: PluginContext): void;
+    onError?(error: unknown, context: ErrorContext, pluginContext: PluginContext): void;
+    dispose?(context: PluginContext): void | Promise<void>;
+}
+interface PluginContext {
+    readonly app: App;
+    readonly name: string;
+    readonly signal: AbortSignal;
+    emitError(error: unknown, phase?: string): void;
+    inject<TToken extends InjectionToken>(token: TToken): TokenValue<TToken>;
+    onDispose(disposer: () => void | Promise<void>): void;
+    watch<T>(read: () => T, listener: (value: T, previous: T) => void, options?: WatchOptions<T>): () => void;
+}
+declare function provide<T>(token: InjectionToken<T>, options: ClassProvideOptions<T>): ClassProvider<T>;
+declare function provide<T>(token: InjectionToken<T>, options: ValueProvideOptions<T>): ValueProvider<T>;
+declare function provide<T, const TDeps extends readonly DependencySpec[]>(token: InjectionToken<T>, options: FactoryProvideOptions<T, TDeps>): FactoryProvider<T, TDeps>;
+declare function provide<T>(token: InjectionToken<T>, options: ExistingProvideOptions<T>): ExistingProvider<T>;
+type Provider<T = unknown, TDeps extends readonly DependencySpec[] = readonly DependencySpec[]> = ClassProvider<T> | ValueProvider<T> | FactoryProvider<T, TDeps> | ExistingProvider<T>;
+type ProviderInput = Constructor<any> | Provider<any, readonly DependencySpec<any>[]>;
+type ResolvedDeps<TDeps extends readonly DependencySpec[]> = {
+    [Index in keyof TDeps]: DependencyValue<TDeps[Index]>;
+};
+declare function runInAction<T>(module: object, callback: () => T, options?: RunInActionOptions): T;
+interface RunInActionOptions {
+    readonly name?: string;
+    readonly args?: readonly unknown[];
+}
+type RunInActionTarget<T extends object = object> = InjectionToken<T> | T;
+type Scope = "singleton" | "scoped" | "resolution" | "transient";
+interface ScopeOptions {
+    readonly strictScopes?: boolean;
+}
+declare function State<This extends object, Value>(_value: ClassAccessorDecoratorTarget<This, Value>, context: ClassAccessorDecoratorContext<This, Value>): void;
+interface StateChangeEvent {
+    readonly state: unknown;
+}
+declare function token<T>(description?: string): Token<T>;
+interface Token<_T = any> {
+    readonly id: symbol;
+    readonly description?: string;
+    readonly __type?: (value: _T) => _T;
+}
+declare function tokenName(tokenValue: InjectionToken): string;
+type TokenValue<TToken> = TToken extends InjectionToken<infer TValue> ? TValue : unknown;
+interface ValueProvideOptions<T> {
+    readonly useValue: T;
+    readonly multi?: boolean;
+    readonly leakSafe?: boolean;
+    readonly autoDispose?: boolean;
+    readonly dispose?: (value: T) => void | Promise<void>;
+}
+interface ValueProvider<T = unknown> {
+    readonly provide: InjectionToken<T>;
+    readonly useValue: T;
+    readonly multi?: boolean;
+    readonly leakSafe?: boolean;
+    readonly autoDispose?: boolean;
+    readonly dispose?: (value: T) => void | Promise<void>;
+}
+interface WatchOptions<T> {
+    readonly equals?: (value: T, previous: T) => boolean;
+    readonly immediate?: boolean;
+}
+
+// Not exported. Reachable from the surface above, so a change here is an API change.
+interface CreateAppOptions {
+    readonly providers?: readonly AppProviderInput[];
+    readonly plugins?: readonly Plugin[];
+    readonly parent?: App | Container;
+    readonly devOptions?: AppDevOptions;
+    readonly engine?: EngineOptions;
+}
+interface MetadataContext {
+    readonly metadata?: Record<PropertyKey, unknown> | undefined;
+}
+type ModuleMethodKey<T> = {
+    readonly [Key in keyof T]-?: T[Key] extends ((...args: any[]) => unknown) ? Key : never;
+}[keyof T];
+interface ProviderOptionsBase<T> {
+    readonly scope?: Scope;
+    readonly multi?: boolean;
+    readonly eager?: boolean;
+    readonly leakSafe?: boolean;
+    readonly autoDispose?: boolean;
+    readonly dispose?: (value: T) => void | Promise<void>;
+}
+```

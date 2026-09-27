@@ -189,6 +189,7 @@ function createWorkspaceSource(overrides, catalog) {
 function createTypeConsumerSource() {
   return `import { provideCoexist, injectSignal } from "@coexist/angular";
 import { createApp, defineModule, provide } from "@coexist/core";
+import { createApp as createLocalApp, type CreateLocalAppOptions } from "@coexist/core/local";
 import { createCoexistProject } from "@coexist/create";
 import { createDevtoolsPlugin } from "@coexist/devtools";
 import { CoexistProvider, useSelector } from "@coexist/react";
@@ -222,9 +223,12 @@ const app = createApp({
   providers: [Counter, provide("value", { useValue: 1 })],
 });
 const storage: StorageService = createLocalSpaceStorage();
+const localOptions: CreateLocalAppOptions = { providers: [Counter] };
+const localApp = createLocalApp(localOptions);
 
 void [
   app,
+  localApp,
   storage,
   provideCoexist,
   injectSignal,
@@ -251,6 +255,7 @@ import { join } from "node:path";
 const requiredExports = {
   "@coexist/angular": ["provideCoexist", "injectSignal"],
   "@coexist/core": ["createApp", "defineModule", "provide"],
+  "@coexist/core/local": ["createApp", "defineModule"],
   "@coexist/create": ["createCoexistProject"],
   "@coexist/devtools": ["createDevtoolsPlugin"],
   "@coexist/react": ["CoexistProvider", "useSelector"],
@@ -325,6 +330,14 @@ if (app.store.getPureState().counter.count !== 1) {
   throw new Error("Installed @coexist/core did not update module state.");
 }
 
+const localApp = modules["@coexist/core/local"].createApp({ providers: [Counter] });
+await localApp.start();
+localApp.getModule(Counter).increase();
+
+if (localApp.store.getPureState().counter.count !== 1) {
+  throw new Error("Installed @coexist/core/local did not update module state.");
+}
+
 if (router.current.path !== "/settings" || router.current.search !== "?tab=profile") {
   throw new Error("Installed @coexist/router did not parse navigation.");
 }
@@ -347,6 +360,7 @@ if (test.test.getState().counter.count !== 1) {
 }
 
 await test.dispose();
+await localApp.dispose();
 await app.dispose();
 await storage.destroy();
 

@@ -19,6 +19,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./local": {
+      "types": "./dist/local.d.ts",
+      "import": "./dist/local.js"
     }
   },
   "publishConfig": {

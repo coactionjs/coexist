@@ -21,6 +21,7 @@ Coexist ships as ESM only and targets Node.js `>=22.12.0` and modern browsers.
   - [With decorators](#with-decorators)
   - [Without decorators](#without-decorators)
 - [Creating an app](#creating-an-app)
+- [Local store entry](#local-store-entry)
 - [Dependency injection](#dependency-injection)
 - [State, actions, computed, and effects](#state-actions-computed-and-effects)
 - [Async actions and `runInAction`](#async-actions-and-runinaction)
@@ -162,6 +163,18 @@ const app = createApp({
 `@Module` providers are instantiated during `createApp()` so their state can be bound to the store. Plugin `setup`, module `onInit` hooks, and effects are kicked off on the next microtask and tracked by the stable `app.ready` promise. `app.start()` awaits that same initialization, then runs `onStart` hooks and marks the app started; many apps can skip `start()` entirely if they have no startup work. Initialization failures reject `app.ready` even though the runtime observes them internally to prevent an unhandled rejection when an app is never started.
 
 When `createApp()` itself throws, its rollback releases everything creation had already built. Because creation is synchronous, an async provider disposer outlives the throw, so the error carries the disposal promise: `getAppCreationCleanup(error)` returns it, resolving when cleanup finishes and rejecting with whatever it failed on.
+
+## Local store entry
+
+For an app whose state stays in one JavaScript realm, import the same module and DI helpers from `@coexist/core/local`:
+
+```ts
+import { createApp, defineModule } from "@coexist/core/local";
+
+const app = createApp({ providers: [Counter] });
+```
+
+This entry uses Coaction's local store and leaves shared-store transport code out of a tree-shaken browser bundle. `engine.transport` is unavailable through this entry. Keep using `@coexist/core` when Coaction's shared-store transport is part of your app. Coexist's own Worker host/client API remains available from `@coexist/core` regardless of which entry created the app. The bundle comparison is checked by `pnpm run test:core:local-bundle`.
 
 ## Dependency injection
 

@@ -1,4 +1,5 @@
-import { createAppInternal, type MutableTestInspector } from "./app.js";
+import { create as createCoactionSharedStore } from "coaction/shared";
+import { createAppInternal, type EngineStoreFactory, type MutableTestInspector } from "./app.js";
 import type { ActionEvent, App, CreateAppOptions, TestAppInspector } from "./app.js";
 import type { ProviderInput } from "./types.js";
 
@@ -37,15 +38,18 @@ export function testApp(options?: ManualTestAppOptions): TestApp;
 export function testApp(options: TestAppOptions = {}): TestApp | Promise<TestApp> {
   const inspector = createTestInspector();
   const { autoStart, overrides, strictActions, ...createOptions } = options;
-  const app = createAppInternal({
-    ...createOptions,
-    devOptions: {
-      ...createOptions.devOptions,
-      ...(strictActions === undefined ? {} : { strictActions }),
+  const app = createAppInternal(
+    {
+      ...createOptions,
+      devOptions: {
+        ...createOptions.devOptions,
+        ...(strictActions === undefined ? {} : { strictActions }),
+      },
+      ...(overrides === undefined ? {} : { overrides }),
+      testInspector: inspector,
     },
-    ...(overrides === undefined ? {} : { overrides }),
-    testInspector: inspector,
-  }) as TestApp;
+    createCoactionSharedStore as unknown as EngineStoreFactory,
+  ) as TestApp;
 
   Object.defineProperty(app, "test", {
     configurable: false,

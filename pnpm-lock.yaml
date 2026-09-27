@@ -72,6 +72,9 @@ catalogs:
     cz-git:
       specifier: 1.13.1
       version: 1.13.1
+    esbuild:
+      specifier: 0.28.1
+      version: 0.28.1
     husky:
       specifier: 9.1.7
       version: 9.1.7
@@ -170,6 +173,9 @@ importers:
       cz-git:
         specifier: 'catalog:'
         version: 1.13.1
+      esbuild:
+        specifier: 'catalog:'
+        version: 0.28.1
       husky:
         specifier: 'catalog:'
         version: 9.1.7

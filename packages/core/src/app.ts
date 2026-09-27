@@ -1,10 +1,5 @@
-import {
-  computed as createCoactionComputed,
-  create as createCoactionStore,
-  endBatch,
-  startBatch,
-  type Store,
-} from "coaction/shared";
+import { computed as createCoactionComputed, endBatch, startBatch, type Store } from "coaction";
+import { create as createCoactionSharedStore } from "coaction/shared";
 import { onStoreCommit } from "coaction/adapter";
 import { createRuntimeAsyncContext } from "./async-context.js";
 import { createContainer } from "./container.js";
@@ -241,6 +236,11 @@ interface CoactionStoreOptions {
   readonly transport?: unknown;
 }
 
+export type EngineStoreFactory = (
+  root: CoactionRootState,
+  options: CoactionStoreOptions,
+) => Store<CoactionRootState>;
+
 interface ModuleBinding {
   readonly name: string;
   readonly token: InjectionToken;
@@ -321,7 +321,7 @@ const appManagedExecutionContext = createRuntimeAsyncContext<AppManagedExecution
 const maxQueuedMutations = 1000;
 
 export function createApp(options: CreateAppOptions = {}): App {
-  return createAppInternal(options);
+  return createAppInternal(options, createCoactionSharedStore as unknown as EngineStoreFactory);
 }
 
 export function runInAction<T>(module: object, callback: () => T, options?: RunInActionOptions): T {
@@ -334,7 +334,10 @@ export function runInAction<T>(module: object, callback: () => T, options?: RunI
   return metadata.app.runInAction(module, callback, options);
 }
 
-export function createAppInternal(options: InternalCreateAppOptions = {}): App {
+export function createAppInternal(
+  options: InternalCreateAppOptions,
+  createEngineStore: EngineStoreFactory,
+): App {
   const parentApp = isApp(options.parent) ? appRuntimeMap.get(options.parent) : undefined;
   const parent = isApp(options.parent) ? getAppContainer(options.parent) : options.parent;
   const container = parent === undefined ? createContainer() : createContainer({ parent });
@@ -407,6 +410,7 @@ export function createAppInternal(options: InternalCreateAppOptions = {}): App {
       rootState,
       createStoreOptions(options.engine, observePatches),
       observePatches,
+      createEngineStore,
     );
     store = rootStore.store;
     const state: { version: number } = { version: 0 };
@@ -2732,11 +2736,9 @@ function createRootStore(
   rootState: RootState,
   options: CoactionStoreOptions,
   observePatches: boolean,
+  createEngineStore: EngineStoreFactory,
 ): RootStoreHandle {
-  const coactionStore = createCoactionStore(
-    { modules: rootState },
-    options as never,
-  ) as unknown as Store<CoactionRootState>;
+  const coactionStore = createEngineStore({ modules: rootState }, options);
   const setState = coactionStore.setState.bind(coactionStore) as CoactionStoreSetState;
   const apply = coactionStore.apply.bind(coactionStore) as CoactionStoreApply;
 
