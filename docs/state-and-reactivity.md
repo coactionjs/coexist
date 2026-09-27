@@ -41,17 +41,19 @@ Three layers, from most to least common:
 
 Adapters use the stable reactive runtime contract, not private store internals. Prefer `app.getModule()` and selectors in application code; reserve `app.store` for plugins and tooling.
 
-`app.store` is an `AppStore` — five members Coexist stands behind, not the underlying Coaction store in full:
+`app.store` is an `AppStore` — five members with signatures owned by Coexist:
 
 ```ts
 interface AppStore {
   getPureState(): AppRootState; // plain snapshot of the whole tree
   getState(): AppRootState; // reactive read, tracked inside a reactive scope
-  setState(update): void; // write through the runtime's transaction machinery
-  apply(state?, patches?): void; // replace state or apply patches to the current state
+  setState(update: AppStoreUpdate): void; // write through the runtime's transaction machinery
+  apply(state?: AppRootState, patches?: readonly AppStorePatch[]): void;
   subscribe(listener): () => void; // committed-change notification
 }
 ```
+
+`AppStoreUpdate` accepts a partial root state, a draft callback, or `null`. `AppStorePatch` has an `add`, `remove`, or `replace` operation, a string or array path, and an optional value. These types are exported from `@coexist/core`; the low-level `setState` updater hook remains available in the full type declaration.
 
 Store lifetime belongs to the app: there is no `destroy()` on this surface, because disposing the store is `app.dispose()`'s job.
 

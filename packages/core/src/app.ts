@@ -92,12 +92,27 @@ export type AppRootState = Record<string, Record<PropertyKey, unknown>>;
  * `share`, `transport`, `patch`, `trace` — inside Coexist's own contract. That
  * made every Coaction change a potential Coexist change, and let application
  * code destroy the store the runtime owns. These five members are what plugins
- * and tooling actually use, and the only ones the runtime stands behind.
+ * and tooling actually use. Coexist owns their signatures so a Coaction type
+ * change cannot silently change this public contract.
  */
-export type AppStore = Pick<
-  Store<AppRootState>,
-  "apply" | "getPureState" | "getState" | "setState" | "subscribe"
->;
+export interface AppStorePatch {
+  readonly op: "add" | "remove" | "replace";
+  readonly path: string | readonly (string | number)[];
+  readonly value?: unknown;
+}
+
+export type AppStoreUpdate = Partial<AppRootState> | ((draft: AppRootState) => unknown) | null;
+
+export interface AppStore {
+  apply(state?: AppRootState, patches?: readonly AppStorePatch[]): void;
+  getPureState(): AppRootState;
+  getState(): AppRootState;
+  setState(
+    next: AppStoreUpdate,
+    updater?: (next: AppStoreUpdate) => [] | [AppRootState, AppStorePatch[], AppStorePatch[]],
+  ): void;
+  subscribe(listener: () => void): () => void;
+}
 
 export interface App {
   readonly ready: Promise<void>;

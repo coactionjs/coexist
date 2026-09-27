@@ -48,7 +48,24 @@ interface AppScope {
 interface AppState {
     readonly version: number;
 }
-type AppStore = Pick<Store<AppRootState>, "apply" | "getPureState" | "getState" | "setState" | "subscribe">;
+interface AppStore {
+    apply(state?: AppRootState, patches?: readonly AppStorePatch[]): void;
+    getPureState(): AppRootState;
+    getState(): AppRootState;
+    setState(next: AppStoreUpdate, updater?: (next: AppStoreUpdate) => [
+    ] | [
+        AppRootState,
+        AppStorePatch[],
+        AppStorePatch[]
+    ]): void;
+    subscribe(listener: () => void): () => void;
+}
+interface AppStorePatch {
+    readonly op: "add" | "remove" | "replace";
+    readonly path: string | readonly (string | number)[];
+    readonly value?: unknown;
+}
+type AppStoreUpdate = Partial<AppRootState> | ((draft: AppRootState) => unknown) | null;
 type AsyncMethodProxy<T extends object> = {
     readonly [Key in keyof T as T[Key] extends ((...args: any[]) => unknown) ? Key : never]: T[Key] extends ((...args: infer Args) => infer Return) ? (...args: Args) => Promise<Awaited<Return>> : never;
 };
@@ -615,7 +632,24 @@ interface AppScope {
 interface AppState {
     readonly version: number;
 }
-type AppStore = Pick<Store<AppRootState>, "apply" | "getPureState" | "getState" | "setState" | "subscribe">;
+interface AppStore {
+    apply(state?: AppRootState, patches?: readonly AppStorePatch[]): void;
+    getPureState(): AppRootState;
+    getState(): AppRootState;
+    setState(next: AppStoreUpdate, updater?: (next: AppStoreUpdate) => [
+    ] | [
+        AppRootState,
+        AppStorePatch[],
+        AppStorePatch[]
+    ]): void;
+    subscribe(listener: () => void): () => void;
+}
+interface AppStorePatch {
+    readonly op: "add" | "remove" | "replace";
+    readonly path: string | readonly (string | number)[];
+    readonly value?: unknown;
+}
+type AppStoreUpdate = Partial<AppRootState> | ((draft: AppRootState) => unknown) | null;
 declare class AsyncProviderInSyncResolutionError extends CoexistError {
     constructor(token: string);
 }

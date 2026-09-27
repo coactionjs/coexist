@@ -25,6 +25,8 @@ export {
   type AppScope,
   type AppState,
   type AppStore,
+  type AppStorePatch,
+  type AppStoreUpdate,
   type CreateAppOptions,
   type EngineOptions,
   type ErrorContext,

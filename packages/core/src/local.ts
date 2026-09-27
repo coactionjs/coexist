@@ -58,6 +58,8 @@ export type {
   AppScope,
   AppState,
   AppStore,
+  AppStorePatch,
+  AppStoreUpdate,
   BuildOptions,
   ClassProvideOptions,
   ClassProvider,

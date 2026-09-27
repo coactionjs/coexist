@@ -188,7 +188,7 @@ function createWorkspaceSource(overrides, catalog) {
 
 function createTypeConsumerSource() {
   return `import { provideCoexist, injectSignal } from "@coexist/angular";
-import { createApp, defineModule, provide } from "@coexist/core";
+import { createApp, defineModule, provide, type AppStore, type AppStorePatch } from "@coexist/core";
 import { createApp as createLocalApp, type CreateLocalAppOptions } from "@coexist/core/local";
 import { createCoexistProject } from "@coexist/create";
 import { createDevtoolsPlugin } from "@coexist/devtools";
@@ -226,9 +226,22 @@ const storage: StorageService = createLocalSpaceStorage();
 const localOptions: CreateLocalAppOptions = { providers: [Counter] };
 const localApp = createLocalApp(localOptions);
 
+const patch: AppStorePatch = { op: "replace", path: ["counter", "count"], value: 2 };
+function verifyStoreContract(store: AppStore): void {
+  store.setState({ counter: { count: 1 } });
+  store.setState((draft) => { draft.counter = { count: 2 }; });
+  store.apply(undefined, [patch]);
+  store.subscribe(() => undefined)();
+  // @ts-expect-error The app owns the underlying store's lifetime.
+  store.destroy();
+  // @ts-expect-error Coaction transport metadata is not an AppStore member.
+  void store.share;
+}
+
 void [
   app,
   localApp,
+  verifyStoreContract,
   storage,
   provideCoexist,
   injectSignal,
