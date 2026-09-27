@@ -87,6 +87,8 @@ export const app = createApp({
 });
 ```
 
+For an app that keeps its store in one JavaScript realm, import `createApp` and the module helpers from `@coexist/core/local` instead. It uses the same application API and leaves Coaction's shared transport runtime out of a tree-shaken bundle. See the [local store entry](../packages/core/README.md#local-store-entry).
+
 You can already use it without any UI:
 
 ```ts

@@ -7,6 +7,7 @@ What Coexist covers, how mature each part is, and what a `1.x` version number pr
 | Area                                                        | Status         | What that means                                                                                                              |
 | ----------------------------------------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | App runtime, modules, DI, lifecycle, plugins                | **Stable**     | The API is exercised by the whole test suite and installed-package smokes. Changes go through a deprecation cycle.           |
+| `@coexist/core/local`                                       | **Stable**     | The same app composition API with a local Coaction store; CI checks installed consumers and the bundle boundary.             |
 | UI adapters (React, Vue, Svelte, Solid, Angular)            | **Stable**     | All five are held to one [conformance contract](./ui-adapters.md#two-things-every-adapter-gives-you) and browser-tested.     |
 | `@coexist/storage`, `@coexist/devtools`, `@coexist/testing` | **Stable**     | Narrow surfaces, covered by unit and installed-package tests.                                                                |
 | `@coexist/router`                                           | **Primitives** | A location source and a plugin. It does not match routes, render views, or own navigation UI — pair it with a real router.   |

@@ -82,6 +82,12 @@ Coexist shines when:
 
 It is intentionally optional and incremental. You can adopt it for one feature module and keep the rest of your app as-is.
 
+The [inventory workbench](../examples/inventory-workbench) is the end-to-end example: one `InventoryBoard` module drives React and Vue views, accepts an injected catalog service, sends planning to a Worker, and persists stock overrides to IndexedDB. Its provider override test exercises the same module without a UI.
+
+## Adoption cost
+
+Coexist introduces module metadata, provider registration, and an app lifecycle. For a small feature with one view and a few state values, that structure may cost more than it saves. The default core entry includes Coaction's shared-store transport; [`@coexist/core/local`](../packages/core/README.md#local-store-entry) uses a local store and excludes that transport code from a tree-shaken bundle. A measured size comparison is checked in CI. The [worker runtime](./scope-and-stability.md#the-worker-runtime-is-beta) remains beta, and applications provide their own Worker entry and lifecycle.
+
 ## Next steps
 
 - [Getting Started](./getting-started.md) — build and run your first app.

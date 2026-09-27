@@ -57,9 +57,9 @@ The DI container does not use `reflect-metadata` or `emitDecoratorMetadata`, doe
 
 All module state lives in a single Coaction store, keyed by module name. App-level patches, persistence, devtools, and selectors all operate over the whole app at once. App watches and adapter selectors receive each committed transition, so their cost scales with the number of selectors rather than the size of a change — a measured trade-off [settled for the `1.x` line](./state-and-reactivity.md#why-app-watches-use-one-publication-and-what-it-would-take-to-change-it). Module effects also run after each commit by default; `engine.effectInvalidation: "path"` opts into Coaction 4's path tracking.
 
-### Single composition entry
+### One composition API
 
-There is one composition entry: `createApp({ providers })`. `@Module` is the marker that promotes a provider entry into a stateful Coexist module. There is deliberately no separate `modules` array.
+There is one composition API: `createApp({ providers })`. Import it from `@coexist/core` for the shared-store transport runtime or `@coexist/core/local` for a local Coaction store. The local entry is kept free of shared transport code by a consumer bundle check. `@Module` is the marker that promotes a provider entry into a stateful Coexist module. There is deliberately no separate `modules` array.
 
 ### Rendering stays native
 
@@ -67,7 +67,7 @@ Adapters expose a framework-neutral reactive runtime (`getModule`, `watch`) and 
 
 ### Everything optional is a plugin
 
-Routing, persistence, and devtools are plugins, not core features. The core stays small and embeddable; capabilities are added by composition. See [Plugins](./plugins.md).
+Routing, persistence, and devtools are plugins; capabilities are added by composition. See [Plugins](./plugins.md).
 
 ## Resolution and lifecycle, briefly
 

@@ -84,35 +84,18 @@ A Coexist app is a graph of **modules** wired by a **DI container**:
 
 Coexist does **not** own rendering — there is no `ViewModule`, root component base class, or `render()` abstraction. UI packages only provide context and subscription helpers.
 
-## How Coexist compares
+## When Coexist fits
 
-Most state libraries are framework-specific and view-first. Coexist is a framework-agnostic application layer, so the comparison is about scope, not just ergonomics — and it is honest about where simpler tools win.
+Coexist provides an application runtime around state: module composition, dependency injection, lifecycle, plugins, testing, and UI adapters. Choose it when those boundaries help your application. The [inventory workbench](./examples/inventory-workbench) exercises one business module in React and Vue, an injected catalog service, Worker planning, and IndexedDB persistence.
 
-|                                  | Coexist                        | Zustand        | Pinia       | MobX / MST    | Redux Toolkit   |
-| -------------------------------- | ------------------------------ | -------------- | ----------- | ------------- | --------------- |
-| Target frameworks                | React/Vue/Svelte/Solid/Angular | React          | Vue         | React-first   | React-first     |
-| Same logic across frameworks     | ✅ first-class                 | ❌             | ❌          | ⚠️ manual     | ❌              |
-| Run logic in a Worker / tabs     | ✅ built-in                    | ❌ DIY         | ❌ DIY      | ❌            | ❌              |
-| Dependency injection             | ✅ explicit, zero-reflection   | ❌             | ❌          | ❌            | ❌              |
-| Mental model                     | modules (classes)              | hooks/closures | setup store | observables   | slices/reducers |
-| Works without a base class       | ✅ plain classes               | ✅             | ✅          | ⚠️ MST models | ✅              |
-| Works without `reflect-metadata` | ✅ zero reflection             | —              | —           | —             | —               |
-| First-class test harness         | ✅ `testApp`                   | ⚠️             | ⚠️          | ⚠️            | ✅              |
-| Ecosystem & maturity             | 🟡 new (v0.x)                  | 🟢 huge        | 🟢 huge     | 🟢 mature     | 🟢 huge         |
-| Best for small / single-fw apps  | ⚠️ overkill                    | 🟢             | 🟢          | 🟢            | ⚠️              |
+| Your need                                                               | What Coexist provides                                                                                                         | Cost or boundary                                                                                                            |
+| ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Keep business rules during a UI migration or across multiple frameworks | One module and app instance can drive React, Vue, Svelte, Solid, and Angular adapters.                                        | Each UI still needs its native components and an adapter.                                                                   |
+| Test a domain module without mounting a UI                              | Explicit providers, overrides, and `testApp()` inspection.                                                                    | You define module metadata and dependencies.                                                                                |
+| Run app logic in a Worker or coordinate trusted tabs                    | Worker host/client, state mirroring, and transport helpers.                                                                   | The worker runtime is [beta](./docs/scope-and-stability.md#the-worker-runtime-is-beta); your app owns Worker bootstrapping. |
+| Keep state within one JavaScript realm                                  | [`@coexist/core/local`](./packages/core/README.md#local-store-entry) removes shared transport code from a tree-shaken bundle. | Coexist still adds a module and lifecycle model; measure it against a smaller state-only solution for simple apps.          |
 
-### When _not_ to reach for Coexist
-
-- A small or single-framework app — Zustand, Pinia, or signals are simpler.
-- You need a mature SSR meta-framework today — Next, Nuxt, or SvelteKit.
-- It is not a renderer, router framework, server, or component library.
-
-### Reach for it when
-
-- Complex domain logic you want decoupled from the view and trivially testable.
-- You ship the **same logic in 2+ frameworks**, or you are migrating frameworks.
-- You want to move logic **off the main thread** or **sync across tabs** without rewriting it.
-- Your team values explicit dependency injection and a clear module boundary (e.g. an Angular or NestJS background).
+Coexist does not render UI, match routes, fetch data, or deploy an app. Use it alongside your chosen application framework and router. The [scope and stability guide](./docs/scope-and-stability.md) states which surfaces are stable and which remain beta.
 
 ## Packages
 
@@ -120,9 +103,9 @@ Every app depends on [`@coexist/core`](./packages/core). Pick a UI adapter for y
 
 ### Core
 
-| Package                            | Description                                                                            |
-| ---------------------------------- | -------------------------------------------------------------------------------------- |
-| [`@coexist/core`](./packages/core) | DI container, module metadata, app runtime, decorators, worker runtime, and `testApp`. |
+| Package                            | Description                                                                                                                   |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| [`@coexist/core`](./packages/core) | DI container, module metadata, app runtime, decorators, worker runtime, and `testApp`. Local apps can use the `/local` entry. |
 
 ### UI adapters
 

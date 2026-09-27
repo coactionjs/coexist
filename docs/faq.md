@@ -18,6 +18,10 @@ Often not. Plugin `setup`, module `onInit` hooks, and effects all run during `cr
 
 Coaction is the reactive state/signal/transport engine. Coexist adds the **application layer** on top: dependency injection, OO modules with lifecycle, a single composed store from many modules, plugins, a worker host/client, framework-native adapters, and `testApp()`. You can think of it as "powered by Coaction." See [Architecture](./architecture.md).
 
+## Does a local app need the shared transport runtime?
+
+No. Import `createApp` from [`@coexist/core/local`](../packages/core/README.md#local-store-entry) when state stays in one JavaScript realm. That entry excludes Coaction's shared transport code from a tree-shaken consumer bundle. Use the package root when you need `engine.transport`.
+
 ## One store or one per module?
 
 One store for the whole app. Each module contributes a slice keyed by its `name`, so `app.store.getPureState()` returns `{ counter: {...}, todos: {...} }`. This keeps patches, persistence, devtools, and selectors unified. See [State & Reactivity](./state-and-reactivity.md).

@@ -2,7 +2,7 @@
 
 > Coexist — the application runtime for coexisting UI frameworks. Write business modules once; run them with React, Vue, Svelte, Solid, Angular, vanilla JS, workers, shared tabs, and tests.
 
-This directory contains the conceptual guides. For per-package API references, see each package's README (linked from the root [Packages](../README.md#packages) table). For runnable demos, see [`examples/`](../examples).
+This directory contains the conceptual guides. For per-package API references, see each package's README (linked from the root [Packages](../README.md#packages) table). For a complete React and Vue business example with a Worker and IndexedDB, see the [inventory workbench](../examples/inventory-workbench); smaller demos live in [`examples/`](../examples).
 
 ## Start here
 
