@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Inventory workbench · Coexist</title>
+  </head>
+  <body>
+    <main class="shell">
+      <header>
+        <p class="eyebrow">One business module · two UI frameworks</p>
+        <h1>Inventory workbench</h1>
+        <p>
+          Adjust stock in either view. React and Vue share one application, while a Worker
+          calculates the reorder plan.
+        </p>
+      </header>
+      <div class="panels">
+        <div id="react-root"></div>
+        <div id="vue-root"></div>
+      </div>
+    </main>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

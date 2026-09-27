@@ -181,6 +181,14 @@ export default defineConfig({
         extends: true,
         test: {
           include: ["src/**/*.test.ts"],
+          name: "@coexist/example-inventory-workbench",
+          root: "./examples/inventory-workbench",
+        },
+      },
+      {
+        extends: true,
+        test: {
+          include: ["src/**/*.test.ts"],
           name: "@coexist/example-testing",
           root: "./examples/testing",
         },

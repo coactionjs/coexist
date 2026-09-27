@@ -1,0 +1,106 @@
+:root {
+  color: #162531;
+  background: #eef3f5;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.shell {
+  width: min(100%, 80rem);
+  min-height: 100vh;
+  margin: auto;
+  padding: 2rem;
+}
+
+header {
+  max-width: 45rem;
+  margin-bottom: 2rem;
+}
+
+h1 {
+  margin: 0.25rem 0 0.75rem;
+  font-size: clamp(2rem, 5vw, 3rem);
+}
+
+h2 {
+  margin: 0.25rem 0 1rem;
+}
+
+.eyebrow {
+  color: #075a83;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.panels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 30rem), 1fr));
+  gap: 1rem;
+}
+
+.panel {
+  overflow-x: auto;
+  border: 1px solid #ccdde4;
+  border-radius: 0.75rem;
+  background: #fff;
+  padding: 1.25rem;
+  box-shadow: 0 12px 32px #153e5012;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+th,
+td {
+  border-bottom: 1px solid #dbe6eb;
+  padding: 0.75rem 0.5rem;
+}
+
+td {
+  font-variant-numeric: tabular-nums;
+}
+
+button {
+  border: 1px solid #075a83;
+  border-radius: 0.4rem;
+  background: #075a83;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  padding: 0.45rem 0.7rem;
+}
+
+button.secondary {
+  background: #fff;
+  color: #075a83;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+[role="alert"] {
+  color: #a32626;
+}

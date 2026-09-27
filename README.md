@@ -589,7 +589,7 @@ expect(startedApp.started).toBe(true);
 
 `testApp({ overrides })` can replace providers discovered from `providers`, but it cannot add a new `@Module` after app module discovery.
 
-More focused examples live in [`examples/`](./examples).
+The [inventory workbench](./examples/inventory-workbench) demonstrates one business module in React and Vue, with an injected catalog, a Worker planner, and IndexedDB persistence. More focused examples live in [`examples/`](./examples).
 
 ## Worker Prototype
 

@@ -68,6 +68,14 @@ async function assertExampleBuild(example) {
     );
   }
 
+  if (example.name === "@coexist/example-inventory-workbench") {
+    assertHasMatchingFile(
+      example,
+      distFiles,
+      (file) => file.includes(".worker-") && file.endsWith(".js"),
+    );
+  }
+
   if (example.name === "@coexist/example-lazy-module") {
     assertHasMatchingFile(
       example,

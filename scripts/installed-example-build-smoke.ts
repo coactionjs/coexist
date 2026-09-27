@@ -52,6 +52,26 @@ const exampleSmokes = [
     await expectText(page, "pre", "reset");
   }),
   counterExample("react-counter", "Increase"),
+  {
+    dirName: "inventory-workbench",
+    async run(page) {
+      await expectText(page, "h1", "Inventory workbench");
+      await expectElementValue(page, "react-available-filters", "18");
+      await expectElementValue(page, "vue-available-filters", "18");
+      await expectElementValue(page, "react-order-filters", "28");
+
+      await page
+        .getByTestId("react-panel")
+        .getByRole("button", { name: "Add five Water filters" })
+        .click();
+      await expectElementValue(page, "vue-available-filters", "23");
+      await expectElementValue(page, "vue-order-filters", "23");
+
+      await page.reload({ waitUntil: "networkidle" });
+      await expectElementValue(page, "react-available-filters", "23");
+      await expectElementValue(page, "vue-available-filters", "23");
+    },
+  },
   counterExample("solid-counter", "Increase"),
   counterExample("svelte-counter", "Increase"),
   counterExample("ts-decorator", "Increase", async (page) => {
@@ -398,6 +418,14 @@ async function assertExampleBuild(example) {
     );
   }
 
+  if (example.name === "@coexist/example-inventory-workbench") {
+    assertHasMatchingFile(
+      example,
+      distFiles,
+      (file) => file.includes(".worker-") && file.endsWith(".js"),
+    );
+  }
+
   if (example.name === "@coexist/example-lazy-module") {
     assertHasMatchingFile(
       example,
@@ -598,6 +626,14 @@ async function expectText(page, selector, expected) {
       return element?.textContent?.includes(expectedText) ?? false;
     },
     { expectedText: expected, selector },
+  );
+}
+
+async function expectElementValue(page, testId, expected) {
+  await page.waitForFunction(
+    ({ id, value }) =>
+      document.querySelector(`[data-testid="${id}"]`)?.textContent?.trim() === value,
+    { id: testId, value: expected },
   );
 }
 
