@@ -4,7 +4,8 @@ import {
   endBatch,
   startBatch,
   type Store,
-} from "coaction";
+} from "coaction/shared";
+import { onStoreCommit } from "coaction/adapter";
 import { createRuntimeAsyncContext } from "./async-context.js";
 import { createContainer } from "./container.js";
 import { EffectRuntime } from "./effectRuntime.js";
@@ -291,7 +292,12 @@ interface AppManagedExecution {
 
 interface StatePublication {
   readonly listeners: Set<() => void>;
-  readonly mutationResults: unknown[];
+  readonly commits: PatchEvent[];
+}
+
+interface RootStoreHandle {
+  readonly store: Store<RootState>;
+  subscribeCommits(listener: (event: PatchEvent) => void): () => void;
 }
 
 interface StatePublicationControl {
@@ -391,10 +397,13 @@ export function createAppInternal(options: InternalCreateAppOptions = {}): App {
 
     const modules = instantiateModules(container, moduleTokens);
     const rootState = createRootState(modules);
-    store = createRootStore(
+    const observePatches = shouldEnablePatches(options);
+    const rootStore = createRootStore(
       rootState,
-      createStoreOptions(options.engine, shouldEnablePatches(options)),
+      createStoreOptions(options.engine, observePatches),
+      observePatches,
     );
+    store = rootStore.store;
     const state: { version: number } = { version: 0 };
     app = new RuntimeApp({
       container,
@@ -405,6 +414,7 @@ export function createAppInternal(options: InternalCreateAppOptions = {}): App {
       plugins: options.plugins ?? [],
       state,
       store,
+      subscribeCommits: rootStore.subscribeCommits,
       ...(options.testInspector === undefined ? {} : { testInspector: options.testInspector }),
     });
 
@@ -699,6 +709,7 @@ class RuntimeApp implements App {
     readonly plugins: readonly Plugin[];
     readonly state: AppState;
     readonly store: Store<RootState>;
+    readonly subscribeCommits: RootStoreHandle["subscribeCommits"];
     readonly testInspector?: MutableTestInspector;
   }) {
     this.#container = options.container;
@@ -720,6 +731,8 @@ class RuntimeApp implements App {
     }));
 
     this.wrapStoreMutations();
+
+    options.subscribeCommits((event) => this.recordStoreCommit(event));
 
     this.store.subscribe(() => {
       (this.state as { version: number }).version += 1;
@@ -2207,7 +2220,6 @@ class RuntimeApp implements App {
       const applyUpdate = () =>
         this.mutations.runStoreMutation(() => {
           const result = originalSetState(...guardedArgs);
-          this.recordMutationResult(result);
 
           if (detachedDrafts !== undefined && detachedDrafts.size > 0) {
             const nextState: RootState = {};
@@ -2216,13 +2228,13 @@ class RuntimeApp implements App {
               nextState[moduleBinding.name] = draft;
             }
 
-            this.recordMutationResult(originalSetState(nextState));
+            originalSetState(nextState);
           }
 
           return result as never;
         });
 
-      return typeof update === "function" && this.statePublication === undefined
+      return this.statePublication === undefined
         ? this.runStatePublicationTransaction(applyUpdate)
         : applyUpdate();
     }) as StoreSetState;
@@ -2236,7 +2248,22 @@ class RuntimeApp implements App {
         return undefined as ReturnType<StoreApply>;
       }
 
-      return this.mutations.runStoreMutation(() => originalApply(...args));
+      // Strict mode exposes a frozen snapshot instead of the engine's current
+      // state object. Translate only that current snapshot back to its source
+      // so Coaction can still reject stale or unrelated patch bases.
+      if (
+        this.devOptions.strictActions === true &&
+        args[0] !== undefined &&
+        args[1] !== undefined &&
+        args[0] === this.store.getPureState()
+      ) {
+        args[0] = this.readRawStoreState();
+      }
+
+      const applyUpdate = () => this.mutations.runStoreMutation(() => originalApply(...args));
+      return this.statePublication === undefined
+        ? this.runStatePublicationTransaction(applyUpdate)
+        : applyUpdate();
     }) as StoreApply;
 
     this.store.getState = (() =>
@@ -2332,7 +2359,7 @@ class RuntimeApp implements App {
 
     const publication: StatePublication = {
       listeners: new Set(),
-      mutationResults: [],
+      commits: [],
     };
     let publish = true;
     this.statePublication = publication;
@@ -2361,7 +2388,7 @@ class RuntimeApp implements App {
             }
           });
 
-          this.recordMutationResults(publication.mutationResults);
+          this.recordStoreCommits(publication.commits);
           this.mutations.flush();
         }
       }
@@ -2465,32 +2492,26 @@ class RuntimeApp implements App {
     }
   }
 
-  private recordMutationResult(result: unknown): void {
+  private recordStoreCommit(event: PatchEvent): void {
     if (this.statePublication !== undefined) {
-      this.statePublication.mutationResults.push(result);
+      this.statePublication.commits.push(event);
       return;
     }
 
-    this.recordMutationResults([result]);
+    this.recordStoreCommits([event]);
   }
 
-  private recordMutationResults(results: readonly unknown[]): void {
+  private recordStoreCommits(events: readonly PatchEvent[]): void {
     const patches: unknown[] = [];
     const inversePatches: unknown[] = [];
 
-    for (const result of results) {
-      if (!Array.isArray(result) || result.length < 3) {
+    for (const event of events) {
+      if (event.patches.length === 0) {
         continue;
       }
 
-      const resultPatches = result[1] as readonly unknown[];
-
-      if (resultPatches.length === 0) {
-        continue;
-      }
-
-      patches.push(...resultPatches);
-      inversePatches.unshift(...(result[2] as readonly unknown[]));
+      patches.push(...event.patches);
+      inversePatches.unshift(...event.inversePatches);
     }
 
     if (patches.length === 0) {
@@ -2688,12 +2709,18 @@ function createStoreOptions(
   return {
     name: "coexist",
     sliceMode: "single",
-    enablePatches,
+    // A Coaction shared-main store needs patches for its transport even when
+    // Coexist's plugin-facing patch events were explicitly disabled.
+    enablePatches: enablePatches || engine?.transport !== undefined,
     ...(engine?.transport === undefined ? {} : { transport: engine.transport }),
   } as CoactionStoreOptions;
 }
 
-function createRootStore(rootState: RootState, options: CoactionStoreOptions): Store<RootState> {
+function createRootStore(
+  rootState: RootState,
+  options: CoactionStoreOptions,
+  observePatches: boolean,
+): RootStoreHandle {
   const coactionStore = createCoactionStore(
     { modules: rootState },
     options as never,
@@ -2718,18 +2745,30 @@ function createRootStore(rootState: RootState, options: CoactionStoreOptions): S
     share: coactionStore.share ?? false,
     ...(coactionStore.transport === undefined ? {} : { transport: coactionStore.transport }),
     isSliceStore: false,
-    apply: ((state, patches) =>
-      apply(
-        state === undefined ? undefined : { modules: state },
-        prefixRootPatches(patches) as never,
-      )) as StoreApply,
+    apply: ((state, patches) => {
+      const current = coactionStore.getPureState();
+      const base =
+        state === undefined ? undefined : state === current.modules ? current : { modules: state };
+      return apply(base, prefixRootPatches(patches) as never);
+    }) as StoreApply,
     getPureState: () => coactionStore.getPureState().modules,
     getInitialState: () => coactionStore.getInitialState().modules,
     ...(coactionStore.patch === undefined ? {} : { patch: coactionStore.patch }),
     ...(coactionStore.trace === undefined ? {} : { trace: coactionStore.trace }),
   };
 
-  return store;
+  return {
+    store,
+    subscribeCommits: observePatches
+      ? (listener) =>
+          onStoreCommit(coactionStore, ({ patches, inversePatches }) => {
+            listener({
+              patches: unwrapRootPatches(patches) as readonly unknown[],
+              inversePatches: unwrapRootPatches(inversePatches) as readonly unknown[],
+            });
+          })
+      : () => () => undefined,
+  };
 }
 
 function wrapRootStateUpdate(
@@ -2759,7 +2798,26 @@ function prefixRootPatches(patches: unknown): unknown {
 }
 
 function unwrapRootPatches(patches: unknown): unknown {
-  return mapRootPatches(patches, (path) => (path[0] === "modules" ? path.slice(1) : path));
+  if (!Array.isArray(patches)) {
+    return patches;
+  }
+
+  return patches.map((patch) => {
+    if (typeof patch !== "object" || patch === null || !Array.isArray(patch.path)) {
+      return patch;
+    }
+
+    const path = patch.path as readonly unknown[];
+
+    if (path.length === 0 && "value" in patch) {
+      return {
+        ...patch,
+        value: (patch.value as CoactionRootState).modules,
+      };
+    }
+
+    return path[0] === "modules" ? { ...patch, path: path.slice(1) } : patch;
+  });
 }
 
 function mapRootPatches(

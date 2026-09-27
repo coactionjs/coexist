@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { applyPatches } from "coaction";
 
 import {
   AsyncProviderInSyncResolutionError,
@@ -1930,7 +1931,9 @@ describe("app runtime", () => {
   });
 
   it("reflects applied Coaction patches through module state accessors", () => {
+    const events: PatchEvent[] = [];
     const app = createApp({
+      plugins: [{ onPatch: (event) => events.push(event) }],
       providers: [Counter, provide(Logger, { useValue: new MemoryLogger() })],
     });
     const counter = app.getModule(Counter);
@@ -1945,6 +1948,98 @@ describe("app runtime", () => {
 
     expect(counter.count).toBe(7);
     expect(counter.double).toBe(14);
+    expect(events).toHaveLength(1);
+    expect(events[0]?.patches).toEqual([{ op: "replace", path: ["counter", "count"], value: 7 }]);
+    expect(events[0]?.inversePatches).toEqual([
+      { op: "replace", path: ["counter", "count"], value: 0 },
+    ]);
+  });
+
+  it("delivers direct-write patches after the app version advances", () => {
+    const versions: number[] = [];
+    let app!: ReturnType<typeof createApp>;
+    app = createApp({
+      plugins: [{ onPatch: () => versions.push(app.state.version) }],
+      providers: [Counter, provide(Logger, { useValue: new MemoryLogger() })],
+    });
+
+    app.store.setState({ counter: { count: 1 } });
+    app.store.apply(undefined, [{ op: "replace", path: ["counter", "count"], value: 2 }] as never);
+
+    expect(versions).toEqual([1, 2]);
+  });
+
+  it("rejects a stale patch base while accepting the current app state", () => {
+    const app = createApp({
+      providers: [Counter, provide(Logger, { useValue: new MemoryLogger() })],
+    });
+    const previous = app.store.getPureState();
+    const patch = [{ op: "replace", path: ["counter", "count"], value: 7 }] as never;
+
+    app.store.apply(previous, patch);
+
+    expect(app.getModule(Counter).count).toBe(7);
+    expect(() => app.store.apply(previous, patch)).toThrow(
+      "store.apply() with patches must be given the current state",
+    );
+    expect(app.getModule(Counter).count).toBe(7);
+  });
+
+  it("accepts the current strict snapshot as a patch base", () => {
+    const app = createApp({
+      devOptions: { strictActions: true },
+      providers: [Counter, provide(Logger, { useValue: new MemoryLogger() })],
+    });
+    const previous = app.store.getPureState();
+
+    app.runInAction(() => {
+      app.store.apply(previous, [{ op: "replace", path: ["counter", "count"], value: 7 }] as never);
+    });
+
+    expect(app.getModule(Counter).count).toBe(7);
+    expect(() =>
+      app.runInAction(() => {
+        app.store.apply(previous, [
+          { op: "replace", path: ["counter", "count"], value: 8 },
+        ] as never);
+      }),
+    ).toThrow("store.apply() with patches must be given the current state");
+  });
+
+  it("publishes replayable app-root patches for aliased state", () => {
+    class AliasedState {
+      left = { value: 0 };
+      right = { value: 0 };
+
+      share(): void {
+        const value = { value: 1 };
+        this.left = value;
+        this.right = value;
+      }
+    }
+
+    defineModule(AliasedState, {
+      actions: ["share"],
+      name: "aliasedState",
+      state: ["left", "right"],
+    });
+
+    const events: PatchEvent[] = [];
+    const app = createApp({
+      plugins: [{ onPatch: (event) => events.push(event) }],
+      providers: [AliasedState],
+    });
+    const before = app.store.getPureState();
+
+    app.getModule(AliasedState).share();
+
+    expect(events).toHaveLength(1);
+    expect(events[0]?.patches).toMatchObject([{ op: "replace", path: [] }]);
+    const after = app.store.getPureState();
+    const replayed = applyPatches(before, events[0]!.patches as never) as typeof after;
+    expect(replayed).toEqual(after);
+    expect(replayed.aliasedState!.left).toBe(replayed.aliasedState!.right);
+    expect(applyPatches(after, events[0]!.inversePatches as never)).toEqual(before);
   });
 
   it("caches computed values until their state dependencies change", () => {
@@ -1984,6 +2079,56 @@ describe("app runtime", () => {
     expect(counter.double).toBe(4);
     expect(counter.double).toBe(4);
     expect(calls).toBe(2);
+  });
+
+  it("tracks effect reads by path while computed getters still refresh on commits", async () => {
+    let computedCalls = 0;
+    const effectValues: number[] = [];
+
+    class GranularityProbe {
+      count = 0;
+      other = 0;
+
+      get doubled(): number {
+        computedCalls += 1;
+        return this.count * 2;
+      }
+
+      recordCount(): void {
+        effectValues.push(this.count);
+      }
+
+      changeCount(): void {
+        this.count += 1;
+      }
+
+      changeOther(): void {
+        this.other += 1;
+      }
+    }
+
+    defineModule(GranularityProbe, {
+      actions: ["changeCount", "changeOther"],
+      computed: ["doubled"],
+      effects: ["recordCount"],
+      name: "granularityProbe",
+      state: ["count", "other"],
+    });
+
+    const app = createApp({ providers: [GranularityProbe] });
+    await app.ready;
+    const probe = app.getModule(GranularityProbe);
+
+    expect(probe.doubled).toBe(0);
+    expect(effectValues).toEqual([0]);
+    probe.changeOther();
+    expect(probe.doubled).toBe(0);
+    expect(computedCalls).toBe(2);
+    expect(effectValues).toEqual([0]);
+    probe.changeCount();
+    expect(probe.doubled).toBe(2);
+    expect(effectValues).toEqual([0, 1]);
+    await app.dispose();
   });
 
   it("caches computed values and reruns effects for lazily loaded modules", async () => {
@@ -3941,6 +4086,27 @@ describe("app runtime", () => {
         count: 1,
       },
     });
+  });
+
+  it("keeps Coaction shared transport available through engine options", async () => {
+    let disposals = 0;
+    const transport = {
+      emit: async () => undefined,
+      listen: () => () => undefined,
+      dispose: () => {
+        disposals += 1;
+      },
+    };
+    const app = createApp({
+      engine: { transport },
+      providers: [Counter, provide(Logger, { useValue: new MemoryLogger() })],
+    });
+
+    app.getModule(Counter).increase();
+    expect(app.store.getPureState()).toEqual({ counter: { count: 1 } });
+
+    await app.dispose();
+    expect(disposals).toBe(1);
   });
 
   it("composes same-module nested action calls into a single commit", () => {

@@ -25,7 +25,7 @@ catalog:
   "@vitejs/plugin-react": "6.0.2"
   "@vitejs/plugin-vue": "6.0.7"
   "@vue/server-renderer": "3.5.38"
-  "coaction": "3.1.0"
+  "coaction": "4.0.0"
   "commitizen": "4.3.2"
   "cz-git": "1.13.1"
   "husky": "9.1.7"
@@ -52,9 +52,6 @@ catalog:
   "vue": "3.5.38"
   "vue-tsc": "3.3.5"
   "zone.js": "0.16.2"
-
-minimumReleaseAgeExclude:
-  - coaction@3.1.0
 
 allowBuilds:
   "@parcel/watcher": true
