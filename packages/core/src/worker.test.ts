@@ -75,6 +75,23 @@ defineModule(WorkerHidden, {
   state: ["value"],
 });
 
+class WorkerAliasedState {
+  left = { value: 0 };
+  right = { value: 0 };
+
+  share(): void {
+    const value = { value: 1 };
+    this.left = value;
+    this.right = value;
+  }
+}
+
+defineModule(WorkerAliasedState, {
+  actions: ["share"],
+  name: "workerAliasedState",
+  state: ["left", "right"],
+});
+
 async function waitUntil(predicate: () => boolean, label: string, timeout = 2000): Promise<void> {
   const deadline = Date.now() + timeout;
 
@@ -635,6 +652,61 @@ describe("worker prototype", () => {
       },
     });
     expect(client.select(selectWorkerCount)).toBe(2);
+
+    client.dispose();
+    await host.dispose();
+  });
+
+  it("keeps worker versions in step with direct store writes", async () => {
+    const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+    const client = createWorkerClient({ transport: clientTransport });
+    const host = createWorkerApp({
+      providers: [WorkerCounter],
+      sync: "patch",
+      transport: hostTransport,
+    });
+    await client.ready;
+
+    host.app.store.setState({ workerCounter: { count: 1 } });
+    expect(client.getState()).toEqual({ workerCounter: { count: 1 } });
+    expect(client.state.version).toBe(host.app.state.version);
+
+    host.app.store.apply(undefined, [
+      { op: "replace", path: ["workerCounter", "count"], value: 2 },
+    ] as never);
+    expect(client.getState()).toEqual({ workerCounter: { count: 2 } });
+    expect(client.state.version).toBe(host.app.state.version);
+
+    client.dispose();
+    await host.dispose();
+  });
+
+  it.each([
+    { sections: undefined, sync: "patch" },
+    { sections: ["workerAliasedState"] as const, sync: "snapshot" },
+  ])("mirrors Coaction root replacement patches with $sync sync", async ({ sections, sync }) => {
+    const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+    const client = createWorkerClient({ transport: clientTransport });
+    const host = createWorkerApp({
+      providers: [WorkerAliasedState, WorkerHidden],
+      ...(sections === undefined ? {} : { stateSections: sections }),
+      sync: "patch",
+      transport: hostTransport,
+    });
+    const messages: WorkerStateMessage[] = [];
+    client.subscribe((message) => messages.push(message));
+
+    await client.ready;
+    await client.module<WorkerAliasedState>("workerAliasedState").share();
+
+    const state = client.getState() as {
+      workerAliasedState: { left: { value: number }; right: { value: number } };
+    };
+    expect(state.workerAliasedState.left.value).toBe(1);
+    expect(state.workerAliasedState.left).toBe(state.workerAliasedState.right);
+    expect(messages.at(-1)?.sync).toBe(sync);
+    expect(state).not.toHaveProperty("modules");
+    expect(Object.hasOwn(state, "workerHidden")).toBe(sections === undefined);
 
     client.dispose();
     await host.dispose();

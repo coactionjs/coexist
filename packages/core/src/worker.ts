@@ -1820,10 +1820,22 @@ function publishState(
   version: number = app.state.version,
   syncId?: number,
 ): WorkerStatePublication {
-  const filteredPatches = filterWorkerPatches(patches, sections);
+  // Coaction 4 can replace the entire root to preserve an object graph. Such
+  // a patch has no section key, so a section-limited mirror needs a fresh
+  // filtered snapshot instead of silently dropping the committed change.
+  const rootReplacement =
+    sections !== undefined &&
+    patches.some((patch) => {
+      if (!isWorkerPatch(patch)) {
+        throw new CoexistError("Worker state patch is invalid.");
+      }
+
+      return normalizePatchPath(patch.path).length === 0;
+    });
+  const filteredPatches = rootReplacement ? [] : filterWorkerPatches(patches, sections);
   const isPatch = filteredPatches.length > 0;
 
-  if (patches.length > 0 && filteredPatches.length === 0) {
+  if (patches.length > 0 && filteredPatches.length === 0 && !rootReplacement) {
     return { published: false };
   }
 
