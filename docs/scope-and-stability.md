@@ -80,7 +80,7 @@ Two exclusions are named rather than implied, because a promise with silent hole
 
 These were open questions before `1.0`. They are settled, and changing either now requires a major:
 
-- **The invalidation model** — one publication signal for the whole app tree. Decided to keep, on the measured cost in [State & Reactivity](./state-and-reactivity.md#why-it-is-one-signal-and-what-it-would-take-to-change-it). An opt-in fine-grained mode remains additive and could still land in a minor.
+- **The public watch and adapter invalidation model** — each app commit evaluates the subscribed selectors. Decided to keep, on the measured cost in [State & Reactivity](./state-and-reactivity.md#why-app-watches-use-one-publication-and-what-it-would-take-to-change-it). Coaction 4's path tracking inside module effects does not change this contract. An opt-in finer selector mode remains additive and could still land in a minor.
 - **The worker protocol's stability** — decided to exclude from the promise, [below](#the-worker-protocol-is-outside-the-compatibility-promise).
 
 ### The worker protocol is outside the compatibility promise

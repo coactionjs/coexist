@@ -1,8 +1,9 @@
 #!/usr/bin/env node
-// A baseline for the cost of Coexist's single-publication design.
+// A baseline for the cost of Coexist's app-level publication design.
 //
-// The whole app store shares one Coaction publication signal, so every commit
-// gives every selector a chance to re-run regardless of which module changed.
+// Every app commit gives each public watch selector a chance to re-run,
+// regardless of which module changed. Coaction's internal effect path tracking
+// is separate from this app watch and adapter subscription contract.
 // That keeps cross-module actions atomic and adapters uniform, but the cost
 // grows with selector count rather than with the size of the change. This
 // script measures where that lands today so a change to the invalidation model
@@ -74,7 +75,7 @@ function measureModuleScaling(moduleCount: number) {
 }
 
 /**
- * The scenario the single-publication signal is worst at: many selectors, one
+ * The scenario the app-level publication is worst at: many selectors, one
  * changing module. Every selector re-runs; only one of them can change value.
  */
 function measureSelectorFanout(selectorCount: number) {

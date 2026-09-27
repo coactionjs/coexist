@@ -48,12 +48,14 @@ interface AppStore {
   getPureState(): AppRootState; // plain snapshot of the whole tree
   getState(): AppRootState; // reactive read, tracked inside a reactive scope
   setState(update): void; // write through the runtime's transaction machinery
-  apply(state, patches): void; // apply patches from a patch-enabled engine
+  apply(state?, patches?): void; // replace state or apply patches to the current state
   subscribe(listener): () => void; // committed-change notification
 }
 ```
 
 Store lifetime belongs to the app: there is no `destroy()` on this surface, because disposing the store is `app.dispose()`'s job.
+
+With patches, omit `state` or pass the current `app.store.getPureState()` result. [Coaction 4](https://github.com/coactionjs/coaction/blob/v4.0.0/docs/migration/v4.md) rejects a stale or unrelated patch base. In strict action mode, Coexist accepts the current frozen snapshot returned by `getPureState()` and checks it against the live state before applying patches. A plain `apply(nextState)` still replaces state. Patch observers can receive a root replacement (`path: []`) when Coaction needs one to preserve an object graph; consumers should replay the published pair rather than assume every patch addresses one leaf. `engine.transport` still selects Coaction's shared runtime internally. The separate [Coexist worker runtime](./worker-runtime.md) remains the recommended application-level API.
 
 ## Watching state
 
@@ -78,20 +80,20 @@ Each committed store mutation is one notification source. A selector that return
 
 ## Invalidation granularity
 
-Coaction publishes one signal for the whole app state tree, so **computed getters and effects are invalidated per commit, not per property**:
+The app publishes one committed state transition to `subscribe`, `watch`, plugins, and UI adapters. Their selectors run on each commit and use equality to decide whether to notify. Coaction 4 also tracks paths read by module effects:
 
 - A **computed** getter is memoized between commits. Repeated reads with no committed change in between evaluate it once. Any committed change anywhere in the app invalidates the cache, so the next read re-evaluates even if the state the getter read is unchanged.
-- An **effect** re-runs once after every committed change, regardless of which module or field changed.
+- An **effect** runs after initialization, then re-runs when a state path it read on its last run changes. A write to an unrelated field does not re-run it. An effect that reads no reactive state has only its initial run.
 
 Two things keep this cheap in practice:
 
-- **Actions batch.** An action's synchronous writes commit once, so an action writing ten fields re-runs each effect once, not ten times.
+- **Actions batch.** An action's synchronous writes commit once, so an affected effect re-runs once for that action.
 - **Unchanged writes do not commit.** Assigning the value a field already holds produces no commit and therefore no invalidation.
 
 When you need value-level granularity, put the equality check where it is observable — `watch(read, listener, { equals })` and every UI adapter selector only notify when the selected value actually changes:
 
 ```ts
-// Re-runs on every commit.
+// Re-runs when this.rows changes.
 class Report {
   expensive(): void {
     buildReport(this.rows);
@@ -105,40 +107,42 @@ app.watch(
 );
 ```
 
-Prefer keeping effects cheap, or guard them against unchanged input, rather than assuming they are dependency-precise.
+Keep effects cheap and read the state they depend on during each run. Use `watch(read, listener, { equals })` when you want a selected value comparison after every app commit.
 
 ### What that costs
 
-`pnpm run bench` measures it, so the trade-off can be argued from numbers. On a 2024 laptop with one module changing and every selector reading something unrelated:
+`pnpm run bench` measures the public selector fanout. In a local run on 2026-09-27 with Node 24.16.0 on an Apple M1 Max, one module changed while the other selectors read unrelated values:
 
 | Selectors watching the app | Cost of one action |
 | -------------------------- | ------------------ |
-| 100                        | ~0.02 ms           |
-| 1,000                      | ~0.09 ms           |
-| 10,000                     | ~1.2 ms            |
+| 100                        | ~0.03 ms           |
+| 1,000                      | ~0.16 ms           |
+| 10,000                     | ~1.95 ms           |
 
-Cost tracks the number of selectors, not the size of the change: every selector is given the chance to re-run, and `equals` then suppresses the UI update rather than the selector call. That is comfortable well past a thousand selectors and becomes worth measuring beyond that. Module count behaves the same way — app creation is roughly linear (~20 ms for 1,000 modules, ~1 s for 10,000), while a single action stays under a millisecond until about 10,000 modules.
+Cost tracks the number of public selectors, not the size of the change: every selector is given the chance to re-run, and `equals` then suppresses the UI update rather than the selector call. Measure on your target device if you approach thousands of selectors. In the same run, app creation took ~19 ms for 1,000 modules and ~960 ms for 10,000; one action took ~0.08 ms and ~1.28 ms respectively.
 
 The benchmark also contrasts worker sync modes on the same state: a 1,000-item snapshot is ~30 KB, while the patch for renaming one item is under 100 bytes. Prefer `sync: "patch"` for anything but small state.
 
-### Why it is one signal, and what it would take to change it
+<a id="why-it-is-one-signal-and-what-it-would-take-to-change-it"></a>
 
-Publishing one signal for the whole tree is not an implementation shortcut — it is what buys three properties the rest of the design leans on:
+### Why app watches use one publication, and what it would take to change it
+
+Publishing each committed transition to all app watches and adapters buys three properties the rest of the design leans on:
 
 - **Cross-module actions commit atomically.** An action touching three modules produces one notification, so no observer ever sees a half-applied change. Per-module signals would need an explicit transaction spanning them to keep that.
 - **Adapters stay uniform.** Every adapter subscribes to one thing. A finer model means adapters must decide _which_ signals a selector depends on, which for React (no tracking during render) means a dependency-collection pass the other four would not need.
 - **Plugins see the whole app.** Persistence, devtools, and worker publication all operate on the complete tree; `onStateChange` and `onPatch` have one coherent meaning.
 
-**This was decided before `1.0`, and the decision was to keep it.** One publication signal for the whole tree is the behaviour `1.0` promises, not an unsettled default that happened to ship. These were the alternatives weighed:
+**This was decided before `1.0`, and the decision was to keep it.** Sending each app commit to all public watches and adapters is the behaviour `1.0` promises. These were the alternatives weighed:
 
-| Option                         | What it buys                                 | What it costs                                                                                                                   |
-| ------------------------------ | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| **Keep one signal** — _chosen_ | Today's atomicity and uniformity             | Selector cost scales with selector count                                                                                        |
-| Per-module publication token   | Only observers of a changed module re-run    | Cross-module atomicity needs an explicit multi-token transaction; adapters must map a selector to its tokens                    |
-| Selector dependency tracking   | Precise invalidation without user annotation | Every selector runs inside a tracking scope; React's render-time reads are not trackable, so its adapter needs a different path |
-| Opt-in fine mode per app       | Existing apps unchanged, large apps opt in   | Two invalidation models to maintain and test, and plugins must work under both                                                  |
+| Option                                  | What it buys                                 | What it costs                                                                                                                   |
+| --------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| **Keep one app publication** — _chosen_ | Today's atomicity and uniformity             | Selector cost scales with selector count                                                                                        |
+| Per-module publication token            | Only observers of a changed module re-run    | Cross-module atomicity needs an explicit multi-token transaction; adapters must map a selector to its tokens                    |
+| Selector dependency tracking            | Precise invalidation without user annotation | Every selector runs inside a tracking scope; React's render-time reads are not trackable, so its adapter needs a different path |
+| Opt-in fine mode per app                | Existing apps unchanged, large apps opt in   | Two invalidation models to maintain and test, and plugins must work under both                                                  |
 
-The measured numbers carried the decision: an app with a thousand live selectors spends under a tenth of a millisecond per action, which is not a cost worth paying two invalidation models to avoid. The three properties above — atomic cross-module commits, uniform adapters, whole-app plugins — are load-bearing for the rest of the design, and every alternative gives up at least one of them.
+The measured selector cost and the three properties above — atomic cross-module commits, uniform adapters, whole-app plugins — carried the decision. Coaction's path tracking inside an effect is separate from this public `watch` and adapter publication model.
 
 What would reopen it is evidence, not preference: an app past roughly ten thousand live selectors where `pnpm run bench` shows per-action cost becoming visible in a frame budget. Because the current behaviour is now a compatibility promise, moving to any of the other rows is a major-version change — with one exception. Adding an **opt-in** fine mode is additive, so it could land in a minor: apps that never enable it keep exactly today's semantics. That is the path a future change would most likely take, and the reason the row is kept here rather than deleted.
 

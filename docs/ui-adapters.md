@@ -50,7 +50,7 @@ const count = useSelector(Counter, (m) => m.count); // ✅ for rendering state
 
 This fails silently, and the first render is correct — so it reads as "the action did not run" rather than "the view was never subscribed". Call actions through the facade; read anything you render through a selector.
 
-The reason is the same everywhere: module state lives in a Coaction store with its own signal, which no framework's tracker follows. A facade read is not tracked by Vue's reactivity, Solid's, or Angular's, and React does not track reads at all. Svelte's `moduleStore` reaches the same place from the other direction — it is a real store, but the facade's identity never changes, so under the default `Object.is` equality it emits once and never again. The selector helpers are the bridge, which is why every adapter has one.
+The reason is the same everywhere: module state lives in Coaction's reactive graph, which no framework's tracker follows automatically. A facade read is not tracked by Vue's reactivity, Solid's, or Angular's, and React does not track reads at all. Svelte's `moduleStore` reaches the same place from the other direction — it is a real store, but the facade's identity never changes, so under the default `Object.is` equality it emits once and never again. The selector helpers are the bridge, which is why every adapter has one.
 
 ## React — [`@coexist/react`](../packages/react/README.md)
 
