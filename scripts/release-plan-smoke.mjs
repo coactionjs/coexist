@@ -15,6 +15,13 @@ const tempDir = await mkdtemp(join(tmpdir(), "coexist-release-plan-"));
 try {
   const publicPackages = await readPublicPackages();
   const publicNames = publicPackages.map((pkg) => pkg.name).toSorted();
+  const currentVersions = new Set(publicPackages.map((pkg) => pkg.version));
+
+  if (currentVersions.size !== 1) {
+    throw new Error("The public packages must share one current version.");
+  }
+
+  const currentVersion = [...currentVersions][0];
   const config = JSON.parse(await readFile(join(rootDir, ".changeset/config.json"), "utf8"));
   const fixed = config.fixed?.[0];
 
@@ -30,9 +37,9 @@ try {
   }
 
   for (const [bump, expectedVersion] of [
-    ["patch", "1.0.2"],
-    ["minor", "1.1.0"],
-    ["major", "2.0.0"],
+    ["patch", nextVersion(currentVersion, "patch")],
+    ["minor", nextVersion(currentVersion, "minor")],
+    ["major", nextVersion(currentVersion, "major")],
   ]) {
     const dir = join(tempDir, bump);
     await copyWorkspaceManifests(dir);
@@ -68,7 +75,9 @@ try {
         );
 
         if (manifest.version !== expectedVersion) {
-          throw new Error(`${pkg.name} was versioned to ${manifest.version}, expected 1.1.0.`);
+          throw new Error(
+            `${pkg.name} was versioned to ${manifest.version}, expected ${expectedVersion}.`,
+          );
         }
 
         if (
@@ -81,12 +90,15 @@ try {
     }
   }
 
-  const currentPlanPath = join(tempDir, "current-plan.json");
-  await run(changesetBin, ["status", "--output", currentPlanPath], { cwd: rootDir });
-  const currentPlan = JSON.parse(await readFile(currentPlanPath, "utf8"));
-  const currentPublic = currentPlan.releases.filter((item) => publicNames.includes(item.name));
+  const pendingChangesets = (await readdir(join(rootDir, ".changeset"))).filter(
+    (name) => name.endsWith(".md") && name !== "README.md",
+  );
 
-  if (currentPublic.length > 0) {
+  if (pendingChangesets.length > 0) {
+    const currentPlanPath = join(tempDir, "current-plan.json");
+    await run(changesetBin, ["status", "--output", currentPlanPath], { cwd: rootDir });
+    const currentPlan = JSON.parse(await readFile(currentPlanPath, "utf8"));
+    const currentPublic = currentPlan.releases.filter((item) => publicNames.includes(item.name));
     const versions = new Set(currentPublic.map((item) => item.newVersion));
 
     if (currentPublic.length !== publicNames.length || versions.size !== 1) {
@@ -114,7 +126,7 @@ async function readPublicPackages() {
     );
 
     if (manifest.private !== true) {
-      packages.push({ directory: entry.name, name: manifest.name });
+      packages.push({ directory: entry.name, name: manifest.name, version: manifest.version });
     }
   }
 
@@ -168,4 +180,24 @@ function sameNames(actual, expected) {
     actual.length === expected.length &&
     actual.toSorted().every((name, index) => name === expected[index])
   );
+}
+
+function nextVersion(version, bump) {
+  const match = /^(\d+)\.(\d+)\.(\d+)$/.exec(version);
+
+  if (match === null) {
+    throw new Error(`Expected a stable semver version, received ${version}.`);
+  }
+
+  const [, major, minor, patch] = match.map(Number);
+
+  if (bump === "major") {
+    return `${major + 1}.0.0`;
+  }
+
+  if (bump === "minor") {
+    return `${major}.${minor + 1}.0`;
+  }
+
+  return `${major}.${minor}.${patch + 1}`;
 }
