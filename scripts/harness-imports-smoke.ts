@@ -9,9 +9,10 @@
 // This check closes that specific gap: it costs milliseconds and fails with the
 // list of scripts a harness change would have broken.
 import { readdir, readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const scriptsDir = new URL(".", import.meta.url).pathname;
+const scriptsDir = dirname(fileURLToPath(import.meta.url));
 const harnessPath = join(scriptsDir, "lib/smoke.ts");
 const harnessSource = await readFile(harnessPath, "utf8");
 const exported = new Set(
