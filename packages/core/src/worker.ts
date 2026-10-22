@@ -1945,6 +1945,11 @@ function applyPatchAtPath(
   const container = clonePatchContainer(state);
 
   if (rest.length === 0) {
+    if (Array.isArray(container) && segment === "length") {
+      truncatePatchArray(container, patch);
+      return container;
+    }
+
     if (patch.op === "remove") {
       removePatchValue(container, segment);
       return container;
@@ -2050,6 +2055,25 @@ function removePatchValue(container: PatchContainer, segment: PatchPathSegment):
   }
 
   delete container[key];
+}
+
+// Coaction's engine records a shrinking array (`pop()`, `splice()`, or a
+// `length` assignment) as a `replace` of its `length`. Only truncation is
+// accepted: growing through `length` would leave holes no snapshot can carry.
+function truncatePatchArray(container: unknown[], patch: WorkerPatch): void {
+  const length = patch.value;
+
+  if (
+    patch.op !== "replace" ||
+    typeof length !== "number" ||
+    !Number.isSafeInteger(length) ||
+    length < 0 ||
+    length > container.length
+  ) {
+    throw new CoexistError("Worker state patch array length is invalid.");
+  }
+
+  container.length = length;
 }
 
 function toArrayIndex(segment: PatchPathSegment): number {

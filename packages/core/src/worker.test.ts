@@ -92,6 +92,28 @@ defineModule(WorkerAliasedState, {
   state: ["left", "right"],
 });
 
+class WorkerList {
+  items = [1, 2, 3, 4];
+
+  pop(): void {
+    this.items.pop();
+  }
+
+  removeFirst(): void {
+    this.items.splice(0, 1);
+  }
+
+  truncate(length: number): void {
+    this.items.length = length;
+  }
+}
+
+defineModule(WorkerList, {
+  actions: ["pop", "removeFirst", "truncate"],
+  name: "workerList",
+  state: ["items"],
+});
+
 async function waitUntil(predicate: () => boolean, label: string, timeout = 2000): Promise<void> {
   const deadline = Date.now() + timeout;
 
@@ -856,6 +878,95 @@ describe("worker prototype", () => {
     });
 
     expect(client.getState()).toEqual({ items: [1, 2, 3] });
+    expect(client.state.version).toBe(1);
+
+    client.dispose();
+  });
+
+  it("applies the length patches that shrink a hosted array", async () => {
+    const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+    const conflicts: WorkerConflictEvent[] = [];
+    const messages: WorkerStateMessage[] = [];
+    const client = createWorkerClient({
+      onConflict(event) {
+        conflicts.push(event);
+      },
+      transport: clientTransport,
+    });
+    const host = createWorkerApp({
+      providers: [WorkerList],
+      sync: "patch",
+      transport: hostTransport,
+    });
+
+    client.subscribe((message) => {
+      messages.push(message);
+    });
+    await client.ready;
+
+    const list = client.module<WorkerList>("workerList");
+    await list.pop();
+    await list.removeFirst();
+    await list.truncate(0);
+
+    expect(conflicts).toEqual([]);
+    expect(messages.map((message) => message.sync)).toEqual([
+      "snapshot",
+      "patch",
+      "patch",
+      "patch",
+    ]);
+    expect(messages[1]?.patches).toEqual([
+      { op: "replace", path: ["workerList", "items", "length"], value: 3 },
+    ]);
+    expect(client.getState()).toEqual({ workerList: { items: [] } });
+
+    client.dispose();
+    await host.dispose();
+  });
+
+  it("rejects worker length patches that do not truncate an array", async () => {
+    const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+    const conflicts: WorkerConflictEvent[] = [];
+    const client = createWorkerClient({
+      onConflict(event) {
+        conflicts.push(event);
+      },
+      transport: clientTransport,
+    });
+
+    hostTransport.post({
+      state: { items: [1, 2] },
+      sync: "snapshot",
+      type: "state",
+      version: 0,
+    });
+    await client.ready;
+
+    for (const patch of [
+      { op: "replace", path: ["items", "length"], value: 3 },
+      { op: "replace", path: ["items", "length"], value: -1 },
+      { op: "replace", path: ["items", "length"], value: 1.5 },
+      { op: "replace", path: ["items", "length"], value: "1" },
+      { op: "add", path: ["items", "length"], value: 1 },
+      { op: "remove", path: ["items", "length"] },
+    ]) {
+      hostTransport.post({ patches: [patch], sync: "patch", type: "state", version: 1 });
+    }
+
+    expect(conflicts.map((event) => event.reason)).toEqual(
+      Array.from({ length: 6 }, () => "patch-apply-failed"),
+    );
+    expect(client.getState()).toEqual({ items: [1, 2] });
+
+    hostTransport.post({
+      patches: [{ op: "replace", path: "/items/length", value: 1 }],
+      sync: "patch",
+      type: "state",
+      version: 1,
+    });
+
+    expect(client.getState()).toEqual({ items: [1] });
     expect(client.state.version).toBe(1);
 
     client.dispose();
