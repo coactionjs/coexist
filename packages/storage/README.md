@@ -111,6 +111,30 @@ Persisted values must be plain data, because localspace 3 validates every write:
 
 A custom `StorageService` must implement `close()` instead of `destroy()` and `getPerformanceStats()`.
 
+### Encrypted stores
+
+`encryptionPlugin()` now rejects a stored value that is not an encrypted payload, with `DESERIALIZATION_FAILED` (`details.reason: "unencrypted-value"`), because anyone with storage access could have written it. If your app persisted state before it enabled encryption, hydration fails on that value and `app.start()` rejects. Rewrite the value once before switching to the strict store:
+
+```ts
+import { createLocalSpaceStorage, encryptionPlugin } from "@coexist/storage";
+import type { StorageValue } from "localspace";
+
+const options = { name: "my-app", storeName: "state" };
+const migration = createLocalSpaceStorage({
+  options: { ...options, plugins: [encryptionPlugin({ key, allowPlaintext: true })] },
+});
+const state = await migration.get<StorageValue>("coexist:app");
+await migration.close();
+
+const strict = createLocalSpaceStorage({
+  options: { ...options, plugins: [encryptionPlugin({ key })] },
+});
+if (state !== null) await strict.set("coexist:app", state);
+await strict.close();
+```
+
+Here `key` is your encryption key, and `"coexist:app"` is the `key` option you pass to `createLocalSpaceStoragePlugin()` (`"coexist:state"` by default). `encryptionPlugin()` also accepts AES-GCM only: AES-CBC or AES-CTR configuration fails with `INVALID_CONFIG`. Read such data with `legacyEncryptionMigrationPlugin` from `localspace` and write it into an AES-GCM store, as localspace's migration guide describes.
+
 ## Legacy StorageLike Adapter
 
 `createStoragePlugin()` is retained for custom string-only backends:
