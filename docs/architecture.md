@@ -55,7 +55,7 @@ The DI container does not use `reflect-metadata` or `emitDecoratorMetadata`, doe
 
 ### One observable store
 
-All module state lives in a single Coaction store, keyed by module name. App-level patches, persistence, devtools, and selectors all operate over the whole app at once. App watches and adapter selectors receive each committed transition, so their cost scales with the number of selectors rather than the size of a change — a measured trade-off [settled for the `1.x` line](./state-and-reactivity.md#why-app-watches-use-one-publication-and-what-it-would-take-to-change-it). Module effects also run after each commit by default; `engine.effectInvalidation: "path"` opts into Coaction 4's path tracking.
+All module state lives in a single Coaction store, keyed by module name. App-level patches, persistence, devtools, and selectors all operate over the whole app at once. App watches and adapter selectors receive each committed transition, so their cost scales with the number of selectors rather than the size of a change — a measured trade-off [settled before `1.0`](./state-and-reactivity.md#why-app-watches-use-one-publication-and-what-it-would-take-to-change-it). Module effects also run after each commit by default; `engine.effectInvalidation: "path"` opts into Coaction 4's path tracking.
 
 ### One composition API
 

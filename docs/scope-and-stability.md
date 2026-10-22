@@ -1,6 +1,6 @@
 # Scope and Stability
 
-What Coexist covers, how mature each part is, and what a `1.x` version number promises. Everything below describes the current release line; it is updated with the code, not aspirationally.
+What Coexist covers, how mature each part is, and what a `2.x` version number promises. Everything below describes the current release line; it is updated with the code, not aspirationally.
 
 ## Maturity by area
 
@@ -63,7 +63,9 @@ Lockstep is enforced at planning, versioning, and publishing: Changesets keeps t
 
 ## Versioning
 
-Coexist is `1.x` and follows semver as npm interprets it: **a major bump may break, a minor and a patch never intentionally do.** That is a stronger promise than the `0.x` line it replaces, where a minor was allowed to break.
+Coexist is `2.x` and follows semver as npm interprets it: **a major bump may break, a minor and a patch never intentionally do.** That promise has held since `1.0`, which replaced a `0.x` line where a minor was allowed to break.
+
+`2.0` broke one package: `@coexist/storage` moved to localspace 3 and dropped the APIs localspace removed, as listed in its [migration notes](../packages/storage/README.md#migrating-from-1x). The other ten packages advanced with the lockstep group and kept their API.
 
 - Every package's public surface is committed under [`api-report/`](../api-report) and verified in CI, so a signature cannot change without the change appearing in a reviewable diff. That report is what the promise is measured against.
 - Every user-facing change ships with a [changeset](../CONTRIBUTING.md#changesets-and-releases) stating its bump and the reason.
@@ -75,7 +77,7 @@ There is no LTS branch. Security fixes land on the newest release line only.
 Two exclusions are named rather than implied, because a promise with silent holes is worse than a narrower one:
 
 - **The worker wire protocol**, [below](#the-worker-protocol-is-outside-the-compatibility-promise).
-- **Maturity is not the same as the semver line.** The table at the top describes how much of a surface is finished and supported; `1.x` describes what may change without a major. A **Beta** area still gets the compatibility promise for its exported API — `@coexist/create`'s generated template is not an API surface, so it may change between minors — while the worker protocol is excluded explicitly and by name.
+- **Maturity is not the same as the semver line.** The table at the top describes how much of a surface is finished and supported; the major version describes what may change without a major. A **Beta** area still gets the compatibility promise for its exported API — `@coexist/create`'s generated template is not an API surface, so it may change between minors — while the worker protocol is excluded explicitly and by name.
 
 ### Decisions this release line locks in
 
@@ -86,20 +88,20 @@ These were open questions before `1.0`. They are settled, and changing either no
 
 ### The worker protocol is outside the compatibility promise
 
-`@coexist/core` is `1.x`, but the worker runtime inside it is beta, and the two cannot honestly make the same promise. So the exclusion is stated rather than left implied:
+`@coexist/core` is `2.x`, but the worker runtime inside it is beta, and the two cannot honestly make the same promise. So the exclusion is stated rather than left implied:
 
 > The wire protocol between `createWorkerApp` and `createWorkerClient` is **not** covered by this package's compatibility promise, and may change in any minor release. Everything else `@coexist/core` exports is covered.
 
-Being explicit is the point. "A protocol change is a minor bump, not a major" was coherent under `0.x`, where a minor was allowed to break. Under `1.x` it would contradict itself, because a minor may not break anything the package stands behind. Naming the exclusion keeps `1.0` meaning exactly what it says everywhere else.
+Being explicit is the point. "A protocol change is a minor bump, not a major" was coherent under `0.x`, where a minor was allowed to break. Since `1.0` it would contradict itself, because a minor may not break anything the package stands behind. Naming the exclusion keeps the major version meaning exactly what it says everywhere else.
 
-| Surface                                                                          | Covered by `1.x`? |
+| Surface                                                                          | Covered by `2.x`? |
 | -------------------------------------------------------------------------------- | ----------------- |
 | `createWorkerApp` / `createWorkerClient` signatures, options, and returned types | Yes               |
 | `WorkerClient` members and their documented behaviour                            | Yes               |
 | The frames exchanged on the wire between a host and a client                     | **No**            |
 | `workerProtocolVersion` and the member shapes of `WorkerMessage`                 | **No**            |
 
-Build against the worker **API** freely — it is ordinary `1.x` API, held to the same report and the same deprecation cycle. Do not implement a third-party host or client against the **frames**, and do not persist or bridge them, until the runtime leaves beta.
+Build against the worker **API** freely — it is ordinary `2.x` API, held to the same report and the same deprecation cycle. Do not implement a third-party host or client against the **frames**, and do not persist or bridge them, until the runtime leaves beta.
 
 Both endpoints must come from the same `@coexist/core` version, and that is enforced rather than assumed. The host stamps `workerProtocolVersion` on its `ready` handshake, and a client that sees a different revision rejects `client.ready` with `WorkerProtocolMismatchError` instead of mirroring frames it may misread. A host with no version in its handshake predates versioning and is accepted.
 
