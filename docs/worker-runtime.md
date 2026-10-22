@@ -205,6 +205,8 @@ Tests and non-browser environments can use `createMemoryBroadcastChannel()` with
 
 The host enables patch generation internally for `"patch"` mode.
 
+Patch mode saves bytes only while the app state is a plain tree: objects with the default prototype, dense arrays, and primitives, with no object reachable twice. When any module's state holds something else — a `Map`, `Set`, `Date`, class instance, or a shared reference — Coaction describes every commit as a replacement of the whole state (`path: []`), so each update carries the full state, and a host with `stateSections` publishes a filtered snapshot instead. The mirror stays correct either way. Keep that state as plain data (an object keyed by id instead of a `Map`, an array instead of a `Set`, a timestamp instead of a `Date`) when patch sync is meant to keep messages small.
+
 ## Isolating state sections
 
 A host can publish only selected top-level module slices with `stateSections`. Method delegation still works for **all** hosted modules, but snapshots and patches only include the configured sections:

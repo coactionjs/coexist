@@ -139,6 +139,24 @@ defineModule(WorkerBoard, {
   state: ["lanes"],
 });
 
+class WorkerIndex {
+  byId = new Map<string, { n: number }>([["a", { n: 1 }]]);
+  labels = new Set<string>(["x"]);
+
+  update(): void {
+    this.byId.set("b", { n: 2 });
+    this.byId.get("a")!.n = 5;
+    this.labels.add("y");
+    this.labels.delete("x");
+  }
+}
+
+defineModule(WorkerIndex, {
+  actions: ["update"],
+  name: "workerIndex",
+  state: ["byId", "labels"],
+});
+
 async function waitUntil(predicate: () => boolean, label: string, timeout = 2000): Promise<void> {
   const deadline = Date.now() + timeout;
 
@@ -985,6 +1003,47 @@ describe("worker prototype", () => {
       workerBoard: { lanes: [[], ["a", "b", "moved", "moved"], ["c"]] },
     });
     expect(client.getState()).toEqual(host.app.store.getPureState());
+
+    client.dispose();
+    await host.dispose();
+  });
+
+  it("mirrors Map and Set state through whole-state replacements", async () => {
+    const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+    const conflicts: WorkerConflictEvent[] = [];
+    const messages: WorkerStateMessage[] = [];
+    const client = createWorkerClient({
+      onConflict(event) {
+        conflicts.push(event);
+      },
+      transport: clientTransport,
+    });
+    const host = createWorkerApp({
+      providers: [WorkerIndex],
+      sync: "patch",
+      transport: hostTransport,
+    });
+
+    client.subscribe((message) => {
+      messages.push(message);
+    });
+    await client.ready;
+
+    await client.module<WorkerIndex>("workerIndex").update();
+
+    // State that is not a plain tree makes Coaction replace the whole root, so
+    // the patch carries the full state rather than a Map or Set operation.
+    expect(conflicts).toEqual([]);
+    expect(messages[1]?.patches).toMatchObject([{ op: "replace", path: [] }]);
+    expect(client.getState()).toEqual({
+      workerIndex: {
+        byId: new Map([
+          ["a", { n: 5 }],
+          ["b", { n: 2 }],
+        ]),
+        labels: new Set(["y"]),
+      },
+    });
 
     client.dispose();
     await host.dispose();
