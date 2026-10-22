@@ -9,6 +9,8 @@ This guide takes you from an empty directory to a running Coexist app with a UI 
 
 Coexist ships as **ESM only**. Your project should use `"type": "module"` (or `.mjs`/`.mts` files) and a modern bundler or Node version.
 
+Define `process.env.NODE_ENV` in every bundle — Vite and most framework CLIs already do. The engine's draft library, Mutative 2, selects its development or production build from it; a production build reports `Minified Mutative error #<code>` instead of the full message, so match error codes rather than messages in production code. In a browser without a bundler, map `mutative` to `mutative/dist/mutative.esm.production.min.mjs` in the import map, because its default ESM file reads `process`.
+
 ## Option A — scaffold a project
 
 The fastest way to start is the `create-coexist` CLI. It generates a minimal `@coexist/core` project with a `defineModule()` counter:

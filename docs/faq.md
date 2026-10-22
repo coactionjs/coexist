@@ -56,7 +56,7 @@ The core is environment-agnostic and headless, so modules run on the server. For
 
 ## TypeScript / build setup?
 
-Coexist is ESM-only and targets modern runtimes. For decorators you need a toolchain supporting TC39 decorators and the `accessor` keyword; otherwise use `defineModule()`. The repo's shared config is [`@coexist/tsconfig`](../packages/tsconfig/README.md).
+Coexist is ESM-only and targets modern runtimes. Bundles must define `process.env.NODE_ENV` (see [Requirements](./getting-started.md#requirements)). For decorators you need a toolchain supporting TC39 decorators and the `accessor` keyword; otherwise use `defineModule()`. The repo's shared config is [`@coexist/tsconfig`](../packages/tsconfig/README.md).
 
 ## Where do I report issues or contribute?
 

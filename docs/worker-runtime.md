@@ -201,7 +201,7 @@ Tests and non-browser environments can use `createMemoryBroadcastChannel()` with
 `createWorkerApp({ sync })` controls how the host publishes state:
 
 - `"snapshot"` (default) — sends a full state snapshot on each change.
-- `"patch"` — sends the initial snapshot, then **patch-only** diffs. The client applies patches locally. Requires fewer bytes for large state.
+- `"patch"` — sends the initial snapshot, then **patch-only** diffs. The client applies patches locally, in the order the engine recorded them, including the `length` replacement that truncates an array. Requires fewer bytes for large state.
 
 The host enables patch generation internally for `"patch"` mode.
 

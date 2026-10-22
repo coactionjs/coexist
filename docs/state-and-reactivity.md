@@ -221,6 +221,8 @@ app.runInAction(() => app.store.setState(nextState), { name: "hydrate" });
 
 The writable draft authority exists only while the synchronous store updater is running. Retaining a nested reference or continuing after an `await` does not extend the boundary.
 
+Development builds of the engine's draft library, [Mutative 2](https://mutative.js.org/docs/advanced-guides/migration-v2/), check two more draft rules inside an action: consume a `Map` or `Set` draft's iterators (`values()`, `entries()`) before the action's synchronous part returns, and do not use a draft object as a `Map` key — key by an id instead.
+
 Async actions may return promises; their settlement is reported to plugins.
 
 ## Patches
@@ -235,6 +237,8 @@ With patches on, plugins receive `PatchEvent` (`{ patches, inversePatches }`) vi
 
 - **The worker runtime's `sync: "patch"` mode** — sending diffs instead of full snapshots after startup (see [Worker & Shared Runtime](./worker-runtime.md)).
 - **Devtools** time-travel-style inspection (see [Plugins](./plugins.md)).
+
+Treat a published pair as a sequence to replay in order, not as a list of independent leaf changes. Coexist runs on Coaction 4.1, whose patches come from Mutative 2 ([what changed](https://github.com/coactionjs/coaction/blob/v4.1.0/docs/migration/mutative-2.md#patches)): a nested value's patches come before its parent's, a draft an action moves to another index travels with its parent's element patches, and an array that shrinks is recorded as a `replace` of its `length`. Applying `patches` in order reaches the committed state, and applying `inversePatches` in order undoes it. A test that compares patch arrays exactly ties itself to the engine's encoding; asserting on the replayed state does not.
 
 The store also tracks a monotonic `app.state.version` that increments on every change — handy as a coarse "something changed" signal.
 
