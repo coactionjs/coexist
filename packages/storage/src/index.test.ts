@@ -594,6 +594,8 @@ describe("localspace storage plugin", () => {
     await expect(service.length()).resolves.toBe(0);
 
     await service.dropInstance();
+    await service.close?.();
+    // The deprecated name stays callable on 1.x.
     await service.destroy();
   });
 
@@ -604,7 +606,7 @@ describe("localspace storage plugin", () => {
       const service = createLocalSpaceStorage({
         options: createMemoryLocalSpaceOptions(name),
       });
-      service.destroy = async () => {
+      service.close = async () => {
         events.push(name);
       };
       return service;
@@ -642,6 +644,35 @@ describe("localspace storage plugin", () => {
 
     await retainedService.instance.destroy();
     await ownedService.instance.destroy();
+  });
+
+  it("falls back to destroy() for owned services that predate close()", async () => {
+    const events: string[] = [];
+    const service = createLocalSpaceStorage({
+      options: createMemoryLocalSpaceOptions("legacy-service"),
+    });
+    const { close: _close, ...legacyService } = service;
+    const app = createApp({
+      plugins: [
+        createLocalSpaceStoragePlugin({
+          destroyOnDispose: true,
+          hydrate: false,
+          persist: false,
+          service: {
+            ...legacyService,
+            destroy: async () => {
+              events.push("destroy");
+            },
+          },
+        }),
+      ],
+    });
+
+    await app.start();
+    await app.dispose();
+
+    expect(events).toEqual(["destroy"]);
+    await service.instance.destroy();
   });
 
   it("runs localspace plugins and destroys owned localspace resources on app disposal", async () => {

@@ -12,8 +12,8 @@ import localspace, {
   indexedDBDriver,
   localStorageDriver,
   memoryDriver,
-  quotaPlugin,
-  syncPlugin,
+  quotaPlugin as localspaceQuotaPlugin,
+  syncPlugin as localspaceSyncPlugin,
   ttlPlugin,
   type LocalSpaceConfig,
   type LocalSpaceInstance,
@@ -41,10 +41,21 @@ export {
   indexedDBDriver,
   localStorageDriver,
   memoryDriver,
-  quotaPlugin,
-  syncPlugin,
   ttlPlugin,
 };
+
+/**
+ * @deprecated localspace 2 removed `quotaPlugin`, so `@coexist/storage` 2.0
+ * no longer exports it. Enforce an application size policy in your own code.
+ */
+export const quotaPlugin: typeof import("localspace").quotaPlugin = localspaceQuotaPlugin;
+
+/**
+ * @deprecated localspace 2 removed `syncPlugin`, so `@coexist/storage` 2.0 no
+ * longer exports it. Notify other tabs from application code, for example over
+ * a `BroadcastChannel`.
+ */
+export const syncPlugin: typeof import("localspace").syncPlugin = localspaceSyncPlugin;
 
 export interface StorageLike {
   getItem(key: string): string | null | Promise<string | null>;
@@ -96,7 +107,21 @@ export interface StorageService {
     runner: (scope: StorageTransactionScope) => Promise<T> | T,
   ): Promise<T>;
   dropInstance(options?: LocalSpaceConfig): Promise<void>;
+  /**
+   * Release the instance's plugins and driver without deleting stored data.
+   * Optional on 1.x so existing `StorageService` implementations keep
+   * compiling; `@coexist/storage` 2.0 requires it.
+   */
+  close?(): Promise<void>;
+  /**
+   * @deprecated Use `close()`. localspace 3 removed `destroy()`, so
+   * `@coexist/storage` 2.0 drops it.
+   */
   destroy(): Promise<void>;
+  /**
+   * @deprecated localspace 2 removed performance stats; `@coexist/storage` 2.0
+   * drops this method.
+   */
   getPerformanceStats(): PerformanceStats | undefined;
 }
 
@@ -169,6 +194,11 @@ export function createLocalSpaceStorage(
     instance,
     clear() {
       return instance.clear();
+    },
+    // localspace 1.x tears plugins down in `destroy()` and keeps the data,
+    // which is what `close()` does from localspace 2.1 on.
+    close() {
+      return instance.destroy();
     },
     destroy() {
       return instance.destroy();
@@ -309,7 +339,7 @@ export function createLocalSpaceStoragePlugin<TState = unknown>(
 
         if (destroyOnDispose) {
           try {
-            await storage.destroy();
+            await (storage.close === undefined ? storage.destroy() : storage.close());
           } catch (error) {
             errors.push(error);
           }

@@ -18,12 +18,7 @@ Ships as ESM only: your project needs `"type": "module"` (or `.mjs`/`.mts`) and 
 
 ```ts
 import { createApp } from "@coexist/core";
-import {
-  StorageToken,
-  createLocalSpaceStoragePlugin,
-  syncPlugin,
-  ttlPlugin,
-} from "@coexist/storage";
+import { StorageToken, createLocalSpaceStoragePlugin, ttlPlugin } from "@coexist/storage";
 
 type CounterAppState = {
   readonly counter: {
@@ -36,7 +31,7 @@ const storage = createLocalSpaceStoragePlugin<CounterAppState>({
   options: {
     name: "my-app",
     storeName: "state",
-    plugins: [ttlPlugin({ defaultTTL: 7 * 24 * 60 * 60_000 }), syncPlugin()],
+    plugins: [ttlPlugin({ defaultTTL: 7 * 24 * 60 * 60_000 })],
   },
   partialize: (state) => ({ counter: (state as CounterAppState).counter }),
   merge: (persisted, current) => ({ ...(current as object), ...persisted }),
@@ -67,7 +62,7 @@ await kv.set("draft", { title: "Hello" });
 | `hydrate`          | `boolean`                              | `true`             | Hydrate app state from `key` during plugin setup.                    |
 | `persist`          | `boolean`                              | `true`             | Persist app state on store changes.                                  |
 | `throttleMs`       | `number`                               | `0`                | Trailing throttle for app-state persistence writes.                  |
-| `destroyOnDispose` | `boolean`                              | owns instance      | Destroy localspace resources when the app is disposed.               |
+| `destroyOnDispose` | `boolean`                              | owns instance      | Close localspace resources when the app is disposed.                 |
 | `partialize`       | `(state) => TState`                    | identity           | Pick the subset of app state to persist.                             |
 | `merge`            | `(persisted, current) => state`        | use persisted      | Combine persisted state with current defaults on hydrate.            |
 | `shouldPersist`    | `(event: StateChangeEvent) => boolean` | always             | Skip selected state changes.                                         |
@@ -94,9 +89,22 @@ await storage.setMany([
 ]);
 ```
 
-`StorageService.instance` exposes the underlying localspace instance when you need lower-level APIs or performance stats. It is a raw escape hatch to the library underneath, so what it offers is localspace's contract, not this package's — and it reaches past the plugin's ownership model, so prefer `destroyOnDispose` over calling `instance.destroy()` yourself.
+`StorageService.instance` exposes the underlying localspace instance when you need lower-level APIs. It is a raw escape hatch to the library underneath, so what it offers is localspace's contract, not this package's — and it reaches past the plugin's ownership model, so prefer `destroyOnDispose` over closing the instance yourself.
 
-`destroyOnDispose` is the sole ownership switch for the supplied storage service. It defaults to `true` only when the plugin created the service itself; an external `service` or `instance` is retained by default. Setting it explicitly to `true` destroys that resource exactly once during app disposal.
+`destroyOnDispose` is the sole ownership switch for the supplied storage service. It defaults to `true` only when the plugin created the service itself; an external `service` or `instance` is retained by default. Setting it explicitly to `true` closes that resource exactly once during app disposal: the plugin calls the service's `close()`, or `destroy()` for a service that does not implement `close()`. Closing releases plugins and the driver and keeps stored data.
+
+## Deprecated, removed in 2.0
+
+`@coexist/storage` 2.0 moves to localspace 3, which no longer ships these APIs:
+
+| Deprecated                             | Replacement                                                                     |
+| -------------------------------------- | ------------------------------------------------------------------------------- |
+| `syncPlugin`                           | Notify other tabs from application code, for example over a `BroadcastChannel`. |
+| `quotaPlugin`                          | Enforce an application size policy in your own code before writing.             |
+| `StorageService.destroy()`             | `StorageService.close()`, which releases resources and keeps stored data.       |
+| `StorageService.getPerformanceStats()` | None; localspace no longer collects performance stats.                          |
+
+localspace 3 also validates every stored value: persisted state must be plain data — objects, arrays, strings, numbers, booleans, `null`, and binary buffers. Convert `Date`, `Map`, `Set`, or class instances in `partialize` before 2.0.
 
 ## Legacy StorageLike Adapter
 
@@ -143,7 +151,7 @@ interface StorageLike {
 
 ## Exports
 
-`createLocalSpaceStoragePlugin`, `createLocalSpaceStorage`, `StorageToken`, `createStoragePlugin`, the localspace plugin/driver value re-exports (`compressionPlugin`, `encryptionPlugin`, `indexedDBDriver`, `localStorageDriver`, `memoryDriver`, `quotaPlugin`, `syncPlugin`, `ttlPlugin`), and the `StorageService`, `StoragePlugin`, `StoragePluginOptions`, `StorageLike`, `StoragePluginErrorPhase`, `StorageEntry`, `StorageEntries`, `StorageBatchResponse`, `StorageTransactionMode`, `StorageTransactionScope`, `CreateLocalSpaceStorageOptions`, `LocalSpaceStoragePlugin`, `LocalSpaceStoragePluginOptions` types.
+`createLocalSpaceStoragePlugin`, `createLocalSpaceStorage`, `StorageToken`, `createStoragePlugin`, the localspace plugin/driver value re-exports (`compressionPlugin`, `encryptionPlugin`, `indexedDBDriver`, `localStorageDriver`, `memoryDriver`, `ttlPlugin`, and the deprecated `quotaPlugin` and `syncPlugin`), and the `StorageService`, `StoragePlugin`, `StoragePluginOptions`, `StorageLike`, `StoragePluginErrorPhase`, `StorageEntry`, `StorageEntries`, `StorageBatchResponse`, `StorageTransactionMode`, `StorageTransactionScope`, `CreateLocalSpaceStorageOptions`, `LocalSpaceStoragePlugin`, `LocalSpaceStoragePluginOptions` types.
 
 No localspace **type** is re-exported: they appear in the signatures above as the external names they are, and are imported from `localspace` directly.
 

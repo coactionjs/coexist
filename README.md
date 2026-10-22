@@ -741,7 +741,7 @@ unsubscribe();
 ## Storage
 
 ```ts
-import { StorageToken, createLocalSpaceStoragePlugin, syncPlugin } from "@coexist/storage";
+import { StorageToken, createLocalSpaceStoragePlugin, ttlPlugin } from "@coexist/storage";
 
 type CounterAppState = {
   readonly counter: {
@@ -754,7 +754,7 @@ const storage = createLocalSpaceStoragePlugin<CounterAppState>({
   options: {
     name: "my-app",
     storeName: "state",
-    plugins: [syncPlugin({ channelName: "my-app-state" })],
+    plugins: [ttlPlugin({ defaultTTL: 7 * 24 * 60 * 60_000 })],
   },
   merge: (persisted, current) => ({
     ...(current as object),

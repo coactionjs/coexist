@@ -33,7 +33,7 @@ interface LocalSpaceStoragePluginOptions<TState = unknown> extends CreateLocalSp
 }
 declare const localStorageWrapper: Driver;
 declare const memoryStorageWrapper: Driver;
-declare const quotaPlugin: (options?: QuotaPluginOptions) => LocalSpacePlugin;
+declare const quotaPlugin: typeof import("localspace").quotaPlugin;
 type StorageBatchResponse<T> = Array<{
     readonly key: string;
     readonly value: T | null;
@@ -81,6 +81,7 @@ interface StorageService {
     removeMany(keys: readonly string[]): Promise<void>;
     transaction<T>(mode: StorageTransactionMode, runner: (scope: StorageTransactionScope) => Promise<T> | T): Promise<T>;
     dropInstance(options?: LocalSpaceConfig): Promise<void>;
+    close?(): Promise<void>;
     destroy(): Promise<void>;
     getPerformanceStats(): PerformanceStats | undefined;
 }
@@ -94,6 +95,6 @@ interface StorageTransactionScope {
     iterate<T, U>(iterator: (value: T, key: string, iterationNumber: number) => U): Promise<U>;
     clear(): Promise<void>;
 }
-declare const syncPlugin: (options?: SyncPluginOptions) => LocalSpacePlugin;
+declare const syncPlugin: typeof import("localspace").syncPlugin;
 declare const ttlPlugin: (options?: TTLPluginOptions) => LocalSpacePlugin;
 ```
