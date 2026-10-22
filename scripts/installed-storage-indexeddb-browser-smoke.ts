@@ -275,7 +275,7 @@ async function drop(): Promise<void> {
     name: storageName,
     storeName: storageStoreName,
   });
-  await plugin.storage.destroy();
+  await plugin.storage.close();
 }
 
 async function read(): Promise<SmokeSnapshot> {

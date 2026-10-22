@@ -76,7 +76,7 @@ describe("plugin stack integration", () => {
 
       await second.app.dispose();
     } finally {
-      await storage.destroy();
+      await storage.close();
     }
   });
 });

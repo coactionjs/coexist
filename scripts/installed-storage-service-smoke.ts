@@ -95,7 +95,7 @@ function createTypeConsumerSource() {
   return `import { createApp } from "@coexist/core";
 // localspace types are not this package's API to re-export: they are named from
 // localspace itself, which a consumer configuring a store already installs.
-import type { LocalSpacePlugin } from "localspace";
+import type { LocalSpacePlugin, StorageValue } from "localspace";
 import {
   StorageToken,
   createLocalSpaceStorage,
@@ -113,7 +113,7 @@ const storage: StorageService = createLocalSpaceStorage({
 });
 const localspacePlugin: LocalSpacePlugin = {
   name: "type-plugin",
-  beforeSet(_key: string, value: unknown): unknown {
+  beforeSet(_key: string, value: StorageValue): StorageValue {
     return value;
   },
 };
@@ -138,7 +138,7 @@ const transactionResult: number = await storage.transaction(
   },
 );
 
-void [app.get(StorageToken), transactionResult, storage.getPerformanceStats()];
+void [app.get(StorageToken), transactionResult, storage.close()];
 `;
 }
 
@@ -162,7 +162,6 @@ const storage = createLocalSpaceStorage({
 await storage.ready();
 expectEqual(storage.driver(), "memoryStorageWrapper", "memory storage driver");
 expectEqual(await storage.length(), 0, "initial storage length");
-expectEqual(storage.getPerformanceStats(), undefined, "memory driver performance stats");
 
 await storage.set("one", { count: 1 });
 expectJsonEqual(await storage.get("one"), { count: 1 }, "single set/get");
@@ -260,7 +259,7 @@ await pluginStorage.set("item", { value: 1 });
 const pluginValue = await pluginStorage.get("item");
 expectEqual(pluginValue.value, 1, "localspace plugin original value");
 expectEqual(pluginValue.tagged, true, "localspace plugin tagged value");
-await pluginStorage.destroy();
+await pluginStorage.close();
 expectJsonEqual(pluginEvents, ["set:item", "get:item", "destroy"], "localspace plugin hooks");
 
 const appStorage = createLocalSpaceStorage({
@@ -284,9 +283,9 @@ expectSame(app.get(StorageToken), appStorage, "storage service is provided throu
 await app.get(StorageToken).set("di", { value: 5 });
 expectJsonEqual(await storagePlugin.storage.get("di"), { value: 5 }, "storage token service writes");
 await app.dispose();
-await appStorage.destroy();
+await appStorage.close();
 await storage.dropInstance({ name: storageName, storeName: "state" });
-await storage.destroy();
+await storage.close();
 
 function expectEqual(actual, expected, label) {
   if (!Object.is(actual, expected)) {

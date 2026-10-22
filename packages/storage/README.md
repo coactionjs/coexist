@@ -2,7 +2,7 @@
 
 > Cross-framework persistence plugin for [Coexist](../../README.md), powered by [`localspace`](https://www.npmjs.com/package/localspace): hydrate app state on startup, persist state changes, and expose a shared storage service through app DI.
 
-The recommended `createLocalSpaceStoragePlugin()` uses localspace drivers and plugins, including IndexedDB, localStorage, memory fallback, TTL, encryption, compression, multi-tab sync, and quota helpers. The older `createStoragePlugin()` adapter is still available for simple `getItem` / `setItem` backends.
+The recommended `createLocalSpaceStoragePlugin()` uses localspace 3 drivers and plugins: IndexedDB, localStorage, memory fallback, TTL, encryption, and compression. The older `createStoragePlugin()` adapter is still available for simple `getItem` / `setItem` backends.
 
 ## Installation
 
@@ -68,7 +68,7 @@ await kv.set("draft", { title: "Hello" });
 | `shouldPersist`    | `(event: StateChangeEvent) => boolean` | always             | Skip selected state changes.                                         |
 | `onError`          | `(error, phase) => void`               | —                  | Observe `"hydrate"`, `"persist"`, or `"clear"` failures.             |
 
-`LocalSpaceOptions`, `LocalSpaceInstance`, `LocalSpaceConfig`, `LocalSpacePlugin`, and `PerformanceStats` in that table are localspace's types, and this package does not re-export them — a re-exported type would be part of _this_ package's API, so localspace changing one would break here. Inference covers the common case (`options: { … }` is checked against `LocalSpaceOptions` without naming it); import the name from `localspace` when you need to write it down:
+`LocalSpaceOptions`, `LocalSpaceInstance`, `LocalSpaceConfig`, `LocalSpacePlugin`, and `StorageValueInput` in these signatures are localspace's types, and this package does not re-export them — a re-exported type would be part of _this_ package's API, so localspace changing one would break here. Inference covers the common case (`options: { … }` is checked against `LocalSpaceOptions` without naming it); import the name from `localspace` when you need to write it down:
 
 ```ts
 import type { LocalSpaceOptions, LocalSpacePlugin } from "localspace";
@@ -91,20 +91,25 @@ await storage.setMany([
 
 `StorageService.instance` exposes the underlying localspace instance when you need lower-level APIs. It is a raw escape hatch to the library underneath, so what it offers is localspace's contract, not this package's — and it reaches past the plugin's ownership model, so prefer `destroyOnDispose` over closing the instance yourself.
 
-`destroyOnDispose` is the sole ownership switch for the supplied storage service. It defaults to `true` only when the plugin created the service itself; an external `service` or `instance` is retained by default. Setting it explicitly to `true` closes that resource exactly once during app disposal: the plugin calls the service's `close()`, or `destroy()` for a service that does not implement `close()`. Closing releases plugins and the driver and keeps stored data.
+`destroyOnDispose` is the sole ownership switch for the supplied storage service. It defaults to `true` only when the plugin created the service itself; an external `service` or `instance` is retained by default. Setting it explicitly to `true` closes that resource exactly once during app disposal through the service's `close()`, which releases plugins and the driver and keeps stored data.
 
-## Deprecated, removed in 2.0
+Persisted values must be plain data, because localspace 3 validates every write: objects, arrays, strings, numbers, booleans, `null`, and binary buffers. `StorageService.set()` checks that at compile time through localspace's `StorageValueInput`; app state is checked when it is written, and a value localspace rejects — a `Date`, `Map`, `Set`, or class instance — is reported to `onError` in the `"persist"` phase. Convert such values in `partialize`.
 
-`@coexist/storage` 2.0 moves to localspace 3, which no longer ships these APIs:
+## Migrating from 1.x
 
-| Deprecated                             | Replacement                                                                     |
-| -------------------------------------- | ------------------------------------------------------------------------------- |
-| `syncPlugin`                           | Notify other tabs from application code, for example over a `BroadcastChannel`. |
-| `quotaPlugin`                          | Enforce an application size policy in your own code before writing.             |
-| `StorageService.destroy()`             | `StorageService.close()`, which releases resources and keeps stored data.       |
-| `StorageService.getPerformanceStats()` | None; localspace no longer collects performance stats.                          |
+`@coexist/storage` 2.0 runs on localspace 3. Read localspace's [migration guide](https://github.com/unadlib/localspace/blob/v3.0.1/docs/migration-guide.md) for driver, plugin, transaction, and encryption changes; the changes on this package's surface are:
 
-localspace 3 also validates every stored value: persisted state must be plain data — objects, arrays, strings, numbers, booleans, `null`, and binary buffers. Convert `Date`, `Map`, `Set`, or class instances in `partialize` before 2.0.
+| 1.x                                    | 2.0                                                                                                                                        |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `syncPlugin`                           | Removed. Notify other tabs from application code, for example over a `BroadcastChannel`.                                                   |
+| `quotaPlugin`                          | Removed. Enforce an application size policy in your own code before writing.                                                               |
+| `StorageService.destroy()`             | `StorageService.close()`, which releases resources and keeps stored data.                                                                  |
+| `StorageService.getPerformanceStats()` | Removed; localspace no longer collects performance stats.                                                                                  |
+| Any value in `set()` / `setMany()`     | Plain data only, checked by type and at runtime.                                                                                           |
+| `transaction()` on any driver          | IndexedDB and memory only; localStorage rejects with `UNSUPPORTED_OPERATION`, and an overlapping transaction on the same instance rejects. |
+| `StorageTransactionScope.iterate()`    | Awaits async callbacks and resolves to `U \| undefined`.                                                                                   |
+
+A custom `StorageService` must implement `close()` instead of `destroy()` and `getPerformanceStats()`.
 
 ## Legacy StorageLike Adapter
 
@@ -151,7 +156,7 @@ interface StorageLike {
 
 ## Exports
 
-`createLocalSpaceStoragePlugin`, `createLocalSpaceStorage`, `StorageToken`, `createStoragePlugin`, the localspace plugin/driver value re-exports (`compressionPlugin`, `encryptionPlugin`, `indexedDBDriver`, `localStorageDriver`, `memoryDriver`, `ttlPlugin`, and the deprecated `quotaPlugin` and `syncPlugin`), and the `StorageService`, `StoragePlugin`, `StoragePluginOptions`, `StorageLike`, `StoragePluginErrorPhase`, `StorageEntry`, `StorageEntries`, `StorageBatchResponse`, `StorageTransactionMode`, `StorageTransactionScope`, `CreateLocalSpaceStorageOptions`, `LocalSpaceStoragePlugin`, `LocalSpaceStoragePluginOptions` types.
+`createLocalSpaceStoragePlugin`, `createLocalSpaceStorage`, `StorageToken`, `createStoragePlugin`, the localspace plugin/driver value re-exports (`compressionPlugin`, `encryptionPlugin`, `indexedDBDriver`, `localStorageDriver`, `memoryDriver`, `ttlPlugin`), and the `StorageService`, `StoragePlugin`, `StoragePluginOptions`, `StorageLike`, `StoragePluginErrorPhase`, `StorageEntry`, `StorageEntries`, `StorageBatchResponse`, `StorageTransactionMode`, `StorageTransactionScope`, `CreateLocalSpaceStorageOptions`, `LocalSpaceStoragePlugin`, `LocalSpaceStoragePluginOptions` types.
 
 No localspace **type** is re-exported: they appear in the signatures above as the external names they are, and are imported from `localspace` directly.
 

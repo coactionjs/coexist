@@ -375,7 +375,7 @@ if (test.test.getState().counter.count !== 1) {
 await test.dispose();
 await localApp.dispose();
 await app.dispose();
-await storage.destroy();
+await storage.close();
 
 const projectDir = await mkdtemp(join(tmpdir(), "coexist-installed-create-"));
 

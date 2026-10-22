@@ -94,7 +94,7 @@ async function writeConsumerProject({ catalog, coreTarball, storageTarball }) {
 function createTypeConsumerSource() {
   return `// The drivers and plugins are re-exported by @coexist/storage; their types are
 // not, so they are named from localspace, which this consumer already installs.
-import type { LocalSpaceOptions, LocalSpacePlugin, PerformanceStats } from "localspace";
+import type { LocalSpaceOptions, LocalSpacePlugin } from "localspace";
 import {
   compressionPlugin,
   createLocalSpaceStorage,
@@ -102,22 +102,14 @@ import {
   indexedDBDriver,
   localStorageDriver,
   memoryDriver,
-  quotaPlugin,
-  syncPlugin,
   ttlPlugin,
   type StorageService,
 } from "@coexist/storage";
 
-const syncOptions: NonNullable<Parameters<typeof syncPlugin>[0]> = {
-  channelName: "coexist-storage-localspace-plugins-type",
-  syncKeys: ["session"],
-};
 const pluginStack: LocalSpacePlugin[] = [
   ttlPlugin({ defaultTTL: 1_000, keyTTL: { session: 10_000 } }),
   compressionPlugin({ threshold: 1 }),
   encryptionPlugin({ key: "0123456789abcdef0123456789abcdef" }),
-  quotaPlugin({ maxSize: 1024 * 1024 }),
-  syncPlugin(syncOptions),
 ];
 
 const options: LocalSpaceOptions = {
@@ -127,37 +119,37 @@ const options: LocalSpaceOptions = {
   storeName: "state",
 };
 const storage: StorageService = createLocalSpaceStorage({ options });
-const stats: PerformanceStats | undefined = storage.getPerformanceStats();
 const drivers: readonly string[] = [
   indexedDBDriver._driver,
   localStorageDriver._driver,
   memoryDriver._driver,
 ];
 
-void [drivers, stats, storage];
+void [drivers, storage];
 `;
 }
 
 function createRuntimeConsumerSource() {
-  return `import {
+  return `import * as storageModule from "@coexist/storage";
+import {
   compressionPlugin,
   createLocalSpaceStorage,
   encryptionPlugin,
   indexedDBDriver,
   localStorageDriver,
   memoryDriver,
-  quotaPlugin,
-  syncPlugin,
   ttlPlugin,
 } from "@coexist/storage";
 
-const warnings = [];
-const originalWarn = console.warn;
-console.warn = (...args) => {
-  warnings.push(args.map(String).join(" "));
-};
+// localspace 2 removed both plugins, and 2.0 of this package stopped
+// re-exporting them; a consumer must not find a stale binding.
+for (const removed of ["quotaPlugin", "syncPlugin"]) {
+  if (removed in storageModule) {
+    throw new Error(removed + " is still exported from @coexist/storage.");
+  }
+}
 
-try {
+{
   const storageName = "coexist-storage-localspace-plugins-smoke-" + Date.now();
   const secretPayload = {
     nested: { ready: true },
@@ -182,7 +174,6 @@ try {
         }),
         compressionPlugin({ threshold: 1 }),
         encryptionPlugin({ key: "0123456789abcdef0123456789abcdef" }),
-        quotaPlugin({ maxSize: 32 * 1024 }),
       ],
       storeName: "state",
     },
@@ -211,58 +202,14 @@ try {
   expectEqual(await storage.get("short"), null, "ttl expired value");
   expectJsonEqual(expired, [{ key: "short", value: { ttl: true } }], "ttl onExpire callback");
 
-  const quotaEvents = [];
-  const quotaStorage = createLocalSpaceStorage({
-    options: {
-      driver: memoryDriver._driver,
-      name: storageName + "-quota",
-      plugins: [
-        quotaPlugin({
-          maxSize: 64,
-          onQuotaExceeded(info) {
-            quotaEvents.push({
-              currentUsage: info.currentUsage,
-              key: info.key,
-              maxSize: info.maxSize,
-            });
-          },
-        }),
-      ],
-      storeName: "state",
-    },
-  });
-
-  await quotaStorage.ready();
   await expectRejects(
-    quotaStorage.set("too-large", { text: "z".repeat(256) }),
-    "Storage quota exceeded",
-    "quota plugin rejects oversized writes",
+    storage.set("rich", { at: new Date(0) }),
+    "Value at",
+    "localspace rejects values that are not plain data",
   );
-  expectEqual(await quotaStorage.get("too-large"), null, "quota rejection does not persist value");
-  expectJsonEqual(
-    quotaEvents,
-    [{ currentUsage: 0, key: "too-large", maxSize: 64 }],
-    "quota exceeded callback payload",
-  );
+  expectEqual(await storage.get("rich"), null, "rejected value is not stored");
 
-  const sync = syncPlugin({
-    channelName: storageName + "-sync",
-    syncKeys: ["secret"],
-  });
-  expectEqual(sync.name, "sync", "sync plugin export");
-
-  await quotaStorage.destroy();
-  await storage.destroy();
-
-  if (!warnings.some((warning) => warning.includes("quotaPlugin"))) {
-    throw new Error("quota plugin warning was not emitted");
-  }
-
-  if (!warnings.some((warning) => warning.includes("syncPlugin"))) {
-    throw new Error("sync plugin warning was not emitted");
-  }
-} finally {
-  console.warn = originalWarn;
+  await storage.close();
 }
 
 function delay(ms) {

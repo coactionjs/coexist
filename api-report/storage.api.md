@@ -33,7 +33,6 @@ interface LocalSpaceStoragePluginOptions<TState = unknown> extends CreateLocalSp
 }
 declare const localStorageWrapper: Driver;
 declare const memoryStorageWrapper: Driver;
-declare const quotaPlugin: typeof import("localspace").quotaPlugin;
 type StorageBatchResponse<T> = Array<{
     readonly key: string;
     readonly value: T | null;
@@ -71,30 +70,27 @@ interface StorageService {
     ready(): Promise<void>;
     driver(): string | null;
     get<T>(key: string): Promise<T | null>;
-    set<T>(key: string, value: T): Promise<T>;
+    set<T>(key: string, value: T & StorageValueInput<T>): Promise<T>;
     remove(key: string): Promise<void>;
     clear(): Promise<void>;
     keys(): Promise<string[]>;
     length(): Promise<number>;
-    setMany<T>(entries: StorageEntries<T>): Promise<StorageBatchResponse<T>>;
+    setMany<T>(entries: StorageEntries<T & StorageValueInput<T>>): Promise<StorageBatchResponse<T>>;
     getMany<T>(keys: readonly string[]): Promise<StorageBatchResponse<T>>;
     removeMany(keys: readonly string[]): Promise<void>;
     transaction<T>(mode: StorageTransactionMode, runner: (scope: StorageTransactionScope) => Promise<T> | T): Promise<T>;
     dropInstance(options?: LocalSpaceConfig): Promise<void>;
-    close?(): Promise<void>;
-    destroy(): Promise<void>;
-    getPerformanceStats(): PerformanceStats | undefined;
+    close(): Promise<void>;
 }
 declare const StorageToken: InjectionToken<StorageService>;
 type StorageTransactionMode = "readonly" | "readwrite";
 interface StorageTransactionScope {
     get<T>(key: string): Promise<T | null>;
-    set<T>(key: string, value: T): Promise<T>;
+    set<T>(key: string, value: T & StorageValueInput<T>): Promise<T>;
     remove(key: string): Promise<void>;
     keys(): Promise<string[]>;
-    iterate<T, U>(iterator: (value: T, key: string, iterationNumber: number) => U): Promise<U>;
+    iterate<T, U>(iterator: (value: T, key: string, iterationNumber: number) => U | Promise<U>): Promise<U | undefined>;
     clear(): Promise<void>;
 }
-declare const syncPlugin: typeof import("localspace").syncPlugin;
 declare const ttlPlugin: (options?: TTLPluginOptions) => LocalSpacePlugin;
 ```

@@ -12,13 +12,11 @@ import localspace, {
   indexedDBDriver,
   localStorageDriver,
   memoryDriver,
-  quotaPlugin as localspaceQuotaPlugin,
-  syncPlugin as localspaceSyncPlugin,
   ttlPlugin,
   type LocalSpaceConfig,
   type LocalSpaceInstance,
   type LocalSpaceOptions,
-  type PerformanceStats,
+  type StorageValueInput,
 } from "localspace";
 
 /**
@@ -43,19 +41,6 @@ export {
   memoryDriver,
   ttlPlugin,
 };
-
-/**
- * @deprecated localspace 2 removed `quotaPlugin`, so `@coexist/storage` 2.0
- * no longer exports it. Enforce an application size policy in your own code.
- */
-export const quotaPlugin: typeof import("localspace").quotaPlugin = localspaceQuotaPlugin;
-
-/**
- * @deprecated localspace 2 removed `syncPlugin`, so `@coexist/storage` 2.0 no
- * longer exports it. Notify other tabs from application code, for example over
- * a `BroadcastChannel`.
- */
-export const syncPlugin: typeof import("localspace").syncPlugin = localspaceSyncPlugin;
 
 export interface StorageLike {
   getItem(key: string): string | null | Promise<string | null>;
@@ -82,10 +67,12 @@ export type StorageTransactionMode = "readonly" | "readwrite";
 
 export interface StorageTransactionScope {
   get<T>(key: string): Promise<T | null>;
-  set<T>(key: string, value: T): Promise<T>;
+  set<T>(key: string, value: T & StorageValueInput<T>): Promise<T>;
   remove(key: string): Promise<void>;
   keys(): Promise<string[]>;
-  iterate<T, U>(iterator: (value: T, key: string, iterationNumber: number) => U): Promise<U>;
+  iterate<T, U>(
+    iterator: (value: T, key: string, iterationNumber: number) => U | Promise<U>,
+  ): Promise<U | undefined>;
   clear(): Promise<void>;
 }
 
@@ -94,12 +81,12 @@ export interface StorageService {
   ready(): Promise<void>;
   driver(): string | null;
   get<T>(key: string): Promise<T | null>;
-  set<T>(key: string, value: T): Promise<T>;
+  set<T>(key: string, value: T & StorageValueInput<T>): Promise<T>;
   remove(key: string): Promise<void>;
   clear(): Promise<void>;
   keys(): Promise<string[]>;
   length(): Promise<number>;
-  setMany<T>(entries: StorageEntries<T>): Promise<StorageBatchResponse<T>>;
+  setMany<T>(entries: StorageEntries<T & StorageValueInput<T>>): Promise<StorageBatchResponse<T>>;
   getMany<T>(keys: readonly string[]): Promise<StorageBatchResponse<T>>;
   removeMany(keys: readonly string[]): Promise<void>;
   transaction<T>(
@@ -107,22 +94,8 @@ export interface StorageService {
     runner: (scope: StorageTransactionScope) => Promise<T> | T,
   ): Promise<T>;
   dropInstance(options?: LocalSpaceConfig): Promise<void>;
-  /**
-   * Release the instance's plugins and driver without deleting stored data.
-   * Optional on 1.x so existing `StorageService` implementations keep
-   * compiling; `@coexist/storage` 2.0 requires it.
-   */
-  close?(): Promise<void>;
-  /**
-   * @deprecated Use `close()`. localspace 3 removed `destroy()`, so
-   * `@coexist/storage` 2.0 drops it.
-   */
-  destroy(): Promise<void>;
-  /**
-   * @deprecated localspace 2 removed performance stats; `@coexist/storage` 2.0
-   * drops this method.
-   */
-  getPerformanceStats(): PerformanceStats | undefined;
+  /** Release the instance's plugins and driver without deleting stored data. */
+  close(): Promise<void>;
 }
 
 export interface CreateLocalSpaceStorageOptions {
@@ -195,13 +168,8 @@ export function createLocalSpaceStorage(
     clear() {
       return instance.clear();
     },
-    // localspace 1.x tears plugins down in `destroy()` and keeps the data,
-    // which is what `close()` does from localspace 2.1 on.
     close() {
-      return instance.destroy();
-    },
-    destroy() {
-      return instance.destroy();
+      return instance.close();
     },
     driver() {
       return instance.driver();
@@ -214,9 +182,6 @@ export function createLocalSpaceStorage(
     },
     getMany<T>(keys: readonly string[]): Promise<StorageBatchResponse<T>> {
       return instance.getItems<T>([...keys]) as Promise<StorageBatchResponse<T>>;
-    },
-    getPerformanceStats() {
-      return instance.getPerformanceStats?.();
     },
     keys() {
       return instance.keys();
@@ -236,7 +201,9 @@ export function createLocalSpaceStorage(
     set(key, value) {
       return instance.setItem(key, value);
     },
-    setMany<T>(entries: StorageEntries<T>): Promise<StorageBatchResponse<T>> {
+    setMany<T>(
+      entries: StorageEntries<T & StorageValueInput<T>>,
+    ): Promise<StorageBatchResponse<T>> {
       return instance.setItems<T>(entries as never) as Promise<StorageBatchResponse<T>>;
     },
     transaction(mode, runner) {
@@ -252,9 +219,9 @@ export function createLocalSpaceStoragePlugin<TState = unknown>(
   const storage =
     options.service ??
     createLocalSpaceStorage({
-      instance: options.instance,
-      localspace: options.localspace,
-      options: options.options,
+      ...(options.instance === undefined ? {} : { instance: options.instance }),
+      ...(options.localspace === undefined ? {} : { localspace: options.localspace }),
+      ...(options.options === undefined ? {} : { options: options.options }),
     });
   const partialize = options.partialize ?? ((state: unknown) => state as TState);
   const merge = options.merge ?? ((persisted: TState) => persisted);
@@ -278,7 +245,7 @@ export function createLocalSpaceStoragePlugin<TState = unknown>(
   };
   const pendingWrites = createTrailingThrottle<TState>(options.throttleMs ?? 0, (state) => {
     void runQueued("persist", async () => {
-      await storage.set(key, state);
+      await storage.set(key, asStorageValue(state));
     }).catch(() => undefined);
   });
 
@@ -313,7 +280,7 @@ export function createLocalSpaceStoragePlugin<TState = unknown>(
       await hydration.pending();
       pendingWrites.discard();
       await runQueued("persist", async () => {
-        await storage.set(key, partialize(app.store.getPureState()));
+        await storage.set(key, asStorageValue(partialize(app.store.getPureState())));
       });
     },
     ready() {
@@ -339,7 +306,7 @@ export function createLocalSpaceStoragePlugin<TState = unknown>(
 
         if (destroyOnDispose) {
           try {
-            await (storage.close === undefined ? storage.destroy() : storage.close());
+            await storage.close();
           } catch (error) {
             errors.push(error);
           }
@@ -386,6 +353,13 @@ export function createLocalSpaceStoragePlugin<TState = unknown>(
       hydration.abandon(new Error("Storage plugin was disposed before hydration started."));
     },
   };
+}
+
+// App state is typed loosely, so its shape cannot be proven storable at compile
+// time. localspace validates every value before writing, and a value it rejects
+// surfaces through `onError` in the "persist" phase.
+function asStorageValue<TState>(state: TState): TState & StorageValueInput<TState> {
+  return state as TState & StorageValueInput<TState>;
 }
 
 export function createStoragePlugin<TState = unknown>(

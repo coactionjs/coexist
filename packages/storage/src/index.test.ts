@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { createApp, defineModule } from "@coexist/core";
 
-import type { LocalSpacePlugin } from "localspace";
+import type { LocalSpacePlugin, StorageValue } from "localspace";
 
 import {
   StorageToken,
@@ -511,7 +511,7 @@ describe("localspace storage plugin", () => {
     await app.dispose();
 
     expect(await plugin.storage.get("app")).toEqual({ storageCounter: { count: 3 } });
-    await plugin.storage.destroy();
+    await plugin.storage.close();
   });
 
   it("provides a cross-framework storage service through app DI", async () => {
@@ -586,17 +586,13 @@ describe("localspace storage plugin", () => {
 
     await expect(service.get("theme")).resolves.toBeNull();
 
-    // Optional on the driver, so it must be forwarded without assuming it exists.
-    expect(() => service.getPerformanceStats()).not.toThrow();
-
     await service.clear();
 
     await expect(service.length()).resolves.toBe(0);
 
     await service.dropInstance();
-    await service.close?.();
-    // The deprecated name stays callable on 1.x.
-    await service.destroy();
+    await service.close();
+    await expect(service.get("theme")).rejects.toMatchObject({ code: "INSTANCE_CLOSED" });
   });
 
   it("honors destroyOnDispose for externally supplied storage services", async () => {
@@ -642,51 +638,22 @@ describe("localspace storage plugin", () => {
 
     expect(events).toEqual(["owned"]);
 
-    await retainedService.instance.destroy();
-    await ownedService.instance.destroy();
+    await retainedService.instance.close();
+    await ownedService.instance.close();
   });
 
-  it("falls back to destroy() for owned services that predate close()", async () => {
-    const events: string[] = [];
-    const service = createLocalSpaceStorage({
-      options: createMemoryLocalSpaceOptions("legacy-service"),
-    });
-    const { close: _close, ...legacyService } = service;
-    const app = createApp({
-      plugins: [
-        createLocalSpaceStoragePlugin({
-          destroyOnDispose: true,
-          hydrate: false,
-          persist: false,
-          service: {
-            ...legacyService,
-            destroy: async () => {
-              events.push("destroy");
-            },
-          },
-        }),
-      ],
-    });
-
-    await app.start();
-    await app.dispose();
-
-    expect(events).toEqual(["destroy"]);
-    await service.instance.destroy();
-  });
-
-  it("runs localspace plugins and destroys owned localspace resources on app disposal", async () => {
+  it("runs localspace plugins and closes owned localspace resources on app disposal", async () => {
     const events: string[] = [];
     const localspacePlugin: LocalSpacePlugin = {
       name: "tagger",
-      afterGet(key: string, value: unknown) {
+      afterGet(key: string, value: StorageValue) {
         events.push(`get:${key}`);
         return value;
       },
-      beforeSet(key: string, value: unknown) {
+      beforeSet(key: string, value: StorageValue) {
         events.push(`set:${key}`);
         return {
-          ...(value as Record<string, unknown>),
+          ...(value as Record<string, StorageValue>),
           tagged: true,
         };
       },
@@ -715,21 +682,48 @@ describe("localspace storage plugin", () => {
     expect(events).toEqual(["set:item", "get:item", "destroy"]);
   });
 
-  it("destroys owned localspace resources when hydration fails", async () => {
+  it("reports state localspace cannot store through the persist phase", async () => {
+    class Schedule {
+      due = new Date(0);
+    }
+
+    defineModule(Schedule, {
+      name: "storageSchedule",
+      state: ["due"],
+    });
+
+    const errors: Array<{ readonly error: unknown; readonly phase: string }> = [];
+    const plugin = createLocalSpaceStoragePlugin({
+      hydrate: false,
+      onError(error, phase) {
+        errors.push({ error, phase });
+      },
+      options: createMemoryLocalSpaceOptions("rejected-value"),
+    });
+    const app = createApp({ plugins: [plugin], providers: [Schedule] });
+    await app.start();
+
+    await expect(plugin.persist(app)).rejects.toMatchObject({ code: "SERIALIZATION_FAILED" });
+    expect(errors.map(({ phase }) => phase)).toEqual(["persist"]);
+    expect(await plugin.storage.get("coexist:state")).toBeNull();
+
+    await app.dispose();
+  });
+
+  it("closes owned localspace resources when hydration fails", async () => {
     const hydrateError = new Error("ready failed");
     const events: string[] = [];
     const errors: Array<{ readonly error: unknown; readonly phase: string }> = [];
     const storage: StorageService = {
       instance: {} as StorageService["instance"],
       clear: async () => undefined,
-      destroy: async () => {
-        events.push("destroy");
+      close: async () => {
+        events.push("close");
       },
       driver: () => "test",
       dropInstance: async () => undefined,
       get: async () => null,
       getMany: async () => [],
-      getPerformanceStats: () => undefined,
       keys: async () => [],
       length: async () => 0,
       ready: async () => {
@@ -757,7 +751,7 @@ describe("localspace storage plugin", () => {
     await expect(app.dispose()).rejects.toBeInstanceOf(AggregateError);
 
     expect(errors).toEqual([{ error: hydrateError, phase: "hydrate" }]);
-    expect(events).toEqual(["ready", "destroy"]);
+    expect(events).toEqual(["ready", "close"]);
   });
 });
 

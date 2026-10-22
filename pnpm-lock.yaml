@@ -82,8 +82,8 @@ catalogs:
       specifier: 17.0.7
       version: 17.0.7
     localspace:
-      specifier: 1.3.0
-      version: 1.3.0
+      specifier: 3.0.1
+      version: 3.0.1
     oxfmt:
       specifier: 0.55.0
       version: 0.55.0
@@ -727,7 +727,7 @@ importers:
     dependencies:
       localspace:
         specifier: 'catalog:'
-        version: 1.3.0
+        version: 3.0.1
     devDependencies:
       '@coexist/core':
         specifier: workspace:*
@@ -3825,8 +3825,8 @@ packages:
     resolution: {integrity: sha512-9FKQA6G1MMtqNxfxvSBNXD/axeG2QRjYbNh0/ykRL5xYcRbCm2vXq7B9bhc7nSuKdHzr8/BHIwfPuYYH1UsXXw==}
     hasBin: true
 
-  localspace@1.3.0:
-    resolution: {integrity: sha512-1qHdQ4ltO8teYVV5uytNySzRnP6SDQgCJLUOwDe8S2l41UEs5zrqlIZktbO8ORKrpLT11dA+naN8d15SsiJIdA==}
+  localspace@3.0.1:
+    resolution: {integrity: sha512-C6NC1u1CHhjMsG9TBZnjeLd+40lc08YkMKUAPwJcrfc/duzynmfG0B7+3bFUmu8uABRwJnqxbktFzD1V6G6s0Q==}
 
   locate-character@3.0.0:
     resolution: {integrity: sha512-SW13ws7BjaeJ6p7Q6CO2nchbYEc3X3J6WrmTTDto7yMPqVSZTUyY5Tjbid+Ab8gLnATtygYtiDIJGQRRn2ZOiA==}
@@ -3858,10 +3858,6 @@ packages:
 
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
-
-  lz-string@1.5.0:
-    resolution: {integrity: sha512-h5bgJWpxJNswbU7qCrV0tIKQCaS3blPDrqKWx+QxzuzL1zGUzij9XCWLrSLsJPu5t+eWA/ycetzYAO5IOMcWAQ==}
-    hasBin: true
 
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
@@ -7392,9 +7388,7 @@ snapshots:
       '@lmdb/lmdb-win32-x64': 3.5.4
     optional: true
 
-  localspace@1.3.0:
-    dependencies:
-      lz-string: 1.5.0
+  localspace@3.0.1: {}
 
   locate-character@3.0.0: {}
 
@@ -7426,8 +7420,6 @@ snapshots:
   lru-cache@5.1.1:
     dependencies:
       yallist: 3.1.1
-
-  lz-string@1.5.0: {}
 
   magic-string@0.30.21:
     dependencies:
