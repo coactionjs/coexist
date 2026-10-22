@@ -114,6 +114,31 @@ defineModule(WorkerList, {
   state: ["items"],
 });
 
+class WorkerBoard {
+  lanes = [
+    ["a", "b"],
+    ["c", "d"],
+  ];
+
+  openLane(): void {
+    const first = this.lanes[0]!;
+    this.lanes.unshift([]);
+    first.push("moved");
+  }
+
+  closeLane(): void {
+    const last = this.lanes[this.lanes.length - 1]!;
+    this.lanes.shift();
+    last.pop();
+  }
+}
+
+defineModule(WorkerBoard, {
+  actions: ["closeLane", "openLane"],
+  name: "workerBoard",
+  state: ["lanes"],
+});
+
 async function waitUntil(predicate: () => boolean, label: string, timeout = 2000): Promise<void> {
   const deadline = Date.now() + timeout;
 
@@ -920,6 +945,46 @@ describe("worker prototype", () => {
       { op: "replace", path: ["workerList", "items", "length"], value: 3 },
     ]);
     expect(client.getState()).toEqual({ workerList: { items: [] } });
+
+    client.dispose();
+    await host.dispose();
+  });
+
+  it("mirrors element patches for array drafts moved and then written", async () => {
+    const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+    const conflicts: WorkerConflictEvent[] = [];
+    const messages: WorkerStateMessage[] = [];
+    const client = createWorkerClient({
+      onConflict(event) {
+        conflicts.push(event);
+      },
+      transport: clientTransport,
+    });
+    const host = createWorkerApp({
+      providers: [WorkerBoard],
+      stateSections: ["workerBoard"],
+      sync: "patch",
+      transport: hostTransport,
+    });
+
+    client.subscribe((message) => {
+      messages.push(message);
+    });
+    await client.ready;
+
+    const board = client.module<WorkerBoard>("workerBoard");
+    await board.openLane();
+    await board.closeLane();
+    await board.openLane();
+
+    // A section-limited host answers a root replacement with a snapshot, so
+    // every message staying a patch shows the moved array kept element patches.
+    expect(conflicts).toEqual([]);
+    expect(messages.slice(1).map((message) => message.sync)).toEqual(["patch", "patch", "patch"]);
+    expect(client.getState()).toEqual({
+      workerBoard: { lanes: [[], ["a", "b", "moved", "moved"], ["c"]] },
+    });
+    expect(client.getState()).toEqual(host.app.store.getPureState());
 
     client.dispose();
     await host.dispose();

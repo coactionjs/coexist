@@ -2042,6 +2042,50 @@ describe("app runtime", () => {
     expect(applyPatches(after, events[0]!.inversePatches as never)).toEqual(before);
   });
 
+  it("publishes element patches for an array draft moved and then written", () => {
+    class Board {
+      lanes = [
+        ["a", "b"],
+        ["c", "d"],
+      ];
+
+      openLane(): void {
+        const first = this.lanes[0]!;
+        this.lanes.unshift([]);
+        first.push("moved");
+      }
+    }
+
+    defineModule(Board, {
+      actions: ["openLane"],
+      name: "board",
+      state: ["lanes"],
+    });
+
+    const events: PatchEvent[] = [];
+    const app = createApp({
+      plugins: [{ onPatch: (event) => events.push(event) }],
+      providers: [Board],
+    });
+    const before = app.store.getPureState();
+
+    app.getModule(Board).openLane();
+
+    const after = app.store.getPureState();
+    expect(after.board!.lanes).toEqual([[], ["a", "b", "moved"], ["c", "d"]]);
+    expect(events).toHaveLength(1);
+    // Mutative 2 carries a moved draft in its parent's element patches, so the
+    // pair stays scoped to the module slice instead of replacing the root.
+    const paths = (events[0]!.patches as { path: unknown[] }[]).map(({ path }) => path);
+    expect(paths.length).toBeGreaterThan(0);
+    for (const path of paths) {
+      expect(path.slice(0, 2)).toEqual(["board", "lanes"]);
+      expect(path.length).toBeGreaterThan(2);
+    }
+    expect(applyPatches(before, events[0]!.patches as never)).toEqual(after);
+    expect(applyPatches(after, events[0]!.inversePatches as never)).toEqual(before);
+  });
+
   it("caches computed values until their state dependencies change", () => {
     let calls = 0;
 
