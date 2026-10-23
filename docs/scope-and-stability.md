@@ -112,6 +112,17 @@ Build against the worker **API** freely — it is ordinary `2.x` API, held to th
 
 Both endpoints must come from the same `@coexist/core` version, and that is enforced rather than assumed. The host stamps `workerProtocolVersion` on its `ready` handshake, and a client that sees a different revision rejects `client.ready` with `WorkerProtocolMismatchError` instead of mirroring frames it may misread. A host with no version in its handshake predates versioning and is accepted.
 
+### What is a breaking change for the worker API
+
+Now that the worker API is Stable, a major release or a deprecation cycle is required for:
+
+- changing the meaning, default, or optionality of an option on `createWorkerApp` or `createWorkerClient`;
+- changing a `WorkerClient` member's behaviour, error name, or settlement semantics;
+- removing a transport, or narrowing a documented topology or trust boundary;
+- changing which module methods are remotely callable by default.
+
+Adding an option with a default, a new transport, or an opt-in recovery mode is additive. The wire protocol is not on this list; it remains internal and may change in a minor.
+
 ## What is deliberately out of scope
 
 Coexist does not, and does not plan to, own:
