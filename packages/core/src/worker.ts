@@ -108,6 +108,11 @@ export interface BroadcastChannelLike {
 
 export interface BroadcastWorkerTransportOptions {
   readonly channel?: string;
+  /**
+   * This transport's address on the channel. The default is unique per
+   * transport and per realm, so peers in different tabs never share one; set it
+   * only for a peer that others address with `targetPeerId`, such as the host.
+   */
   readonly peerId?: string;
   readonly targetPeerId?: string;
   readonly authToken?: string;
@@ -2209,6 +2214,7 @@ const defaultBroadcastWorkerChannel = "coexist:worker";
 const maxBroadcastMessageRoutes = 1024;
 const memoryBroadcastChannels = new Map<string, Set<MemoryBroadcastChannel>>();
 let nextWorkerPeerId = 1;
+let workerPeerRealmId: string | undefined;
 
 class MemoryBroadcastChannel implements BroadcastChannelLike {
   readonly name: string;
@@ -2290,9 +2296,32 @@ class MemoryBroadcastChannel implements BroadcastChannelLike {
 }
 
 function createWorkerPeerId(): string {
+  // Every tab evaluates its own copy of this module, so the counter alone would
+  // name the first transport of every tab `peer:1`, and two tabs on default ids
+  // would drop each other's traffic as their own echo. A per-realm random part
+  // keeps defaults apart across tabs; the counter keeps them apart within one.
+  workerPeerRealmId ??= createWorkerPeerRealmId();
   const id = nextWorkerPeerId;
   nextWorkerPeerId += 1;
-  return `peer:${id}`;
+  return `peer:${workerPeerRealmId}:${id}`;
+}
+
+function createWorkerPeerRealmId(): string {
+  const webCrypto = (
+    globalThis as {
+      readonly crypto?: { getRandomValues?(array: Uint32Array): Uint32Array };
+    }
+  ).crypto;
+
+  if (typeof webCrypto?.getRandomValues === "function") {
+    return Array.from(webCrypto.getRandomValues(new Uint32Array(2)), (value) =>
+      value.toString(36),
+    ).join("");
+  }
+
+  // A peer id routes messages; it is not a secret, so a runtime without Web
+  // Crypto still gets a per-realm value rather than a shared constant.
+  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
 }
 
 function isWorkerMessage(message: unknown): message is WorkerMessage {

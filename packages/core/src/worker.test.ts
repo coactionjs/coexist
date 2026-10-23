@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   createBroadcastWorkerTransport,
@@ -10,6 +10,8 @@ import {
   createWorkerClient,
   defineModule,
   lazyModule,
+  type BroadcastChannelLike,
+  type BroadcastWorkerMessageEnvelope,
   type DataTransportLike,
   type PostMessageEndpoint,
   type PostMessageEventLike,
@@ -1907,6 +1909,60 @@ describe("worker runtime", () => {
     clientTwoChannel.close?.();
   });
 
+  it("connects a host tab and a client tab that both use default peer ids", async () => {
+    // Each tab evaluates its own copy of the module, so both transports below are
+    // the first one their realm creates. A per-module counter alone named both
+    // `peer:1`, and each side dropped the other's traffic as its own echo.
+    const hostTab = await importWorkerModuleInNewRealm();
+    const clientTab = await importWorkerModuleInNewRealm();
+    const channel = "worker-default-peer-ids";
+    const hostChannel = createMemoryBroadcastChannel(channel);
+    const clientChannel = createMemoryBroadcastChannel(channel);
+    const host = createWorkerApp({
+      providers: [WorkerCounter],
+      transport: hostTab.createBroadcastWorkerTransport(hostChannel),
+    });
+    const client = createWorkerClient({
+      readyTimeout: 1000,
+      transport: clientTab.createBroadcastWorkerTransport(clientChannel),
+    });
+
+    await client.ready;
+    await expect(client.module<WorkerCounter>("workerCounter").increase(3)).resolves.toBe(3);
+    expect(client.select(selectWorkerCount)).toBe(3);
+
+    client.dispose();
+    await host.dispose();
+    hostChannel.close?.();
+    clientChannel.close?.();
+  });
+
+  it("keeps default peer ids distinct across realms without Web Crypto", async () => {
+    const sources: unknown[] = [];
+    const recorder: BroadcastChannelLike = {
+      addEventListener: () => undefined,
+      postMessage(envelope) {
+        sources.push((envelope as BroadcastWorkerMessageEnvelope).source);
+      },
+      removeEventListener: () => undefined,
+    };
+
+    vi.stubGlobal("crypto", undefined);
+
+    try {
+      const firstTab = await importWorkerModuleInNewRealm();
+      const secondTab = await importWorkerModuleInNewRealm();
+
+      firstTab.createBroadcastWorkerTransport(recorder).post({ type: "ready" });
+      secondTab.createBroadcastWorkerTransport(recorder).post({ type: "ready" });
+    } finally {
+      vi.unstubAllGlobals();
+    }
+
+    expect(sources).toHaveLength(2);
+    expect(sources[0]).not.toBe(sources[1]);
+  });
+
   it("targets broadcast snapshot resyncs to the requesting client", async () => {
     const channel = "worker-broadcast-sync";
     const hostChannel = createMemoryBroadcastChannel(channel);
@@ -3035,6 +3091,12 @@ interface WorkerFailingCounterState {
 
 function selectWorkerCount(state: unknown): number {
   return (state as WorkerCounterState).workerCounter.count;
+}
+
+/** A fresh copy of the worker module, as another tab would evaluate it. */
+async function importWorkerModuleInNewRealm() {
+  vi.resetModules();
+  return import("./worker.js");
 }
 
 function selectFailingWorkerCount(state: unknown): number {
