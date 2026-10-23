@@ -175,17 +175,19 @@ const transport = createPostMessageWorkerTransport(window as any, {
 
 ### Shared tabs (BroadcastChannel)
 
-Clients request their own initial snapshot, so they may attach before or after the host starts. Identify peers with `peerId` / `targetPeerId`:
+Clients request their own initial snapshot, so they may attach before or after the host starts. A channel has exactly one host, addressed by a fixed `peerId`; every other tab runs a client that targets it with `targetPeerId`:
 
 ```ts
+// Every tab: a client. Without an explicit `peerId`, each tab's transport gets
+// its own id, so a result routed back to one tab never settles another's call.
 const client = createWorkerClient({
   transport: createBroadcastWorkerTransport(new BroadcastChannel("counter"), {
     authToken: sharedRandomCapability,
-    peerId: "tab:client",
     targetPeerId: "tab:host",
   }),
 });
 
+// One tab only: the host, under the id the clients target.
 const host = createWorkerApp({
   providers: [Counter],
   sync: "patch",
@@ -195,6 +197,10 @@ const host = createWorkerApp({
   }),
 });
 ```
+
+Client ids must be unique on a channel. Replies are routed by `peerId`, and each client numbers its calls from 1, so two tabs that share an id settle each other's calls with the wrong results. Keep the default, or derive an explicit id per tab, such as `` `tab:${crypto.randomUUID()}` ``.
+
+The runtime does not elect the host. Start `createWorkerApp` in exactly one tab, for example the tab that holds a [Web Lock](https://developer.mozilla.org/docs/Web/API/Web_Locks_API). Two hosts under the same id both answer every call, so each action runs twice and their states diverge. Nor does the runtime hand over between hosts: a replacement host starts its own version sequence, and clients that mirrored the previous host ignore its frames as stale until that sequence passes theirs. Recreate the clients when the host changes.
 
 Tests and non-browser environments can use `createMemoryBroadcastChannel()` with the same API.
 

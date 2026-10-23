@@ -662,20 +662,18 @@ await client.ready;
 For shared tab coordination, adapt a browser `BroadcastChannel`. The client should subscribe before the host starts so it receives the initial snapshot:
 
 ```ts
-const hostChannel = new BroadcastChannel("counter-runtime");
-const clientChannel = new BroadcastChannel("counter-runtime");
-
+// Every tab runs a client. The default `peerId` is unique per tab.
 const client = createWorkerClient({
-  transport: createBroadcastWorkerTransport(clientChannel, {
-    peerId: "tab:client",
+  transport: createBroadcastWorkerTransport(new BroadcastChannel("counter-runtime"), {
     targetPeerId: "tab:host",
   }),
 });
 
+// Exactly one tab runs the host, under the id the clients target.
 const host = createWorkerApp({
   providers: [Counter],
   sync: "patch",
-  transport: createBroadcastWorkerTransport(hostChannel, {
+  transport: createBroadcastWorkerTransport(new BroadcastChannel("counter-runtime"), {
     peerId: "tab:host",
   }),
 });
@@ -683,6 +681,8 @@ const host = createWorkerApp({
 await client.ready;
 await client.module<Counter>("counter").increase(1);
 ```
+
+The runtime does not elect the host, so start it in one tab only. [Shared tabs](./docs/worker-runtime.md#shared-tabs-broadcastchannel) explains why client ids must be unique and what to do when the host changes.
 
 Tests and non-browser environments can use `createMemoryBroadcastChannel()` with the same transport API.
 

@@ -469,7 +469,7 @@ Transports (all interchangeable):
 
 - `createMemoryWorkerTransportPair()` — in-process host/client pair (tests).
 - `createPostMessageWorkerTransport(endpoint)` — `Worker`, iframe, `MessagePort`.
-- `createBroadcastWorkerTransport(channel, { peerId, targetPeerId })` — shared tabs via `BroadcastChannel`; `createMemoryBroadcastChannel()` mirrors it in tests.
+- `createBroadcastWorkerTransport(channel, { peerId, targetPeerId })` — shared tabs via `BroadcastChannel`, with exactly one host per channel and a unique `peerId` per client (the default is); `createMemoryBroadcastChannel()` mirrors it in tests.
 - `createDataTransportWorkerTransport(dataTransport)` — process/socket/custom RPC.
 
 Hosts can isolate published state to selected top-level sections with `stateSections: ["counter"]` (method delegation still covers all modules). Sync defaults to `"snapshot"`; `sync: "patch"` sends patch-only updates after startup. Clients can observe conflicts via `onConflict` (`stale-message`, `missing-snapshot`, `version-gap`, `patch-apply-failed`).
