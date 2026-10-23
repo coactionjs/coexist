@@ -50,6 +50,9 @@ jobs:
       - name: Verify documented versions
         run: pnpm run test:docs-versions
 
+      - name: Verify worker stability claims
+        run: pnpm run test:docs-stability
+
       - name: Verify lockstep release planning
         run: pnpm run test:release-plan
 
