@@ -140,6 +140,8 @@ A transport is just `{ post(message), subscribe(listener) }`. The package ships 
 | `createBroadcastWorkerTransport(channel, opts)`     | Shared tabs via `BroadcastChannel`.         |
 | `createDataTransportWorkerTransport(dataTransport)` | Process/socket/custom RPC.                  |
 
+A `MessagePort` — either end of a `MessageChannel`, or a `SharedWorker` port — needs no extra setup: the postMessage transport subscribes with `addEventListener`, which leaves a port's queue disabled, so it calls `start()` on the port itself.
+
 ### Web Worker
 
 ```ts

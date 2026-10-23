@@ -1609,6 +1609,38 @@ describe("worker runtime", () => {
     await host.dispose();
   });
 
+  it("starts MessagePort endpoints so their queued messages reach the transport", async () => {
+    // A browser MessagePort holds every message until start(); only assigning
+    // onmessage starts it implicitly, and the transport uses addEventListener.
+    const [hostPort, clientPort] = createMessagePortPair();
+    const client = createWorkerClient({
+      readyTimeout: 1000,
+      transport: createPostMessageWorkerTransport(clientPort),
+    });
+    const host = createWorkerApp({
+      providers: [WorkerCounter],
+      transport: createPostMessageWorkerTransport(hostPort),
+    });
+
+    await client.ready;
+    await expect(client.module<WorkerCounter>("workerCounter").increase(4)).resolves.toBe(4);
+    expect([hostPort.started, clientPort.started]).toEqual([true, true]);
+
+    client.dispose();
+    await host.dispose();
+  });
+
+  it("leaves a start function alone on an endpoint that is not a MessagePort", () => {
+    // On a window, `start` can be any global function the page declared.
+    const globalStart = vi.fn<() => void>();
+    const endpoint = Object.assign(new MockPostMessageEndpoint(), { start: globalStart });
+    const unsubscribe = createPostMessageWorkerTransport(endpoint).subscribe(() => undefined);
+
+    expect(globalStart).not.toHaveBeenCalled();
+
+    unsubscribe();
+  });
+
   it("filters postMessage origin/source, validates payloads, and uses targetOrigin", () => {
     const endpoint = new MockPostMessageEndpoint();
     const expectedSource = {};
@@ -3216,6 +3248,40 @@ class MockPostMessageEndpoint implements PostMessageEndpoint {
       listener(event);
     }
   }
+}
+
+/** Models a browser MessagePort: nothing reaches a listener before start(). */
+class MockMessagePort extends MockPostMessageEndpoint {
+  readonly [Symbol.toStringTag] = "MessagePort";
+  started = false;
+  readonly #queued: PostMessageEventLike[] = [];
+
+  start(): void {
+    this.started = true;
+
+    for (const event of this.#queued.splice(0)) {
+      super.dispatch(event);
+    }
+  }
+
+  override dispatch(event: PostMessageEventLike): void {
+    if (!this.started) {
+      this.#queued.push(event);
+      return;
+    }
+
+    super.dispatch(event);
+  }
+}
+
+function createMessagePortPair(): readonly [MockMessagePort, MockMessagePort] {
+  const left = new MockMessagePort();
+  const right = new MockMessagePort();
+
+  left.peer = right;
+  right.peer = left;
+
+  return [left, right];
 }
 
 function createDataTransportEndpoint(

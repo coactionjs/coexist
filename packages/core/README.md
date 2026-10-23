@@ -468,7 +468,7 @@ Both endpoints enforce size quotas alongside schema validation, tunable with `li
 Transports (all interchangeable):
 
 - `createMemoryWorkerTransportPair()` — in-process host/client pair (tests).
-- `createPostMessageWorkerTransport(endpoint)` — `Worker`, iframe, `MessagePort`.
+- `createPostMessageWorkerTransport(endpoint)` — `Worker`, iframe, `MessagePort` (the transport calls the port's `start()` for you).
 - `createBroadcastWorkerTransport(channel, { peerId, targetPeerId })` — shared tabs via `BroadcastChannel`, with exactly one host per channel and a unique `peerId` per client (the default is); `createMemoryBroadcastChannel()` mirrors it in tests.
 - `createDataTransportWorkerTransport(dataTransport)` — process/socket/custom RPC.
 

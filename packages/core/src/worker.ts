@@ -1384,6 +1384,7 @@ export function createPostMessageWorkerTransport(
       };
 
       source.addEventListener("message", handleMessage);
+      startMessagePort(source);
 
       return () => {
         source.removeEventListener("message", handleMessage);
@@ -2419,6 +2420,20 @@ function isUnsafeWorkerPathSegment(segment: PatchPathSegment): boolean {
 
 function isAllowedPostMessageOrigin(origin: string, allowedOrigins: readonly string[]): boolean {
   return allowedOrigins.includes("*") || allowedOrigins.includes(origin);
+}
+
+/**
+ * A browser `MessagePort` keeps its queue disabled for `addEventListener`
+ * listeners until `start()` is called — only assigning `onmessage` starts it
+ * implicitly — so a transport on a `MessageChannel` port would never receive a
+ * message. The platform tag identifies a real port, across realms too; probing
+ * for a `start` method instead would, on a window, call whatever global
+ * function happens to have that name.
+ */
+function startMessagePort(source: PostMessageSource): void {
+  if (Object.prototype.toString.call(source) === "[object MessagePort]") {
+    (source as { start?: () => void }).start?.();
+  }
 }
 
 function resolveWorkerProtocolLimits(
