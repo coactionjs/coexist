@@ -235,7 +235,7 @@ function createSnapshotHost(transport: WorkerTransport) {
   };
 }
 
-describe("worker prototype", () => {
+describe("worker runtime", () => {
   it("disposes the worker app when transport subscription fails", async () => {
     const subscribeError = new Error("host subscribe failed");
     const events: string[] = [];

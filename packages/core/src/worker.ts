@@ -2180,9 +2180,10 @@ function createMemoryWorkerTransport(
 /**
  * The wire revision `createWorkerApp` and `createWorkerClient` speak. It is
  * announced in the `ready` handshake so a version mismatch fails loudly at
- * connection time rather than as corrupted state later. While the worker
- * runtime is beta this bumps on any breaking wire change — which is a minor
- * release, not a major one.
+ * connection time rather than as corrupted state later. The wire protocol is
+ * internal and outside the package's compatibility promise, so a breaking wire
+ * change bumps this revision and ships in a minor release; the public API
+ * remains stable.
  */
 export const workerProtocolVersion = 1;
 

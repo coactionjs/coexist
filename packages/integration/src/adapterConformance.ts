@@ -183,9 +183,10 @@ export function describeAdapterConformance(binding: AdapterBinding): void {
     });
 
     // The worker helpers are the half most likely to drift: they are used less,
-    // they mirror state instead of owning it, and the runtime behind them is
-    // still beta. Holding them to the same contract is what keeps one adapter
-    // from quietly diverging while its app-side helpers stay correct.
+    // they mirror state instead of owning it, and the runtime behind them has a
+    // separate topology and trust contract. Holding them to the same contract is
+    // what keeps one adapter from quietly diverging while its app-side helpers
+    // stay correct.
     it("mirrors worker state and follows remote actions", async () => {
       const worker = await startWorkerHost();
       const observation = binding.observeWorker(worker.client);
