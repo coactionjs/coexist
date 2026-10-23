@@ -4,26 +4,31 @@ What Coexist covers, how mature each part is, and what a `2.x` version number pr
 
 ## Maturity by area
 
-| Area                                                        | Status         | What that means                                                                                                              |
-| ----------------------------------------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| App runtime, modules, DI, lifecycle, plugins                | **Stable**     | The API is exercised by the whole test suite and installed-package smokes. Changes go through a deprecation cycle.           |
-| `@coexist/core/local`                                       | **Stable**     | The same app composition API with a local Coaction store; CI checks installed consumers and the bundle boundary.             |
-| UI adapters (React, Vue, Svelte, Solid, Angular)            | **Stable**     | All five are held to one [conformance contract](./ui-adapters.md#two-things-every-adapter-gives-you) and browser-tested.     |
-| `@coexist/storage`, `@coexist/devtools`, `@coexist/testing` | **Stable**     | Narrow surfaces, covered by unit and installed-package tests.                                                                |
-| `@coexist/router`                                           | **Primitives** | A location source and a plugin. It does not match routes, render views, or own navigation UI — pair it with a real router.   |
-| Worker / shared runtime                                     | **Beta**       | Correct and tested over reliable transports. See [what beta means](#the-worker-runtime-is-beta) before depending on it.      |
-| `@coexist/create`                                           | **Beta**       | Generates a minimal starter. The template is expected to change between minors.                                              |
-| SSR                                                         | **Partial**    | The core is SSR-safe and adapters isolate per-request apps, but there is no streaming, hydration, or server-component story. |
+| Area                                                        | Status         | What that means                                                                                                                                                                                                                             |
+| ----------------------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| App runtime, modules, DI, lifecycle, plugins                | **Stable**     | The API is exercised by the whole test suite and installed-package smokes. Changes go through a deprecation cycle.                                                                                                                          |
+| `@coexist/core/local`                                       | **Stable**     | The same app composition API with a local Coaction store; CI checks installed consumers and the bundle boundary.                                                                                                                            |
+| UI adapters (React, Vue, Svelte, Solid, Angular)            | **Stable**     | All five are held to one [conformance contract](./ui-adapters.md#two-things-every-adapter-gives-you) and browser-tested.                                                                                                                    |
+| `@coexist/storage`, `@coexist/devtools`, `@coexist/testing` | **Stable**     | Narrow surfaces, covered by unit and installed-package tests.                                                                                                                                                                               |
+| `@coexist/router`                                           | **Primitives** | A location source and a plugin. It does not match routes, render views, or own navigation UI — pair it with a real router.                                                                                                                  |
+| Worker / shared runtime                                     | **Stable**     | API, transports, readiness, recovery, and the trust boundary are covered over trusted, reliable transports. The host is authoritative; concurrent writers are last-writer-wins, not merged. See [the supported model](#the-worker-runtime). |
+| `@coexist/create`                                           | **Beta**       | Generates a minimal starter. The template is expected to change between minors.                                                                                                                                                             |
+| SSR                                                         | **Partial**    | The core is SSR-safe and adapters isolate per-request apps, but there is no streaming, hydration, or server-component story.                                                                                                                |
 
-## The worker runtime is beta
+<a id="the-worker-runtime-is-beta" name="the-worker-runtime-is-beta"></a>
 
-The worker runtime hosts a real app off-thread and mirrors its state, with schema validation, an action allowlist, protocol quotas, bounded readiness, snapshot recovery, and a delivery contract. It is genuinely usable — but "beta" is the honest label, because:
+## The worker runtime
 
-- **Concurrent writes are not merged.** Several peers writing the same state produce last-writer-wins on the host. The client detects that its mirror fell behind and re-syncs a snapshot; it does not reconcile competing writes.
-- **BroadcastChannel coordination is trusted-peer only.** Any code that can join a same-origin channel observes its traffic, so the `authToken` routes messages rather than authenticating peers — see the worker [trust boundary](./worker-runtime.md#trust-boundary).
+The worker runtime hosts a real app off-thread and mirrors its state, with schema validation, an action allowlist, protocol quotas, bounded readiness, snapshot recovery, and a delivery contract.
+
+It is **Stable** within a deliberately narrow operational model. Stable covers the API, options, error semantics, and documented behaviour over a trusted, reliable transport. It does not promise distributed-systems properties the runtime does not implement:
+
+- **One authoritative host.** State lives on the host; clients read a mirror and write through delegated actions. Concurrent writes are last-writer-wins on the host, and a client whose mirror falls behind detects the gap and re-syncs a snapshot; it does not reconcile competing writes. The runtime does not merge concurrent writes.
+- **Trusted transports only.** A bare `WorkerTransport` does not authenticate its peer. BroadcastChannel `authToken` routes messages rather than authenticating them. Schema validation, quotas, and the action allowlist are defense-in-depth, not a security boundary against hostile same-origin code — see the worker [trust boundary](./worker-runtime.md#trust-boundary).
 - **Framework worker bootstrapping is yours.** Adapters consume a `WorkerClient`; spawning the worker, bundling its entry, and handling its lifecycle are application concerns.
+- **The wire protocol is internal.** The API is stable; the frames are not. Both endpoints must come from the same `@coexist/core` version, enforced at `ready` via `workerProtocolVersion` ([below](#the-worker-protocol-is-outside-the-compatibility-promise)).
 
-Depend on it for a trusted, reliable transport — a dedicated `Worker`, a `MessagePort`, a same-origin iframe you control. Treat it as a prototype for unreliable remote transports or multi-writer shared runtimes.
+Depend on it for a dedicated `Worker`, a `MessagePort`, a same-origin iframe you control, or a trusted `BroadcastChannel`. If you need CRDT-style merge, offline queueing, or an adversarial transport boundary, use a system designed for that; those are out of scope, not unfinished.
 
 ## Compatibility
 
@@ -77,31 +82,32 @@ There is no LTS branch. Security fixes land on the newest release line only.
 Two exclusions are named rather than implied, because a promise with silent holes is worse than a narrower one:
 
 - **The worker wire protocol**, [below](#the-worker-protocol-is-outside-the-compatibility-promise).
-- **Maturity is not the same as the semver line.** The table at the top describes how much of a surface is finished and supported; the major version describes what may change without a major. A **Beta** area still gets the compatibility promise for its exported API — `@coexist/create`'s generated template is not an API surface, so it may change between minors — while the worker protocol is excluded explicitly and by name.
+- **Maturity is not the same as the semver line.** The table at the top describes how much of a surface is finished and supported; the major version describes what may change without a major. A **Beta** area still gets the compatibility promise for its exported API — `@coexist/create`'s generated template is not an API surface, so it may change between minors. The worker protocol is the one explicit exclusion, below; it is an internal encoding, not a maturity label.
 
 ### Decisions this release line locks in
 
 These were open questions before `1.0`. They are settled, and changing either now requires a major:
 
 - **The public watch and adapter invalidation model** — each app commit evaluates the subscribed selectors. Decided to keep, on the measured cost in [State & Reactivity](./state-and-reactivity.md#why-app-watches-use-one-publication-and-what-it-would-take-to-change-it). Effects also re-run after each commit by default, preserving `1.0` behavior; `engine.effectInvalidation: "path"` is an additive opt-in. A finer selector mode remains a separate possible addition.
-- **The worker protocol's stability** — decided to exclude from the promise, [below](#the-worker-protocol-is-outside-the-compatibility-promise).
+- **The worker protocol's stability** — the runtime API is Stable, but the wire protocol remains excluded from the promise ([below](#the-worker-protocol-is-outside-the-compatibility-promise)). It is an internal encoding, not a public contract.
 
 ### The worker protocol is outside the compatibility promise
 
-`@coexist/core` is `2.x`, but the worker runtime inside it is beta, and the two cannot honestly make the same promise. So the exclusion is stated rather than left implied:
+The wire protocol is an internal implementation detail. Keeping it out of the compatibility promise lets the runtime change frame encoding, recovery, and routing without turning every internal change into a major. This is a boundary between the public API and the transport encoding, not a maturity caveat: the runtime is Stable and its API is covered.
 
 > The wire protocol between `createWorkerApp` and `createWorkerClient` is **not** covered by this package's compatibility promise, and may change in any minor release. Everything else `@coexist/core` exports is covered.
 
-Being explicit is the point. "A protocol change is a minor bump, not a major" was coherent under `0.x`, where a minor was allowed to break. Since `1.0` it would contradict itself, because a minor may not break anything the package stands behind. Naming the exclusion keeps the major version meaning exactly what it says everywhere else.
+Being explicit is the point. "A protocol change is a minor bump, not a major" was coherent under `0.x`, where a minor was allowed to break. Since `1.0` it would contradict itself, because a minor may not break anything the package stands behind — and the package does not stand behind the frames. Naming the exclusion keeps the major version meaning exactly what it says everywhere else.
 
-| Surface                                                                          | Covered by `2.x`? |
-| -------------------------------------------------------------------------------- | ----------------- |
-| `createWorkerApp` / `createWorkerClient` signatures, options, and returned types | Yes               |
-| `WorkerClient` members and their documented behaviour                            | Yes               |
-| The frames exchanged on the wire between a host and a client                     | **No**            |
-| `workerProtocolVersion` and the member shapes of `WorkerMessage`                 | **No**            |
+| Surface                                                                          | Covered by `2.x`?  |
+| -------------------------------------------------------------------------------- | ------------------ |
+| `createWorkerApp` / `createWorkerClient` signatures, options, and returned types | Yes                |
+| `WorkerClient` members and their documented behaviour                            | Yes                |
+| Supported transports, readiness/recovery, and the trust boundary                 | Yes, as documented |
+| The frames exchanged on the wire between a host and a client                     | **No**             |
+| `workerProtocolVersion` and the member shapes of `WorkerMessage`                 | **No**             |
 
-Build against the worker **API** freely — it is ordinary `2.x` API, held to the same report and the same deprecation cycle. Do not implement a third-party host or client against the **frames**, and do not persist or bridge them, until the runtime leaves beta.
+Build against the worker **API** freely — it is ordinary `2.x` API, held to the same report and the same deprecation cycle. Do not implement a third-party host or client against the **frames**, and do not persist or bridge them. The API is stable; the encoding is not.
 
 Both endpoints must come from the same `@coexist/core` version, and that is enforced rather than assumed. The host stamps `workerProtocolVersion` on its `ready` handshake, and a client that sees a different revision rejects `client.ready` with `WorkerProtocolMismatchError` instead of mirroring frames it may misread. A host with no version in its handshake predates versioning and is accepted.
 
@@ -113,9 +119,10 @@ Coexist does not, and does not plan to, own:
 - **Route matching, data loading, bundling, or deployment.** That is a meta-framework's job; use one.
 - **A server runtime.** Modules run wherever you run them.
 - **A component library or styling system.**
+- **Distributed conflict resolution.** The worker runtime is host-authoritative; merging concurrent writers (CRDT/OT) is out of scope, not a missing stable feature.
 
 ## Next
 
 - [Introduction](./introduction.md) — positioning and mental model.
-- [Worker & Shared Runtime](./worker-runtime.md) — what the beta covers, and the trust boundary it enforces.
+- [Worker & Shared Runtime](./worker-runtime.md) — what the runtime covers, and the trust boundary it enforces.
 - [Contributing](../CONTRIBUTING.md#security) — how to report a vulnerability privately.

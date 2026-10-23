@@ -1,6 +1,8 @@
 # Worker & Shared Runtime
 
-`@coexist/core` includes a beta worker runtime: run an app (and its modules) in a Web Worker, iframe, `MessagePort`, `BroadcastChannel`, or custom RPC channel, and consume its state from another context with the same selector and module ergonomics you use on the main thread.
+`@coexist/core` includes a worker runtime: run an app (and its modules) in a Web Worker, iframe, `MessagePort`, `BroadcastChannel`, or custom RPC channel, and consume its state from another context with the same selector and module ergonomics you use on the main thread.
+
+> **Stability.** The worker API is **Stable** under the `2.x` promise over trusted, reliable transports. The supported model is one authoritative host with clients, host-authoritative last-writer-wins, application-owned bootstrapping, and an internal wire protocol. See [Scope & Stability](./scope-and-stability.md#the-worker-runtime) for the boundaries.
 
 Because business logic is plain modules, **moving it off-thread does not change the modules** — only where they run.
 
@@ -297,13 +299,24 @@ function View() {
 
 See [UI Adapters](./ui-adapters.md#consuming-worker-hosted-state) for the per-framework helper names.
 
-## What the beta covers (and doesn't)
+<a id="what-the-beta-covers-and-doesnt" name="what-the-beta-covers-and-doesnt"></a>
+
+## What the runtime covers (and doesn't)
 
 Covered: app creation, method delegation, initial snapshots, patch-only sync after startup, bounded client readiness, snapshot recovery after a lost patch, a delivery contract that surfaces transport failures, protocol size quotas, selector watches, `postMessage` endpoints, a `data-transport`-style `listen`/`emit` bridge, and BroadcastChannel shared-tab coordination with routed call results.
 
-Not covered: full shared-runtime conflict _resolution_ (it reports conflicts and re-syncs a stale mirror, but does not merge competing writes) and framework-specific worker bootstrapping. It reuses Coaction's transport/worker primitives rather than reimplementing a full shared runtime.
+Not covered: full shared-runtime conflict _resolution_ (the host is authoritative and reports conflicts, while a client re-syncs a stale mirror; it does not merge competing writes) and framework-specific worker bootstrapping. It reuses Coaction's transport/worker primitives rather than reimplementing a full shared runtime.
 
-**This is beta, not a prototype and not production-hardened.** Over a trusted, reliable transport — a dedicated `Worker`, a `MessagePort`, a same-origin iframe you control — it is meant to be depended on. Over an unreliable remote transport, or with several peers writing the same state, treat it as experimental. [Scope & Stability](./scope-and-stability.md#the-worker-runtime-is-beta) states exactly what that label covers.
+**This is stable, not a prototype and not a distributed-systems consensus layer.** Over a trusted, reliable transport — a dedicated `Worker`, a `MessagePort`, a same-origin iframe you control, or a trusted `BroadcastChannel` — it is meant to be depended on. If you need merge semantics, offline queueing, or an adversarial transport boundary, those are out of scope rather than planned for a later release. [Scope & Stability](./scope-and-stability.md#the-worker-runtime) states exactly what Stable covers.
+
+## Operating checklist
+
+- Create the `Worker` yourself, bundle its entry, and connect it with a `postMessage` transport. A `WorkerClient` does not spawn or terminate the `Worker` for you. The runnable [`worker-counter`](../examples/worker-counter) example shows the smallest end-to-end setup.
+- Await `client.ready` before treating worker-backed state as available, and render a loading or error state if it rejects.
+- Dispose both ends. `client.dispose()` rejects pending calls; `host.dispose()` disposes the hosted app, not the `Worker` object itself.
+- Observe `onDeliveryError` on the host and `onConflict`/`onResync` on the client; a silent transport failure is otherwise indistinguishable from a slow action.
+- Deploy host and client from the same `@coexist/core` version. A mixed-version pair fails `client.ready` with `WorkerProtocolMismatchError` instead of mirroring frames it may misread.
+- Keep transports trusted. Use `targetOrigin`/`allowedOrigins`/`expectedSource` for iframes, and an authenticated channel for cross-origin RPC; a bare transport does not authenticate its peer.
 
 ## Next
 

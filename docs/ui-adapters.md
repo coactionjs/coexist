@@ -34,7 +34,7 @@ Those two capabilities are not a convention — they are a contract every adapte
 
 Selecting through a module token — `useSelector(Counter, (m) => m.count)` rather than `(app) => app.getModule(Counter).count` — is part of that contract, not a per-adapter convenience. An adapter that only offered the app form would push its users back to the shape adapters exist to remove.
 
-The [worker helpers](#consuming-worker-hosted-state) are held to the same contract — mirrored state follows a remote action, a disposed scope stops mirroring, and a missing client raises an error. They are the half most likely to drift: used less often, mirroring state rather than owning it, and backed by a runtime that is still beta.
+The [worker helpers](#consuming-worker-hosted-state) are held to the same contract — mirrored state follows a remote action, a disposed scope stops mirroring, and a missing client raises an error. They are the half most likely to drift: used less often, mirroring state rather than owning it, and backed by the worker runtime, whose supported topology and trust boundary are documented in [Scope & Stability](./scope-and-stability.md#the-worker-runtime).
 
 ### Module access does not subscribe
 

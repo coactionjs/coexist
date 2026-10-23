@@ -86,7 +86,7 @@ The [inventory workbench](../examples/inventory-workbench) is the end-to-end exa
 
 ## Adoption cost
 
-Coexist introduces module metadata, provider registration, and an app lifecycle. For a small feature with one view and a few state values, that structure may cost more than it saves. The default core entry includes Coaction's shared-store transport; [`@coexist/core/local`](../packages/core/README.md#local-store-entry) uses a local store and excludes that transport code from a tree-shaken bundle. A measured size comparison is checked in CI. The [worker runtime](./scope-and-stability.md#the-worker-runtime-is-beta) remains beta, and applications provide their own Worker entry and lifecycle.
+Coexist introduces module metadata, provider registration, and an app lifecycle. For a small feature with one view and a few state values, that structure may cost more than it saves. The default core entry includes Coaction's shared-store transport; [`@coexist/core/local`](../packages/core/README.md#local-store-entry) uses a local store and excludes that transport code from a tree-shaken bundle. A measured size comparison is checked in CI. The [worker runtime](./scope-and-stability.md#the-worker-runtime) is stable over trusted, reliable transports; applications provide their own Worker entry and lifecycle.
 
 ## Next steps
 

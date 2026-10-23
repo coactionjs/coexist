@@ -2,7 +2,7 @@
 
 > The Coexist core runtime: a typed application core with lightweight dependency injection, object-oriented state, actions, computed getters, effects, and a framework-agnostic store powered by [Coaction](https://www.npmjs.com/package/coaction).
 
-`@coexist/core` is the only package every Coexist app depends on. It owns the DI container, module metadata, the app runtime and lifecycle, the reactive store, and a beta worker runtime. UI adapters (`@coexist/react`, `@coexist/vue`, …) and plugins (`@coexist/storage`, `@coexist/router`, …) are thin layers on top of the primitives exported here.
+`@coexist/core` is the only package every Coexist app depends on. It owns the DI container, module metadata, the app runtime and lifecycle, the reactive store, and a worker runtime. UI adapters (`@coexist/react`, `@coexist/vue`, …) and plugins (`@coexist/storage`, `@coexist/router`, …) are thin layers on top of the primitives exported here.
 
 ## Installation
 
@@ -31,7 +31,7 @@ Coexist ships as ESM only and targets Node.js `>=22.12.0` and modern browsers.
 - [Plugins](#plugins)
 - [Reading state outside of components](#reading-state-outside-of-components)
 - [Testing](#testing)
-- [Worker / shared runtime](#worker--shared-runtime)
+- [Worker & shared runtime](#worker--shared-runtime)
 - [Errors](#errors)
 - [API reference](#api-reference)
 
@@ -417,9 +417,11 @@ expect(started.started).toBe(true);
 
 `testApp({ overrides })` replaces providers discovered from `providers`, but it cannot introduce a brand new `@Module` after module discovery. The inspector (`app.test`) exposes `getActions`, `getState`, `getPatches`, `clearActions`, `clearPatches`, and `flushEffects`.
 
-## Worker / shared runtime
+## Worker & shared runtime
 
-`@coexist/core` includes a beta worker runtime: run the app (and its modules) in a Worker, iframe, `MessagePort`, `BroadcastChannel`, or custom RPC channel, and consume its state from another context.
+`@coexist/core` includes a worker runtime: run the app (and its modules) in a Worker, iframe, `MessagePort`, `BroadcastChannel`, or custom RPC channel, and consume its state from another context.
+
+The worker API is **Stable** over trusted, reliable transports. The host is authoritative; concurrent writes are last-writer-wins, the wire protocol is internal and may change in a minor, and both endpoints must come from the same `@coexist/core` version. See [Scope & Stability](../../docs/scope-and-stability.md#the-worker-runtime) and the [worker reference](../../docs/worker-runtime.md).
 
 ```ts
 import {
@@ -474,7 +476,7 @@ Hosts can isolate published state to selected top-level sections with `stateSect
 
 A mirror that lost its patch sequence (`missing-snapshot`, `version-gap`, `patch-apply-failed`) requests a fresh snapshot instead of only reporting the conflict, so a watch-only client cannot stay behind forever. `client.state.status` is `synced` / `recovering` / `failed`, `onResync` reports transitions, and `resync` tunes the single-flight run (`delay`, `backoffFactor`, `maxDelay`, `maxAttempts`, `timeout`) or disables it with `resync: false`.
 
-The beta intentionally does not implement full shared-runtime conflict resolution or framework-specific worker bootstrapping. Adapters (`@coexist/react`, `@coexist/vue`, `@coexist/svelte`, `@coexist/solid`, `@coexist/angular`) ship `WorkerClient`-based hooks for consuming worker state.
+The worker runtime intentionally does not implement full shared-runtime conflict resolution or framework-specific worker bootstrapping. Those are out of scope, not unfinished. Adapters (`@coexist/react`, `@coexist/vue`, `@coexist/svelte`, `@coexist/solid`, `@coexist/angular`) ship `WorkerClient`-based hooks for consuming worker state.
 
 ## Errors
 
