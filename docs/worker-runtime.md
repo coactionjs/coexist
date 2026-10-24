@@ -99,7 +99,7 @@ Observers never alter protocol handling: throwing from one is contained and cann
 
 If the initial sync request cannot even be posted, `ready` rejects with `WorkerInitialSyncError` whose `cause` is the transport failure. Because a client asks for its own snapshot — and asks again whenever the host announces `ready` — a client that attaches _after_ the host published still catches up rather than hanging.
 
-A rejected `ready` does not disable the client: a snapshot that arrives later is still applied and still notifies watchers. `ready` simply cannot re-settle, so treat its rejection as "startup was not observed in time", not as "this client is dead". The one exception is `WorkerProtocolMismatchError`: a client that refused its host stays refused.
+A rejected `ready` does not disable the client: a snapshot that arrives later is still applied, and it reaches `client.subscribe` listeners and watches registered with `immediate: true`. A default `watch` takes that first snapshot as its baseline and fires from the next change. `ready` simply cannot re-settle, so treat its rejection as "startup was not observed in time", not as "this client is dead". The one exception is `WorkerProtocolMismatchError`: a client that refused its host stays refused.
 
 RPC calls default to a 30-second timeout (`requestTimeout` on `createWorkerClient`; `0` disables it). Use `callWithOptions()` for a per-call timeout or `AbortSignal`. Remote invocation is restricted to methods explicitly listed in the module's `actions` metadata; ordinary methods, lifecycle hooks, computed properties, and arbitrary callable fields are not remotely exposed by default. When a plain method intentionally belongs to the RPC surface, list it by module name with `createWorkerApp({ expose: { counter: ["refresh"] }, ... })`.
 
@@ -320,7 +320,7 @@ Not covered: full shared-runtime conflict _resolution_ (the host is authoritativ
 ## Operating checklist
 
 - Create the `Worker` yourself, bundle its entry, and connect it with a `postMessage` transport. A `WorkerClient` does not spawn or terminate the `Worker` for you. The runnable [`worker-counter`](../examples/worker-counter) example shows the smallest end-to-end setup.
-- Await `client.ready` before treating worker-backed state as available, and render a loading or error state if it rejects.
+- Await `client.ready` before mounting views that read worker state: the adapter helpers call `client.select`, which throws until a snapshot has arrived. A timeout or an abort is not final, because a snapshot that lands later is still applied. Show a connecting state the app can leave, and mount once `client.subscribe` or a `watch` with `immediate: true` reports the first frame. Only `WorkerProtocolMismatchError` is final.
 - Dispose both ends. `client.dispose()` rejects pending calls; `host.dispose()` disposes the hosted app, not the `Worker` object itself.
 - Observe `onDeliveryError` on the host and `onConflict`/`onResync` on the client; a silent transport failure is otherwise indistinguishable from a slow action.
 - Deploy host and client from the same `@coexist/core` version. A client refuses a host that speaks another wire revision — `client.ready` and its calls reject with `WorkerProtocolMismatchError`, and none of that host's frames are mirrored — but releases that share a revision are not told apart.
