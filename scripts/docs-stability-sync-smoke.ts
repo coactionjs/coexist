@@ -4,20 +4,12 @@
 // say Stable, and the anchors the published 2.0.0 README links to must keep
 // working. `@coexist/create` stays Beta on purpose: a future blanket
 // find-and-replace must not promote an unrelated surface.
-import { readFile } from "node:fs/promises";
+import { readdir, readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 
 import { rootDir } from "./lib/smoke.ts";
 
-const paths = [
-  "README.md",
-  "docs/scope-and-stability.md",
-  "docs/worker-runtime.md",
-  "docs/introduction.md",
-  "docs/ui-adapters.md",
-  "docs/faq.md",
-  "packages/core/README.md",
-];
+const paths = await listPublicDocuments();
 const sources: Record<string, string> = Object.fromEntries(
   await Promise.all(
     paths.map(async (path) => [path, await readFile(join(rootDir, path), "utf8")] as const),
@@ -65,23 +57,28 @@ expectMatches(
   "an explicit Beta row for @coexist/create",
 );
 
-const staleClaims = [
-  "beta worker runtime",
-  "worker runtime is beta",
-  "the beta covers",
-  "this is beta",
-  "the beta intentionally",
-  "until the runtime leaves beta",
-  "worker prototype",
-  "worker / shared runtime",
-];
+// A stale claim is a sentence that still gives the worker runtime a pre-Stable
+// label. A list of fixed phrases missed rewordings such as "remains beta" or
+// "is [beta](…)" and also rejected true statements about `@coexist/create`, so
+// sentences are matched instead: one that carries a maturity label and names
+// the runtime, or that sits in the worker guide, is stale unless it is about
+// `@coexist/create`. "Prototype" counts only as a label ("a prototype"), not
+// as the JavaScript object prototype.
+const maturityLabel = /(?<!\bnot (?:a |an )?)\b(?:beta|experimental|(?:a|worker)\s+prototype)\b/i;
+const workerContext = /\bworker|\bruntime\b|\bshared[- ]tabs?\b|\bbroadcastchannel\b|\btransport/i;
+const createSurface = /@coexist\/create/i;
+const workerGuides = new Set(["docs/worker-runtime.md"]);
 
 for (const [path, source] of Object.entries(sources)) {
-  const lower = source.toLowerCase();
+  for (const sentence of readSentences(source)) {
+    if (!maturityLabel.test(sentence) || createSurface.test(sentence)) {
+      continue;
+    }
 
-  for (const claim of staleClaims) {
-    if (lower.includes(claim)) {
-      problems.push(`${path} still contains the stale claim ${JSON.stringify(claim)}.`);
+    if (workerGuides.has(path) || workerContext.test(sentence)) {
+      problems.push(
+        `${path} still labels the worker runtime pre-Stable: ${JSON.stringify(sentence)}.`,
+      );
     }
   }
 }
@@ -95,3 +92,47 @@ if (problems.length > 0) {
 }
 
 console.log(`Verified worker stability claims across ${paths.length} public documents.`);
+
+/** The root README, every guide, and every package and example README. */
+async function listPublicDocuments(): Promise<string[]> {
+  const guides = (await readdir(join(rootDir, "docs")))
+    .filter((name) => name.endsWith(".md"))
+    .map((name) => `docs/${name}`);
+  const readmes = await Promise.all(
+    ["packages", "examples"].map(async (directory) => {
+      const entries = await readdir(join(rootDir, directory), { withFileTypes: true });
+      const candidates = entries
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => `${directory}/${entry.name}/README.md`);
+      const present = await Promise.all(
+        candidates.map(async (path) => ((await isFile(path)) ? path : undefined)),
+      );
+
+      return present.filter((path) => path !== undefined);
+    }),
+  );
+
+  return ["README.md", ...guides.toSorted(), ...readmes.flat().toSorted()];
+}
+
+async function isFile(path: string): Promise<boolean> {
+  try {
+    return (await stat(join(rootDir, path))).isFile();
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * The prose of a Markdown document as sentences, without code blocks, HTML such
+ * as the legacy anchors, or link targets, which may still name those anchors.
+ */
+function readSentences(markdown: string): string[] {
+  return markdown
+    .replaceAll(/^(```|~~~)[^\n]*\n[\s\S]*?^\1[^\n]*$/gm, "")
+    .replaceAll(/<[^>]+>/g, "")
+    .replaceAll(/\]\([^)]*\)/g, "]")
+    .split(/\n+|(?<=[.!?])\s+/)
+    .map((sentence) => sentence.trim())
+    .filter((sentence) => sentence.length > 0);
+}
