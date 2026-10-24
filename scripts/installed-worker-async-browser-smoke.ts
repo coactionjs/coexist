@@ -32,7 +32,9 @@ try {
 
   await runWorkerAsyncSmoke(browser, server.url);
 
-  console.log("Verified installed worker async action state synchronization.");
+  console.log(
+    "Verified installed worker async action state synchronization and a MessageChannel port.",
+  );
 } finally {
   await browser?.close();
   await server?.close();
@@ -135,6 +137,7 @@ async function writeConsumerProject(coreTarball, catalog) {
   );
   await writeFile(join(consumerDir, "src/main.ts"), createBrowserSource());
   await writeFile(join(consumerDir, "src/counter.worker.ts"), createWorkerSource());
+  await writeFile(join(consumerDir, "src/port.worker.ts"), createPortWorkerSource());
 }
 
 function createBrowserSource() {
@@ -157,6 +160,10 @@ interface AsyncCounterState {
   };
 }
 
+interface PortCounterApi {
+  increase(step?: number): number;
+}
+
 interface WorkerAsyncSnapshot {
   readonly count: number;
   readonly lastError: string | null;
@@ -173,6 +180,7 @@ declare global {
       readonly ready: Promise<void>;
       failAfterIncrease(step?: number): Promise<WorkerAsyncSnapshot>;
       increaseLater(step?: number): Promise<WorkerAsyncSnapshot>;
+      increaseOverPort(step?: number): Promise<number>;
       read(): WorkerAsyncSnapshot;
       reset(): Promise<WorkerAsyncSnapshot>;
     };
@@ -192,6 +200,20 @@ const client = createWorkerClient({
   transport: createPostMessageWorkerTransport(worker),
 });
 const counter: AsyncMethodProxy<AsyncCounterApi> = client.module<AsyncCounterApi>("asyncCounter");
+// A second worker is reached through a MessageChannel instead. Neither end
+// calls start(): a port delivers nothing to addEventListener listeners until it
+// is started, so the transport has to start both ends itself.
+const portWorker = new Worker(new URL("./port.worker.ts", import.meta.url), {
+  type: "module",
+});
+const { port1, port2 } = new MessageChannel();
+
+portWorker.postMessage(null, [port2]);
+
+const portClient = createWorkerClient({
+  readyTimeout: 5_000,
+  transport: createPostMessageWorkerTransport(port1),
+});
 const messageVersions: number[] = [];
 const selectCount = (state: unknown): number => (state as AsyncCounterState).asyncCounter.count;
 
@@ -213,6 +235,7 @@ window.__coexistWorkerAsyncSmoke = {
   ready: readyPromise,
   failAfterIncrease,
   increaseLater,
+  increaseOverPort,
   read,
   reset,
 };
@@ -230,6 +253,8 @@ window.addEventListener("beforeunload", () => {
   unsubscribe();
   client.dispose();
   worker.terminate();
+  portClient.dispose();
+  portWorker.terminate();
 });
 
 render();
@@ -286,6 +311,11 @@ async function reset(): Promise<WorkerAsyncSnapshot> {
   lastResult = value;
   render();
   return read();
+}
+
+async function increaseOverPort(step = 1): Promise<number> {
+  await portClient.ready;
+  return await portClient.module<PortCounterApi>("portCounter").increase(step);
 }
 
 function clearLastCall(): void {
@@ -387,6 +417,47 @@ async function delay(): Promise<void> {
 `;
 }
 
+function createPortWorkerSource() {
+  return `import {
+  createPostMessageWorkerTransport,
+  createWorkerApp,
+  defineModule,
+} from "@coexist/core";
+
+class PortCounter {
+  count = 0;
+
+  increase(step = 1): number {
+    this.count += step;
+    return this.count;
+  }
+}
+
+defineModule(PortCounter, {
+  actions: ["increase"],
+  name: "portCounter",
+  state: ["count"],
+});
+
+// The page hands over one end of a MessageChannel and hosts nothing else here,
+// so the only path to this app is a port that nobody but the transport starts.
+globalThis.addEventListener(
+  "message",
+  (event: MessageEvent) => {
+    const [port] = event.ports;
+
+    if (port !== undefined) {
+      void createWorkerApp({
+        providers: [PortCounter],
+        transport: createPostMessageWorkerTransport(port),
+      }).ready;
+    }
+  },
+  { once: true },
+);
+`;
+}
+
 async function runWorkerAsyncSmoke(browserInstance, url) {
   const context = await browserInstance.newContext();
   const page = await context.newPage();
@@ -443,6 +514,10 @@ async function runWorkerAsyncSmoke(browserInstance, url) {
     expectSnapshotValue(afterReset.count, 0, "count after async worker reset");
     expectSnapshotValue(afterReset.selectedAtResolution, 0, "selected count after reset");
     await expectStat(page, "Count", "0");
+
+    const overPort = await callSmoke(page, "increaseOverPort", 4);
+
+    expectSnapshotValue(overPort, 4, "result over a MessageChannel port nobody started");
 
     if (errors.length > 0) {
       throw new Error(`Installed worker async smoke emitted browser errors:\n${errors.join("\n")}`);

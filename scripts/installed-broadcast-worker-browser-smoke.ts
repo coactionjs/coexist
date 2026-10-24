@@ -31,8 +31,11 @@ try {
   browser = await launchBrowser();
 
   await runBroadcastWorkerSmoke(browser, server.url);
+  await runBroadcastTabSmoke(browser, server.url);
 
-  console.log("Verified installed broadcast worker browser transport.");
+  console.log(
+    "Verified installed broadcast worker browser transport, across tabs on default peer ids and a replacement host.",
+  );
 } finally {
   await browser?.close();
   await server?.close();
@@ -95,7 +98,7 @@ async function writeConsumerProject(coreTarball, catalog) {
           strict: true,
           target: "ES2022",
         },
-        include: ["src/main.ts"],
+        include: ["src/main.ts", "src/tabs.ts"],
       },
       null,
       2,
@@ -133,6 +136,36 @@ async function writeConsumerProject(coreTarball, catalog) {
     ].join("\n"),
   );
   await writeFile(join(consumerDir, "src/main.ts"), createBrowserSource());
+  // Each tab of the second page evaluates its own copy of the runtime, which no
+  // number of channels inside one page can reproduce.
+  await writeFile(
+    join(consumerDir, "tabs.html"),
+    [
+      "<!doctype html>",
+      '<html lang="en">',
+      "  <head>",
+      '    <meta charset="UTF-8" />',
+      "    <title>Coexist broadcast tab smoke</title>",
+      "  </head>",
+      "  <body>",
+      '    <script type="module" src="/src/tabs.ts"></script>',
+      "  </body>",
+      "</html>",
+      "",
+    ].join("\n"),
+  );
+  await writeFile(join(consumerDir, "src/tabs.ts"), createTabSource());
+  await writeFile(
+    join(consumerDir, "vite.config.ts"),
+    [
+      'import { defineConfig } from "vite";',
+      "",
+      "export default defineConfig({",
+      '  build: { rollupOptions: { input: { main: "index.html", tabs: "tabs.html" } } },',
+      "});",
+      "",
+    ].join("\n"),
+  );
 }
 
 function createBrowserSource() {
@@ -358,6 +391,76 @@ function getElement<T extends HTMLElement = HTMLElement>(id: string): T {
 `;
 }
 
+function createTabSource() {
+  return `import {
+  createBroadcastWorkerTransport,
+  createWorkerApp,
+  createWorkerClient,
+  defineModule,
+} from "@coexist/core";
+
+interface TabCounterApi {
+  increase(step?: number): number;
+}
+
+interface TabCounterState {
+  readonly tabCounter: {
+    readonly count: number;
+  };
+}
+
+declare global {
+  interface Window {
+    __coexistBroadcastTabSmoke?: {
+      readonly ready: Promise<void>;
+      count(): number;
+      increase(step?: number): Promise<number>;
+    };
+  }
+}
+
+class TabCounter {
+  count = 0;
+
+  increase(step = 1): number {
+    this.count += step;
+    return this.count;
+  }
+}
+
+defineModule(TabCounter, {
+  actions: ["increase"],
+  name: "tabCounter",
+  state: ["count"],
+});
+
+const params = new URLSearchParams(location.search);
+const channel = new BroadcastChannel(params.get("channel") ?? "coexist-broadcast-tab-smoke");
+// Every tab leaves peerId to its default. Each tab's first transport used to be
+// "peer:1", so a host tab and a client tab dropped each other's traffic.
+const transport = createBroadcastWorkerTransport(channel);
+const selectCount = (state: unknown): number => (state as TabCounterState).tabCounter.count;
+
+if (params.get("role") === "host") {
+  const host = createWorkerApp({ providers: [TabCounter], sync: "patch", transport });
+
+  window.__coexistBroadcastTabSmoke = {
+    ready: host.ready,
+    count: () => host.app.getModule(TabCounter).count,
+    increase: async (step = 1) => host.app.getModule(TabCounter).increase(step),
+  };
+} else {
+  const client = createWorkerClient({ readyTimeout: 5_000, transport });
+
+  window.__coexistBroadcastTabSmoke = {
+    ready: client.ready,
+    count: () => client.select(selectCount),
+    increase: async (step = 1) => await client.module<TabCounterApi>("tabCounter").increase(step),
+  };
+}
+`;
+}
+
 async function runBroadcastWorkerSmoke(browserInstance, url) {
   const context = await browserInstance.newContext();
   const page = await context.newPage();
@@ -430,6 +533,91 @@ async function runBroadcastWorkerSmoke(browserInstance, url) {
     }
   } finally {
     await context.close();
+  }
+}
+
+async function runBroadcastTabSmoke(browserInstance, url) {
+  // Tabs of one browser context share BroadcastChannel but not a module realm:
+  // default peer ids that collide across realms, and clients that must follow a
+  // host whose tab closed, only show up across real tabs.
+  const context = await browserInstance.newContext();
+  const channel = `coexist-broadcast-tab-smoke-${Date.now()}`;
+  const errors = [];
+
+  const openTab = async (role) => {
+    const page = await context.newPage();
+
+    page.on("pageerror", (error) => {
+      errors.push(error.stack ?? error.message);
+    });
+    page.on("console", (message) => {
+      if (message.type() === "error") {
+        errors.push(message.text());
+      }
+    });
+    await page.goto(new URL(`tabs.html?role=${role}&channel=${channel}`, url).href, {
+      waitUntil: "networkidle",
+    });
+    await page.evaluate(() => window.__coexistBroadcastTabSmoke?.ready);
+
+    return page;
+  };
+
+  try {
+    const hostTab = await openTab("host");
+    const clientTab = await openTab("client");
+
+    expectTabValue(await callTab(clientTab, "increase", 3), 3, "a call between default peer ids");
+    await waitForTabCount(hostTab, 3, "the host tab");
+    await waitForTabCount(clientTab, 3, "the client tab");
+
+    await hostTab.close();
+    await openTab("host");
+
+    await waitForTabCount(clientTab, 0, "the client tab after its host was replaced");
+    expectTabValue(await callTab(clientTab, "increase", 2), 2, "a call to the replacement host");
+    await waitForTabCount(clientTab, 2, "the client tab on the replacement host");
+
+    if (errors.length > 0) {
+      throw new Error(
+        `Installed broadcast tab smoke emitted browser errors:\n${errors.join("\n")}`,
+      );
+    }
+  } finally {
+    await context.close();
+  }
+}
+
+async function callTab(page, method, ...args) {
+  return await page.evaluate(
+    async ({ callArgs, methodName }) => {
+      const smoke = window.__coexistBroadcastTabSmoke;
+
+      if (smoke === undefined) {
+        throw new Error("Broadcast tab smoke API was not registered.");
+      }
+
+      return await smoke[methodName](...callArgs);
+    },
+    { callArgs: args, methodName: method },
+  );
+}
+
+async function waitForTabCount(page, expected, label) {
+  try {
+    await page.waitForFunction(
+      (value) => window.__coexistBroadcastTabSmoke?.count() === value,
+      expected,
+      { timeout: 5_000 },
+    );
+  } catch (error) {
+    throw new Error(`The count in ${label} never reached ${expected}.`, { cause: error });
+  }
+}
+
+function expectTabValue(actual, expected, label) {
+  if (actual !== expected) {
+    throw new Error(`${label} expected ${expected}, got ${JSON.stringify(actual)}.`);
   }
 }
 
