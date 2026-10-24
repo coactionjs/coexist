@@ -2892,6 +2892,65 @@ describe("worker runtime", () => {
     stopHost();
   });
 
+  it("reports a refused client as failed for good", async () => {
+    const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+    const stopHost = hostTransport.subscribe(() => undefined);
+    const client = createWorkerClient({
+      readyTimeout: 0,
+      requestInitialSync: false,
+      transport: clientTransport,
+    });
+
+    hostTransport.post({ protocol: workerProtocolVersion + 1, type: "ready" });
+
+    await expect(client.ready).rejects.toBeInstanceOf(WorkerProtocolMismatchError);
+    expect(client.state.status).toBe("failed");
+
+    client.dispose();
+    stopHost();
+  });
+
+  it("ends a recovery run when the host turns out to speak another revision", async () => {
+    const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+    const stopHost = hostTransport.subscribe(() => undefined);
+    const events: WorkerResyncEvent[] = [];
+    const client = createWorkerClient({
+      onResync(event) {
+        events.push(event);
+      },
+      readyTimeout: 0,
+      requestInitialSync: false,
+      resync: { delay: 1000 },
+      transport: clientTransport,
+    });
+
+    hostTransport.post({
+      state: { workerCounter: { count: 1 } },
+      sync: "snapshot",
+      type: "state",
+      version: 1,
+    });
+    await client.ready;
+    // Version 2 never arrived, so version 3 starts a recovery run.
+    hostTransport.post({
+      patches: [{ op: "replace", path: ["workerCounter", "count"], value: 3 }],
+      sync: "patch",
+      type: "state",
+      version: 3,
+    });
+
+    expect(client.state.status).toBe("recovering");
+
+    hostTransport.post({ protocol: workerProtocolVersion + 1, type: "ready" });
+
+    expect(client.state.status).toBe("failed");
+    expect(events.map((event) => event.status)).toEqual(["recovering", "failed"]);
+    expect(events[1]?.error).toBeInstanceOf(WorkerProtocolMismatchError);
+
+    client.dispose();
+    stopHost();
+  });
+
   it("names each host instance on its handshake and on the frames a client adopts", async () => {
     const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
     const frames: WorkerMessage[] = [];

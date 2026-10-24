@@ -1130,6 +1130,16 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
     }
 
     pending.clear();
+
+    // The mirror can never sync again, and a view that watches only the status
+    // must see that. A recovery run in progress ends here, with the reason.
+    const recovering = state.status === "recovering";
+
+    state.status = "failed";
+
+    if (recovering) {
+      emitResync("failed", new WorkerProtocolMismatchError(workerProtocolVersion, protocol));
+    }
   };
 
   // A host without an identity is from a release before hosts carried one, and

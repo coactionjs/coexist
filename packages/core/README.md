@@ -474,7 +474,7 @@ Transports (all interchangeable):
 
 Hosts can isolate published state to selected top-level sections with `stateSections: ["counter"]` (method delegation still covers all modules). Sync defaults to `"snapshot"`; `sync: "patch"` sends patch-only updates after startup. Clients can observe conflicts via `onConflict` (`stale-message`, `missing-snapshot`, `version-gap`, `patch-apply-failed`).
 
-A mirror that lost its patch sequence (`missing-snapshot`, `version-gap`, `patch-apply-failed`) requests a fresh snapshot instead of only reporting the conflict, so a watch-only client cannot stay behind forever. `client.state.status` is `synced` / `recovering` / `failed`, `onResync` reports transitions, and `resync` tunes the single-flight run (`delay`, `backoffFactor`, `maxDelay`, `maxAttempts`, `timeout`) or disables it with `resync: false`.
+A mirror that lost its patch sequence (`missing-snapshot`, `version-gap`, `patch-apply-failed`) requests a fresh snapshot instead of only reporting the conflict, so a watch-only client cannot stay behind forever. `client.state.status` is `synced` / `recovering` / `failed` (and stays `failed` once the client refuses a host that speaks another protocol revision), `onResync` reports transitions, and `resync` tunes the single-flight run (`delay`, `backoffFactor`, `maxDelay`, `maxAttempts`, `timeout`) or disables it with `resync: false`.
 
 The worker runtime intentionally does not implement full shared-runtime conflict resolution or framework-specific worker bootstrapping. Those are out of scope, not unfinished. Adapters (`@coexist/react`, `@coexist/vue`, `@coexist/svelte`, `@coexist/solid`, `@coexist/angular`) ship `WorkerClient`-based hooks for consuming worker state.
 
