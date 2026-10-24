@@ -24,6 +24,30 @@ const pinnedAnchors = [
 const skippedFiles = new Set(["CHANGELOG.md"]);
 const skippedDirectories = new Set([".git", ".turbo", "coverage", "dist", "node_modules"]);
 
+// The slug rules are this script's own reading of GitHub's, so they are pinned:
+// the first three are anchors that published READMEs link to and that GitHub
+// is known to generate; the rest fix how rendering treats markup.
+const knownSlugs = [
+  ["Worker & shared runtime", "worker--shared-runtime"],
+  ["What the runtime covers (and doesn't)", "what-the-runtime-covers-and-doesnt"],
+  ["The `WorkerClient` API", "the-workerclient-api"],
+  ["_Emphasis_ and **strong**", "emphasis-and-strong"],
+  ["`snake_case` and snake_case", "snake_case-and-snake_case"],
+  ["Fish &amp; chips", "fish--chips"],
+  ["`&amp;` in code", "amp-in-code"],
+] as const;
+
+for (const [heading, expected] of knownSlugs) {
+  const actual = slugifyHeading(heading);
+
+  if (actual !== expected) {
+    throw new Error(
+      `The anchor for ${JSON.stringify(heading)} must be ${expected}, not ${actual}: ` +
+        "the slug rules drifted from GitHub's.",
+    );
+  }
+}
+
 const paths = await listMarkdown(rootDir);
 const sources = new Map(
   await Promise.all(
@@ -105,12 +129,18 @@ async function listMarkdown(directory: string): Promise<string[]> {
   return nested.flat().toSorted();
 }
 
-/** Prose lines with their line numbers, skipping fenced code. */
+/** Prose lines with their line numbers, skipping front matter and fenced code. */
 function readProseLines(source: string): { readonly line: number; readonly text: string }[] {
   const lines: { line: number; text: string }[] = [];
+  const sourceLines = source.split("\n");
+  const frontMatterEnd = sourceLines[0] === "---" ? sourceLines.indexOf("---", 1) : -1;
   let fence: string | undefined;
 
-  for (const [index, text] of source.split("\n").entries()) {
+  for (const [index, text] of sourceLines.entries()) {
+    if (index <= frontMatterEnd) {
+      continue;
+    }
+
     const marker = /^\s*(```|~~~)/.exec(text)?.[1];
 
     if (marker !== undefined && (fence === undefined || fence === marker)) {
@@ -133,9 +163,21 @@ function readProseLines(source: string): { readonly line: number; readonly text:
 function readAnchors(source: string): Set<string> {
   const anchors = new Set<string>();
   const repeats = new Map<string, number>();
+  let previous = "";
 
   for (const { text } of readProseLines(source)) {
-    const heading = /^#{1,6}\s+(.*?)\s*#*\s*$/.exec(text)?.[1];
+    // An ATX heading (`## Title`), or a setext one: a paragraph line underlined
+    // with `===` or `---`. A `---` after a blank line, a list, or a table is a
+    // rule or a delimiter instead.
+    const heading =
+      /^#{1,6}\s+(.*?)\s*#*\s*$/.exec(text)?.[1] ??
+      (/^ {0,3}(?:=+|-+)\s*$/.test(text) &&
+      /^ {0,3}[^\s#>|*+-]/.test(previous) &&
+      !/^ {0,3}\d+[.)]\s/.test(previous)
+        ? previous.trim()
+        : undefined);
+
+    previous = text;
 
     if (heading !== undefined) {
       const slug = slugifyHeading(heading);
@@ -153,16 +195,51 @@ function readAnchors(source: string): Set<string> {
   return anchors;
 }
 
-/** GitHub's heading slug: the rendered text, lowercased, punctuation dropped, spaces hyphenated. */
+/**
+ * GitHub's heading slug: the rendered text, lowercased, with punctuation
+ * dropped and spaces hyphenated. Rendering keeps a code span's text verbatim,
+ * removes the underscores that delimit emphasis while keeping those inside a
+ * word, and decodes HTML entities.
+ */
 function slugifyHeading(heading: string): string {
-  return heading
+  const text = heading
     .replaceAll(/<[^>]+>/g, "")
     .replaceAll(/!?\[([^\]]*)\]\([^)]*\)/g, "$1")
-    .replaceAll("`", "")
+    .split(/(`[^`]*`)/)
+    .map((part) =>
+      part.startsWith("`") && part.endsWith("`") && part.length > 1
+        ? part.slice(1, -1)
+        : decodeEntities(part.replaceAll(/(?<![\p{L}\p{N}])_+|_+(?![\p{L}\p{N}])/gu, "")),
+    )
+    .join("");
+
+  return text
     .trim()
     .toLowerCase()
     .replaceAll(/[^\p{L}\p{M}\p{N}\p{Pc} -]/gu, "")
     .replaceAll(" ", "-");
+}
+
+function decodeEntities(text: string): string {
+  const named: Record<string, string> = {
+    amp: "&",
+    apos: "'",
+    gt: ">",
+    lt: "<",
+    nbsp: " ",
+    quot: '"',
+  };
+
+  return text.replaceAll(/&(#x[\da-f]+|#\d+|[a-z]+);/gi, (entity: string, name: string) => {
+    if (name.startsWith("#")) {
+      const code =
+        name[1]?.toLowerCase() === "x" ? Number.parseInt(name.slice(2), 16) : Number(name.slice(1));
+
+      return Number.isInteger(code) && code > 0 ? String.fromCodePoint(code) : entity;
+    }
+
+    return named[name.toLowerCase()] ?? entity;
+  });
 }
 
 function readLinks(source: string): { readonly line: number; readonly target: string }[] {
