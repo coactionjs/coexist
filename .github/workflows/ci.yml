@@ -53,6 +53,9 @@ jobs:
       - name: Verify worker stability claims
         run: pnpm run test:docs-stability
 
+      - name: Verify documentation anchors
+        run: pnpm run test:docs-anchors
+
       - name: Verify lockstep release planning
         run: pnpm run test:release-plan
 

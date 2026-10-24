@@ -574,6 +574,8 @@ expect(startedApp.started).toBe(true);
 
 The [inventory workbench](./examples/inventory-workbench) demonstrates one business module in React and Vue, with an injected catalog, a Worker planner, and IndexedDB persistence. More focused examples live in [`examples/`](./examples).
 
+<a id="worker-prototype" name="worker-prototype"></a>
+
 ## Worker & Shared Runtime
 
 `@coexist/core` includes a worker runtime. The API is stable over trusted, reliable transports; the wire protocol is internal and may change in a minor. See [Scope & Stability](./docs/scope-and-stability.md#the-worker-runtime) for the supported topology and trust boundary.

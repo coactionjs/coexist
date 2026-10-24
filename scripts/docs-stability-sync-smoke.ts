@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // The worker runtime's Stable label is a promise, so it is checked like one.
 // The maturity table, README badge, worker guide, and package README must all
-// say Stable, and the anchors the published 2.0.0 README links to must keep
-// working. `@coexist/create` stays Beta on purpose: a future blanket
-// find-and-replace must not promote an unrelated surface.
+// say Stable. `@coexist/create` stays Beta on purpose: a future blanket
+// find-and-replace must not promote an unrelated surface. The anchors of the
+// renamed headings, old and new, are checked by `docs-anchors-smoke.ts`.
 import { readdir, readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 
@@ -38,8 +38,6 @@ expectContains("docs/scope-and-stability.md", "## The worker runtime");
 expectContains("docs/worker-runtime.md", "The worker API is **Stable**");
 expectContains("docs/worker-runtime.md", "## Operating checklist");
 expectContains("packages/core/README.md", "The worker API is **Stable**");
-expectContains("docs/scope-and-stability.md", 'id="the-worker-runtime-is-beta"');
-expectContains("docs/worker-runtime.md", 'id="what-the-beta-covers-and-doesnt"');
 
 expectMatches(
   "docs/scope-and-stability.md",
