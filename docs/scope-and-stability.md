@@ -83,7 +83,7 @@ There is no LTS branch. Security fixes land on the newest release line only.
 Two exclusions are named rather than implied, because a promise with silent holes is worse than a narrower one:
 
 - **The worker wire protocol**, [below](#the-worker-protocol-is-outside-the-compatibility-promise).
-- **Maturity is not the same as the semver line.** The table at the top describes how much of a surface is finished and supported; the major version describes what may change without a major. A **Beta** area still gets the compatibility promise for its exported API — `@coexist/create`'s generated template is not an API surface, so it may change between minors. The worker protocol is the one explicit exclusion, below; it is an internal encoding, not a maturity label.
+- **Maturity is not the same as the semver line.** The table at the top describes how much of a surface is finished and supported; the major version describes what may change without a major. A **Beta** area still gets the compatibility promise for its exported API — `@coexist/create`'s generated template is not an API surface, so it may change between minors. The worker protocol above is excluded because it is an internal encoding, not because of a maturity label.
 
 ### Decisions this release line locks in
 
