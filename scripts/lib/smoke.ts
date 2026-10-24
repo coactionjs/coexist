@@ -114,3 +114,44 @@ export function createPackPackage(tarballsDir) {
     return join(destination, tarballs[0]);
   };
 }
+
+/**
+ * The body rows of the first table under a heading, as trimmed cells with
+ * escaped pipes (`\|`) restored. Reading one table by its heading, instead of
+ * every line shaped like a row, keeps a check on one table from matching the
+ * rows of another one in the same document.
+ *
+ * @param {string} markdown
+ * @param {string} heading The heading line, such as "## Maturity by area".
+ * @returns {string[][]}
+ */
+export function readMarkdownTable(markdown, heading) {
+  const lines = markdown.split("\n");
+  const start = lines.findIndex((line) => line.trim() === heading);
+
+  if (start === -1) {
+    throw new Error(`There is no ${JSON.stringify(heading)} heading to read a table under.`);
+  }
+
+  const rows = [];
+
+  for (const line of lines.slice(start + 1)) {
+    if (/^#{1,6}\s/.test(line) || (rows.length > 0 && !line.startsWith("|"))) {
+      break;
+    }
+
+    if (line.startsWith("|")) {
+      rows.push(
+        line
+          .trim()
+          .replace(/^\|/, "")
+          .replace(/(?<!\\)\|$/, "")
+          .split(/(?<!\\)\|/)
+          .map((cell) => cell.trim().replaceAll("\\|", "|")),
+      );
+    }
+  }
+
+  // The header row and the delimiter row come first.
+  return rows.slice(2);
+}

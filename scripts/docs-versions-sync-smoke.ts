@@ -7,7 +7,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import { packagesDir, rootDir } from "./lib/smoke.ts";
+import { packagesDir, readMarkdownTable, rootDir } from "./lib/smoke.ts";
 
 const docPath = join(rootDir, "docs/scope-and-stability.md");
 const doc = await readFile(docPath, "utf8");
@@ -21,9 +21,9 @@ if (typeof nodeFloor !== "string") {
 
 // | `@coexist/react` | `^18.3.0 \|\| ^19.0.0` | React 19 |
 const documentedRanges = new Map(
-  [...doc.matchAll(/^\|\s*`(@coexist\/[\w-]+)`\s*\|\s*`([^`]+)`\s*\|/gm)].map((match) => [
-    match[1],
-    match[2].replaceAll("\\|", "|"),
+  readMarkdownTable(doc, "### UI frameworks").map(([adapter = "", range = ""]) => [
+    adapter.replaceAll("`", ""),
+    range.replaceAll("`", ""),
   ]),
 );
 

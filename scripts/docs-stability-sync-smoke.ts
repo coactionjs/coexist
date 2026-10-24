@@ -7,7 +7,7 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 
-import { rootDir } from "./lib/smoke.ts";
+import { readMarkdownTable, rootDir } from "./lib/smoke.ts";
 
 const paths = await listPublicDocuments();
 const sources: Record<string, string> = Object.fromEntries(
@@ -36,7 +36,13 @@ expectContains("packages/core/README.md", "The worker API is **Stable**");
 // Each area needs exactly one row with its label. Checking only that a Stable
 // row existed let a second, contradicting row through, and any other row about
 // the worker or shared tabs must not label that surface differently either.
-const maturityRows = readMaturityRows(read("docs/scope-and-stability.md"));
+const maturityRows = readMarkdownTable(
+  read("docs/scope-and-stability.md"),
+  "## Maturity by area",
+).map(([area = "", status = ""]) => ({
+  area,
+  status: /^\*\*(.+)\*\*$/.exec(status)?.[1] ?? status,
+}));
 
 const expectMaturity = (area: string, status: string): void => {
   const statuses = maturityRows.filter((row) => row.area === area).map((row) => row.status);
@@ -126,21 +132,6 @@ async function isFile(path: string): Promise<boolean> {
   } catch {
     return false;
   }
-}
-
-/** The rows of the "Maturity by area" table, as area cell and unbolded status. */
-function readMaturityRows(markdown: string): { readonly area: string; readonly status: string }[] {
-  const table = /^## Maturity by area\n([\s\S]*?)(?=^## )/m.exec(markdown)?.[1] ?? "";
-
-  return table
-    .split("\n")
-    .filter((line) => line.startsWith("|"))
-    .map((line) => line.split("|").map((cell) => cell.trim()))
-    .map(([, area = "", status = ""]) => ({
-      area,
-      status: /^\*\*(.+)\*\*$/.exec(status)?.[1] ?? status,
-    }))
-    .filter(({ area }) => area !== "Area" && !/^-+$/.test(area));
 }
 
 /**
