@@ -661,7 +661,7 @@ const client = createWorkerClient({
 await client.ready;
 ```
 
-For shared tab coordination, adapt a browser `BroadcastChannel`. The client should subscribe before the host starts so it receives the initial snapshot:
+For shared tab coordination, adapt a browser `BroadcastChannel`. Clients request their own initial snapshot, so they may attach before or after the host starts:
 
 ```ts
 // Every tab runs a client. The default `peerId` is unique per tab.
