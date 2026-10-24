@@ -26,12 +26,6 @@ const expectContains = (path: string, fragment: string): void => {
   }
 };
 
-const expectMatches = (path: string, pattern: RegExp, description: string): void => {
-  if (!pattern.test(read(path))) {
-    problems.push(`${path} must contain ${description}.`);
-  }
-};
-
 expectContains("README.md", "Web_Worker-stable");
 expectContains("README.md", "## Worker & Shared Runtime");
 expectContains("docs/scope-and-stability.md", "## The worker runtime");
@@ -39,21 +33,34 @@ expectContains("docs/worker-runtime.md", "The worker API is **Stable**");
 expectContains("docs/worker-runtime.md", "## Operating checklist");
 expectContains("packages/core/README.md", "The worker API is **Stable**");
 
-expectMatches(
-  "docs/scope-and-stability.md",
-  /^\|\s*Worker runtime\s*\|\s*\*\*Stable\*\*/m,
-  "a Stable Worker runtime row",
-);
-expectMatches(
-  "docs/scope-and-stability.md",
-  /^\|\s*Shared-tab coordination\s*\|\s*\*\*Stable\*\*/m,
-  "a Stable Shared-tab coordination row",
-);
-expectMatches(
-  "docs/scope-and-stability.md",
-  /^\|\s*`@coexist\/create`\s*\|\s*\*\*Beta\*\*/m,
-  "an explicit Beta row for @coexist/create",
-);
+// Each area needs exactly one row with its label. Checking only that a Stable
+// row existed let a second, contradicting row through, and any other row about
+// the worker or shared tabs must not label that surface differently either.
+const maturityRows = readMaturityRows(read("docs/scope-and-stability.md"));
+
+const expectMaturity = (area: string, status: string): void => {
+  const statuses = maturityRows.filter((row) => row.area === area).map((row) => row.status);
+
+  if (statuses.length !== 1 || statuses[0] !== status) {
+    problems.push(
+      `docs/scope-and-stability.md must have exactly one ${JSON.stringify(area)} row, ` +
+        `labelled ${status}; found ${statuses.length === 0 ? "none" : statuses.join(", ")}.`,
+    );
+  }
+};
+
+expectMaturity("Worker runtime", "Stable");
+expectMaturity("Shared-tab coordination", "Stable");
+expectMaturity("`@coexist/create`", "Beta");
+
+for (const { area, status } of maturityRows) {
+  if (/worker|shared[- ]tab|broadcast/i.test(area) && status !== "Stable") {
+    problems.push(
+      `docs/scope-and-stability.md labels ${JSON.stringify(area)} ${status}, ` +
+        "but the worker runtime and shared-tab coordination are Stable.",
+    );
+  }
+}
 
 // A stale claim is a sentence that still gives the worker runtime a pre-Stable
 // label. A list of fixed phrases missed rewordings such as "remains beta" or
@@ -119,6 +126,21 @@ async function isFile(path: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/** The rows of the "Maturity by area" table, as area cell and unbolded status. */
+function readMaturityRows(markdown: string): { readonly area: string; readonly status: string }[] {
+  const table = /^## Maturity by area\n([\s\S]*?)(?=^## )/m.exec(markdown)?.[1] ?? "";
+
+  return table
+    .split("\n")
+    .filter((line) => line.startsWith("|"))
+    .map((line) => line.split("|").map((cell) => cell.trim()))
+    .map(([, area = "", status = ""]) => ({
+      area,
+      status: /^\*\*(.+)\*\*$/.exec(status)?.[1] ?? status,
+    }))
+    .filter(({ area }) => area !== "Area" && !/^-+$/.test(area));
 }
 
 /**
