@@ -71,7 +71,7 @@ interface WorkerClient {
 
 `module<T>(name)` returns an `AsyncMethodProxy<T>`: every method becomes `(...args) => Promise<...>`, since each call is delegated across the transport. When a delegated method settles, the client waits until its mirrored state has reached the worker state version observed by that method result. If the result arrives before the corresponding state message, the client requests a snapshot sync and resolves or rejects the method promise only after the local mirror is caught up.
 
-Disposal is terminal on both sides. `host.dispose()` first starts app disposal, which aborts plugin setup through `PluginContext.signal`, and only then waits for startup to settle; this prevents initialization/disposal deadlocks. Repeated host disposal shares one promise. If disposal wins the race with initial state publication, `host.ready` rejects instead of reporting a host that never became observable as ready. `client.dispose()` rejects pending calls and all later `call()` / module-proxy requests immediately instead of posting work that can no longer receive a response.
+Disposal is terminal on both sides. `host.dispose()` first starts app disposal, which aborts plugin setup through `PluginContext.signal`, and only then waits for startup to settle; this prevents initialization/disposal deadlocks. Repeated host disposal shares one promise. If disposal wins the race with initial state publication, `host.ready` rejects instead of reporting a host that never became observable as ready. `client.dispose()` rejects pending calls and all later `call()` / module-proxy requests immediately instead of posting work that can no longer receive a response. Neither disposal terminates the `Worker` or closes a port or channel; those belong to the code that created them.
 
 ### The option surface
 
@@ -100,6 +100,8 @@ Observers never alter protocol handling: throwing from one is contained and cann
 If the initial sync request cannot even be posted, `ready` rejects with `WorkerInitialSyncError` whose `cause` is the transport failure. Because a client asks for its own snapshot, a client that attaches _after_ the host published still catches up rather than hanging. It asks again when a different host announces `ready`: each host names itself on its handshake and snapshots, so a client whose host was replaced re-bases its mirror on the new host's snapshot instead of judging that host's fresh version sequence stale.
 
 A rejected `ready` does not disable the client: a snapshot that arrives later is still applied, and it reaches `client.subscribe` listeners and watches registered with `immediate: true`. A default `watch` takes that first snapshot as its baseline and fires from the next change. `ready` simply cannot re-settle, so treat its rejection as "startup was not observed in time", not as "this client is dead". The one exception is `WorkerProtocolMismatchError`: a client that refused its host stays refused.
+
+The adapter helpers read through `client.select`, which throws until a snapshot has arrived. Mount views that use them once one has: when `client.ready` resolves, or, after it rejected, when `client.subscribe` or a `watch` with `immediate: true` reports the first frame. Until then, show a connecting state the app can leave.
 
 RPC calls default to a 30-second timeout (`requestTimeout` on `createWorkerClient`; `0` disables it). Use `callWithOptions()` for a per-call timeout or `AbortSignal`. Remote invocation is restricted to methods explicitly listed in the module's `actions` metadata; ordinary methods, lifecycle hooks, computed properties, and arbitrary callable fields are not remotely exposed by default. When a plain method intentionally belongs to the RPC surface, list it by module name with `createWorkerApp({ expose: { counter: ["refresh"] }, ... })`.
 
@@ -132,6 +134,8 @@ Schema validation and the action allowlist limit capabilities, but a bare `Worke
 A transport is just `{ post(message), subscribe(listener) }`. The package ships adapters for the common channels — all interchangeable:
 
 `post()` returns `void | Promise<void>`, and **a transport that cannot deliver must throw or reject**. That failure is not decoration: the client uses it to fail the affected call immediately instead of waiting out `requestTimeout`, and the host uses it to publish the next update as a full snapshot instead of a patch on top of a version the peer never received. Hosts observe those failures with `createWorkerApp({ onDeliveryError })`; the built-in adapters additionally report them through their own `onError` before propagating.
+
+A failure the transport reports is the only kind the runtime can see. A message dropped without a throw or a rejection reaches no observer: its caller sees only its `requestTimeout`, and with the default `sync: "snapshot"` a lost update stays lost until the next one. With `sync: "patch"`, the client reports the gap through `onConflict` once the next patch arrives.
 
 A transport must also deliver each frame at most once, in the order it was sent. The host does not deduplicate calls: a replayed `call` frame runs the action again, and its caller cannot tell. The postMessage and `BroadcastChannel` adapters meet this by construction. A custom channel that can replay or reorder frames, such as a reconnecting socket or a retrying queue, must deduplicate and order them before it hands them to the transport.
 
@@ -249,12 +253,12 @@ const client = createWorkerClient({
 
 `WorkerConflictReason` is one of:
 
-| Reason               | Meaning                                           |
-| -------------------- | ------------------------------------------------- |
-| `stale-message`      | A message older than the current version arrived. |
-| `missing-snapshot`   | A patch arrived before any snapshot.              |
-| `version-gap`        | A patch skipped a version (a message was lost).   |
-| `patch-apply-failed` | A patch could not be applied to local state.      |
+| Reason               | Meaning                                                  |
+| -------------------- | -------------------------------------------------------- |
+| `stale-message`      | A message older than the current version arrived.        |
+| `missing-snapshot`   | A patch arrived before a snapshot from the current host. |
+| `version-gap`        | A patch skipped a version (a message was lost).          |
+| `patch-apply-failed` | A patch could not be applied to local state.             |
 
 ### Automatic recovery
 
@@ -323,12 +327,14 @@ Not covered: full shared-runtime conflict _resolution_ (the host is authoritativ
 
 ## Operating checklist
 
-- Create the `Worker` yourself, bundle its entry, and connect it with a `postMessage` transport. A `WorkerClient` does not spawn or terminate the `Worker` for you. The runnable [`worker-counter`](../examples/worker-counter) example shows the smallest end-to-end setup.
-- Await `client.ready` before mounting views that read worker state: the adapter helpers call `client.select`, which throws until a snapshot has arrived. A timeout or an abort is not final, because a snapshot that lands later is still applied. Show a connecting state the app can leave, and mount once `client.subscribe` or a `watch` with `immediate: true` reports the first frame. Only `WorkerProtocolMismatchError` is final.
-- Dispose both ends. `client.dispose()` rejects pending calls; `host.dispose()` disposes the hosted app, not the `Worker` object itself.
-- Observe `onDeliveryError` on the host and `onConflict`/`onResync` on the client. They report what the runtime can detect: a post that throws or rejects, and, with `sync: "patch"`, a gap in the patch sequence once the next patch arrives. A message the transport drops without failing reaches neither: the caller sees only its `requestTimeout`, and with the default `sync: "snapshot"` a lost update stays lost until the next one. Use a transport that throws or rejects when it cannot deliver.
-- Deploy host and client from the same `@coexist/core` version. A client refuses a host that speaks another wire revision — `client.ready` and its calls reject with `WorkerProtocolMismatchError`, and none of that host's frames are mirrored — but releases that share a revision are not told apart.
-- Keep transports trusted. Use `targetOrigin`/`allowedOrigins`/`expectedSource` for iframes, and an authenticated channel for cross-origin RPC; a bare transport does not authenticate its peer.
+Each item is explained in the section it links to.
+
+- Create and bundle the `Worker` yourself, and connect it with a `postMessage` transport ([Web Worker](#web-worker); the runnable [`worker-counter`](../examples/worker-counter) example).
+- Mount views that read worker state once a first snapshot has arrived, and give a rejected `client.ready` a state the app can leave ([Client readiness](#client-readiness)).
+- Dispose both ends; neither disposal terminates the `Worker` ([The `WorkerClient` API](#the-workerclient-api)).
+- Observe `onDeliveryError` on the host and `onConflict`/`onResync` on the client, over a transport that throws or rejects when it cannot deliver ([Transports](#transports), [Conflict handling](#conflict-handling)).
+- Deploy host and client from the same `@coexist/core` version ([Trust boundary](#trust-boundary)).
+- Keep transports trusted: origin and source checks for iframes, an authenticated channel for cross-origin RPC ([Trust boundary](#trust-boundary)).
 
 ## Next
 
