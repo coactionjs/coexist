@@ -133,6 +133,8 @@ A transport is just `{ post(message), subscribe(listener) }`. The package ships 
 
 `post()` returns `void | Promise<void>`, and **a transport that cannot deliver must throw or reject**. That failure is not decoration: the client uses it to fail the affected call immediately instead of waiting out `requestTimeout`, and the host uses it to publish the next update as a full snapshot instead of a patch on top of a version the peer never received. Hosts observe those failures with `createWorkerApp({ onDeliveryError })`; the built-in adapters additionally report them through their own `onError` before propagating.
 
+A transport must also deliver each frame at most once, in the order it was sent. The host does not deduplicate calls: a replayed `call` frame runs the action again, and its caller cannot tell. The postMessage and `BroadcastChannel` adapters meet this by construction. A custom channel that can replay or reorder frames, such as a reconnecting socket or a retrying queue, must deduplicate and order them before it hands them to the transport.
+
 | Factory                                             | Use for                                     |
 | --------------------------------------------------- | ------------------------------------------- |
 | `createMemoryWorkerTransportPair()`                 | In-process host/client pair (tests, demos). |
@@ -315,7 +317,7 @@ Covered: app creation, method delegation, initial snapshots, patch-only sync aft
 
 Not covered: full shared-runtime conflict _resolution_ (the host is authoritative and applies concurrent writes last-writer-wins without reporting them; a client reports anomalies in its own mirror through `onConflict` and re-syncs a stale one; nothing merges competing writes) and framework-specific worker bootstrapping. The runtime publishes the patches the app's Coaction store emits over its own protocol and transports; it is separate from the shared runtime that Coaction's `engine.transport` selects ([State & Reactivity](./state-and-reactivity.md)).
 
-**This is stable, not a prototype and not a distributed-systems consensus layer.** Over a trusted, reliable transport — a dedicated `Worker`, a `MessagePort`, a same-origin iframe you control, or a trusted `BroadcastChannel` — it is meant to be depended on. If you need merge semantics, offline queueing, or an adversarial transport boundary, those are out of scope rather than planned for a later release. [Scope & Stability](./scope-and-stability.md#the-worker-runtime) states exactly what Stable covers.
+**This is stable, not a prototype and not a distributed-systems consensus layer.** Over a trusted, reliable transport — a dedicated `Worker`, a `MessagePort`, a same-origin iframe you control, a trusted `BroadcastChannel`, or a custom RPC channel that delivers each frame once and in order ([Transports](#transports)) — it is meant to be depended on. If you need merge semantics, offline queueing, or an adversarial transport boundary, those are out of scope rather than planned for a later release. [Scope & Stability](./scope-and-stability.md#the-worker-runtime) states exactly what Stable covers.
 
 ## Operating checklist
 
