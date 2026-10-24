@@ -22,6 +22,11 @@ export interface WorkerTransport {
   subscribe(listener: (message: WorkerMessage) => void): () => void;
 }
 
+/**
+ * Receives a delivery failure and the frame that failed. The frame is for
+ * logging: its fields belong to the internal wire protocol and may change in a
+ * minor.
+ */
 export type WorkerDeliveryErrorHandler = (error: unknown, message: WorkerMessage) => void;
 
 /**
@@ -299,6 +304,7 @@ export interface WorkerConflictEvent {
   readonly reason: WorkerConflictReason;
   readonly currentVersion: number;
   readonly incomingVersion: number;
+  /** The frame that conflicted, for logging; its fields may change in a minor. */
   readonly message: WorkerStateMessage;
   readonly error?: unknown;
 }
@@ -339,6 +345,12 @@ export interface WorkerClient {
     options?: WorkerCallOptions,
   ): Promise<unknown>;
   module<T extends object>(name: string): AsyncMethodProxy<T>;
+  /**
+   * Calls `listener` with each state frame the mirror applies. When it fires is
+   * part of the API; the frame's fields belong to the internal wire protocol and
+   * may change in a minor, so read state through `getState`, `select`, or
+   * `watch` rather than from the frame.
+   */
   subscribe(listener: (message: WorkerStateMessage) => void): () => void;
   dispose(): void;
 }

@@ -100,15 +100,18 @@ The wire protocol is an internal implementation detail. Keeping it out of the co
 
 Being explicit is the point. "A protocol change is a minor bump, not a major" was coherent under `0.x`, where a minor was allowed to break. Since `1.0` it would contradict itself, because a minor may not break anything the package stands behind — and the package does not stand behind the frames. Naming the exclusion keeps the major version meaning exactly what it says everywhere else.
 
-| Surface                                                                          | Covered by `2.x`?  |
-| -------------------------------------------------------------------------------- | ------------------ |
-| `createWorkerApp` / `createWorkerClient` signatures, options, and returned types | Yes                |
-| `WorkerClient` members and their documented behaviour                            | Yes                |
-| Supported transports, readiness/recovery, and the trust boundary                 | Yes, as documented |
-| The frames exchanged on the wire between a host and a client                     | **No**             |
-| `workerProtocolVersion` and the member shapes of `WorkerMessage`                 | **No**             |
+| Surface                                                                                | Covered by `2.x`?  |
+| -------------------------------------------------------------------------------------- | ------------------ |
+| `createWorkerApp` / `createWorkerClient` signatures, options, and returned types       | Yes                |
+| `WorkerClient` members and their documented behaviour                                  | Yes                |
+| Supported transports, readiness/recovery, and the trust boundary                       | Yes, as documented |
+| The frames exchanged on the wire between a host and a client                           | **No**             |
+| `workerProtocolVersion` and the member shapes of `WorkerMessage`                       | **No**             |
+| The fields of a frame passed to `client.subscribe`, `onConflict`, or `onDeliveryError` | **No**             |
 
 Build against the worker **API** freely — it is ordinary `2.x` API, held to the same report and the same deprecation cycle. Do not implement a third-party host or client against the **frames**, and do not persist or bridge them. The API is stable; the encoding is not.
+
+Three stable members hand you a frame: the `client.subscribe` listener, `WorkerConflictEvent.message`, and the `message` argument of `onDeliveryError`. Their timing and meaning are covered — a frame arrived, a mirror conflicted, a delivery failed — but the frame's fields are not. Treat it as an opaque value to log or count, and read state through `getState`, `select`, or `watch`.
 
 Both endpoints must come from the same `@coexist/core` version. What the runtime enforces is the part correctness depends on, the wire revision. The host stamps `workerProtocolVersion` on its `ready` handshake and on every frame that carries the full state, so a client that attached after the handshake still learns it before adopting any state. A client that sees a different revision rejects `client.ready` with `WorkerProtocolMismatchError`, rejects its pending and later calls with the same error, and ignores the rest of that host's frames instead of mirroring frames it may misread. The revision moves only with a breaking wire change, so two releases that share one connect normally; that is compatible, not verified. A host whose frames carry no revision predates versioning and is accepted.
 
