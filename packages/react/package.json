@@ -1,6 +1,6 @@
 {
   "name": "@coexist/react",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "React adapter for Coexist.",
   "license": "MIT",
   "repository": {

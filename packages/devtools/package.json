@@ -1,6 +1,6 @@
 {
   "name": "@coexist/devtools",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Dev inspection plugin for Coexist.",
   "license": "MIT",
   "repository": {
