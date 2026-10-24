@@ -114,14 +114,14 @@ Both endpoints must come from the same `@coexist/core` version. What the runtime
 
 ### What is a breaking change for the worker API
 
-Now that the worker API is Stable, a major release or a deprecation cycle is required for:
+Now that the worker API is Stable, each of the following is breaking and ships only in a major release. Where practical, a deprecation warns for at least one minor first, as for every other surface; it precedes the major and never replaces it:
 
 - changing the meaning, default, or optionality of an option on `createWorkerApp` or `createWorkerClient`;
 - changing a `WorkerClient` member's behaviour, error name, or settlement semantics;
 - removing a transport, or narrowing a documented topology or trust boundary;
 - changing which module methods are remotely callable by default.
 
-Adding an option with a default, a new transport, or an opt-in recovery mode is additive. The wire protocol is not on this list; it remains internal and may change in a minor.
+Adding an option with a default, a new transport, or an opt-in recovery mode is additive. A fix that brings behaviour back to what this page and the [worker guide](./worker-runtime.md) document is a patch. The wire protocol is not on this list; it remains internal and may change in a minor.
 
 ## What is deliberately out of scope
 
