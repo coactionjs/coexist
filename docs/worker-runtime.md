@@ -2,7 +2,7 @@
 
 `@coexist/core` includes a worker runtime: run an app (and its modules) in a Web Worker, iframe, `MessagePort`, `BroadcastChannel`, or custom RPC channel, and consume its state from another context with the same selector and module ergonomics you use on the main thread.
 
-> **Stability.** The worker API is **Stable** under the `2.x` promise over trusted, reliable transports. The supported model is one authoritative host with clients, host-authoritative last-writer-wins, application-owned bootstrapping, and an internal wire protocol. See [Scope & Stability](./scope-and-stability.md#the-worker-runtime) for the boundaries.
+> **Stability.** The worker API is **Stable** under the `2.x` promise, within a deliberately narrow model: one authoritative host, trusted and reliable transports, application-owned bootstrapping, and an internal wire protocol. [Scope & Stability](./scope-and-stability.md#the-worker-runtime) defines each of these; this guide does not restate them.
 
 Because business logic is plain modules, **moving it off-thread does not change the modules** — only where they run.
 
@@ -319,7 +319,7 @@ Covered: app creation, method delegation, initial snapshots, patch-only sync aft
 
 Not covered: full shared-runtime conflict _resolution_ (the host is authoritative and applies concurrent writes last-writer-wins without reporting them; a client reports anomalies in its own mirror through `onConflict` and re-syncs a stale one; nothing merges competing writes) and framework-specific worker bootstrapping. The runtime publishes the patches the app's Coaction store emits over its own protocol and transports; it is separate from the shared runtime that Coaction's `engine.transport` selects ([State & Reactivity](./state-and-reactivity.md)).
 
-**This is stable, not a prototype and not a distributed-systems consensus layer.** Over a trusted, reliable transport — a dedicated `Worker`, a `MessagePort`, a same-origin iframe you control, a trusted `BroadcastChannel`, or a custom RPC channel that delivers each frame once and in order ([Transports](#transports)) — it is meant to be depended on. If you need merge semantics, offline queueing, or an adversarial transport boundary, those are out of scope rather than planned for a later release. [Scope & Stability](./scope-and-stability.md#the-worker-runtime) states exactly what Stable covers.
+**This is stable, not a prototype and not a distributed-systems consensus layer.** [Scope & Stability](./scope-and-stability.md#the-worker-runtime) lists the transports it is meant to be depended on over, and why merge semantics, offline queueing, and an adversarial transport boundary are out of scope rather than planned for a later release.
 
 ## Operating checklist
 

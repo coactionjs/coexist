@@ -421,7 +421,7 @@ expect(started.started).toBe(true);
 
 `@coexist/core` includes a worker runtime: run the app (and its modules) in a Worker, iframe, `MessagePort`, `BroadcastChannel`, or custom RPC channel, and consume its state from another context.
 
-The worker API is **Stable** over trusted, reliable transports. The host is authoritative; concurrent writes are last-writer-wins, the wire protocol is internal and may change in a minor, and both endpoints must come from the same `@coexist/core` version. See [Scope & Stability](../../docs/scope-and-stability.md#the-worker-runtime) and the [worker reference](../../docs/worker-runtime.md).
+The worker API is **Stable** within the model that [Scope & Stability](../../docs/scope-and-stability.md#the-worker-runtime) defines; deploy both endpoints from the same `@coexist/core` version. The [worker reference](../../docs/worker-runtime.md) covers the rest.
 
 ```ts
 import {

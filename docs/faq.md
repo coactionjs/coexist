@@ -36,7 +36,7 @@ With `devOptions: { strictActions: true }`, every state write must happen inside
 
 ## How do I run a module in a Web Worker?
 
-Host it with `createWorkerApp({ providers, transport })` in the worker and consume it with `createWorkerClient({ transport })` on the main thread. The module code is unchanged; only where it runs differs. Method calls become async. Each adapter has `useWorkerModule`/`useWorkerSelector`-style helpers. The worker API is stable over trusted, reliable transports; the host is authoritative and concurrent writes are last-writer-wins, not merged. See [Worker & Shared Runtime](./worker-runtime.md).
+Host it with `createWorkerApp({ providers, transport })` in the worker and consume it with `createWorkerClient({ transport })` on the main thread. The module code is unchanged; only where it runs differs. Method calls become async. Each adapter has `useWorkerModule`/`useWorkerSelector`-style helpers. The worker API is Stable within the model [Scope & Stability](./scope-and-stability.md#the-worker-runtime) defines. See [Worker & Shared Runtime](./worker-runtime.md).
 
 ## How do I persist state?
 

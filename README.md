@@ -88,12 +88,12 @@ Coexist does **not** own rendering — there is no `ViewModule`, root component 
 
 Coexist provides an application runtime around state: module composition, dependency injection, lifecycle, plugins, testing, and UI adapters. Choose it when those boundaries help your application. The [inventory workbench](./examples/inventory-workbench) exercises one business module in React and Vue, an injected catalog service, Worker planning, and IndexedDB persistence.
 
-| Your need                                                               | What Coexist provides                                                                                                         | Cost or boundary                                                                                                                                        |
-| ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Keep business rules during a UI migration or across multiple frameworks | One module and app instance can drive React, Vue, Svelte, Solid, and Angular adapters.                                        | Each UI still needs its native components and an adapter.                                                                                               |
-| Test a domain module without mounting a UI                              | Explicit providers, overrides, and `testApp()` inspection.                                                                    | You define module metadata and dependencies.                                                                                                            |
-| Run app logic in a Worker or coordinate trusted tabs                    | Worker host/client, state mirroring, and transport helpers.                                                                   | The worker runtime is [stable](./docs/scope-and-stability.md#the-worker-runtime) over trusted, reliable transports; your app owns Worker bootstrapping. |
-| Keep state within one JavaScript realm                                  | [`@coexist/core/local`](./packages/core/README.md#local-store-entry) removes shared transport code from a tree-shaken bundle. | Coexist still adds a module and lifecycle model; measure it against a smaller state-only solution for simple apps.                                      |
+| Your need                                                               | What Coexist provides                                                                                                         | Cost or boundary                                                                                                                                |
+| ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Keep business rules during a UI migration or across multiple frameworks | One module and app instance can drive React, Vue, Svelte, Solid, and Angular adapters.                                        | Each UI still needs its native components and an adapter.                                                                                       |
+| Test a domain module without mounting a UI                              | Explicit providers, overrides, and `testApp()` inspection.                                                                    | You define module metadata and dependencies.                                                                                                    |
+| Run app logic in a Worker or coordinate trusted tabs                    | Worker host/client, state mirroring, and transport helpers.                                                                   | The worker runtime is [stable within a documented model](./docs/scope-and-stability.md#the-worker-runtime); your app owns Worker bootstrapping. |
+| Keep state within one JavaScript realm                                  | [`@coexist/core/local`](./packages/core/README.md#local-store-entry) removes shared transport code from a tree-shaken bundle. | Coexist still adds a module and lifecycle model; measure it against a smaller state-only solution for simple apps.                              |
 
 Coexist does not render UI, match routes, fetch data, or deploy an app. Use it alongside your chosen application framework and router. The [scope and stability guide](./docs/scope-and-stability.md) states which surfaces are stable, beta, or partial.
 
@@ -578,7 +578,7 @@ The [inventory workbench](./examples/inventory-workbench) demonstrates one busin
 
 ## Worker & Shared Runtime
 
-`@coexist/core` includes a worker runtime. The API is stable over trusted, reliable transports; the wire protocol is internal and may change in a minor. See [Scope & Stability](./docs/scope-and-stability.md#the-worker-runtime) for the supported topology and trust boundary.
+`@coexist/core` includes a worker runtime. Its API is Stable within the model that [Scope & Stability](./docs/scope-and-stability.md#the-worker-runtime) defines: the transports, topology, write semantics, and trust boundary it covers.
 
 ```ts
 import {
@@ -703,7 +703,7 @@ const host = createWorkerApp({
 await client.ready;
 ```
 
-The runtime covers app creation, method delegation, initial state snapshots, patch-only sync messages after startup, client-side readiness, selector watches for worker-hosted state, `postMessage` endpoints, and a `data-transport`-style `listen`/`emit` bridge. It also supports BroadcastChannel-style shared tab coordination with routed call results. The host is authoritative: concurrent writers are last-writer-wins, and a client that falls behind re-syncs rather than merging. It does not attempt full shared-runtime conflict resolution or framework-specific worker bootstrapping; those are out of scope, not unfinished.
+The runtime covers app creation, method delegation, initial state snapshots, patch-only sync messages after startup, client-side readiness, selector watches for worker-hosted state, `postMessage` endpoints, and a `data-transport`-style `listen`/`emit` bridge. It also supports BroadcastChannel-style shared tab coordination with routed call results. It does not attempt full shared-runtime conflict resolution or framework-specific worker bootstrapping; those are out of scope, not unfinished.
 
 Remote calls are limited to declared module actions by default. Additional methods can be enabled explicitly per module with `createWorkerApp({ expose: { counter: ["refresh"] }, ... })`.
 
