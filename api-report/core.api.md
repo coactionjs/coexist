@@ -533,6 +533,7 @@ interface WorkerStateMessage {
     readonly syncId?: number;
     readonly version: number;
     readonly protocol?: number;
+    readonly host?: string;
 }
 type WorkerStateSection = string;
 type WorkerStateSelector<T> = (state: unknown, client: WorkerClient) => T;
@@ -572,6 +573,7 @@ interface WorkerCallMessage {
 interface WorkerReadyMessage {
     readonly type: "ready";
     readonly protocol?: number;
+    readonly host?: string;
 }
 interface WorkerResultMessage {
     readonly id: number;

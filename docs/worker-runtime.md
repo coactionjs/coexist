@@ -97,7 +97,7 @@ Observers never alter protocol handling: throwing from one is contained and cann
 | `requestInitialSync` | `true`  | Asks the host for a snapshot at construction instead of waiting to be published to.         |
 | `signal`             | —       | Aborting rejects `ready` with `WorkerHostUnavailableError` (and aborts in-flight calls).    |
 
-If the initial sync request cannot even be posted, `ready` rejects with `WorkerInitialSyncError` whose `cause` is the transport failure. Because a client asks for its own snapshot — and asks again whenever the host announces `ready` — a client that attaches _after_ the host published still catches up rather than hanging.
+If the initial sync request cannot even be posted, `ready` rejects with `WorkerInitialSyncError` whose `cause` is the transport failure. Because a client asks for its own snapshot, a client that attaches _after_ the host published still catches up rather than hanging. It asks again when a different host announces `ready`: each host names itself on its handshake and snapshots, so a client whose host was replaced re-bases its mirror on the new host's snapshot instead of judging that host's fresh version sequence stale.
 
 A rejected `ready` does not disable the client: a snapshot that arrives later is still applied, and it reaches `client.subscribe` listeners and watches registered with `immediate: true`. A default `watch` takes that first snapshot as its baseline and fires from the next change. `ready` simply cannot re-settle, so treat its rejection as "startup was not observed in time", not as "this client is dead". The one exception is `WorkerProtocolMismatchError`: a client that refused its host stays refused.
 
@@ -204,7 +204,9 @@ const host = createWorkerApp({
 
 Client ids must be unique on a channel. Replies are routed by `peerId`, and each client numbers its calls from 1, so two tabs that share an id settle each other's calls with the wrong results. Keep the default, or derive an explicit id per tab, such as `` `tab:${crypto.randomUUID()}` ``.
 
-The runtime does not elect the host. Start `createWorkerApp` in exactly one tab, for example the tab that holds a [Web Lock](https://developer.mozilla.org/docs/Web/API/Web_Locks_API). Two hosts under the same id both answer every call, so each action runs twice and their states diverge. Nor does the runtime hand over between hosts: a replacement host starts its own version sequence, and clients that mirrored the previous host ignore its frames as stale until that sequence passes theirs. Recreate the clients when the host changes.
+The runtime does not elect the host. Start `createWorkerApp` in exactly one tab, for example the tab that holds a [Web Lock](https://developer.mozilla.org/docs/Web/API/Web_Locks_API). Two hosts under the same id both answer every call, so each action runs twice and their states diverge.
+
+When the hosting tab closes, start a replacement in the tab that takes over, such as the next holder of that lock. Clients recognise the replacement by the identity on its `ready` announcement and snapshots, and re-sync from its first snapshot. Nothing carries over from the closed host: the replacement starts from its own state, so persist what it must resume, for example with `@coexist/storage`. Calls in flight to the closed host end with their `requestTimeout`.
 
 Tests and non-browser environments can use `createMemoryBroadcastChannel()` with the same API.
 

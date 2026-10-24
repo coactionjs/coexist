@@ -684,7 +684,7 @@ await client.ready;
 await client.module<Counter>("counter").increase(1);
 ```
 
-The runtime does not elect the host, so start it in one tab only. [Shared tabs](./docs/worker-runtime.md#shared-tabs-broadcastchannel) explains why client ids must be unique and what to do when the host changes.
+The runtime does not elect the host, so start it in one tab only. [Shared tabs](./docs/worker-runtime.md#shared-tabs-broadcastchannel) explains why client ids must be unique and how clients follow a replacement host.
 
 Tests and non-browser environments can use `createMemoryBroadcastChannel()` with the same transport API.
 

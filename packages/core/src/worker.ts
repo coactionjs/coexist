@@ -171,6 +171,8 @@ export interface WorkerStateMessage {
    * revision here, before it adopts any state.
    */
   readonly protocol?: number;
+  /** The identity of the host instance, on the same frames as `protocol`. */
+  readonly host?: string;
 }
 
 export interface WorkerReadyMessage {
@@ -181,6 +183,13 @@ export interface WorkerReadyMessage {
    * talk to it.
    */
   readonly protocol?: number;
+  /**
+   * A random identity for this host instance. A client that already mirrors a
+   * different host learns here that it was replaced, and re-syncs from the new
+   * one instead of judging its fresh version sequence stale. Absent from a host
+   * published before hosts were identified.
+   */
+  readonly host?: string;
 }
 
 export interface WorkerSyncMessage {
@@ -429,6 +438,9 @@ export function createWorkerApp(options: CreateWorkerAppOptions): WorkerAppHost 
   const serializeError =
     customSerializeError ?? ((error: unknown) => serializeWorkerError(error, includeErrorStack));
   const limits = resolveWorkerProtocolLimits(limitOptions);
+  // Names this host instance on its handshake and snapshots, so a client that
+  // mirrored a host this one replaced can tell the two version sequences apart.
+  const hostId = createRandomWorkerId();
   let stateSyncVersion = 0;
   let publishPatches = false;
   // A published version that never reached the peer cannot be the base for the
@@ -456,6 +468,8 @@ export function createWorkerApp(options: CreateWorkerAppOptions): WorkerAppHost 
         resendSnapshot ? "snapshot" : sync,
         stateSections,
         version,
+        undefined,
+        hostId,
       );
 
       if (publication.published) {
@@ -482,7 +496,7 @@ export function createWorkerApp(options: CreateWorkerAppOptions): WorkerAppHost 
     }
 
     publishPatches = true;
-    announceReady(transport, handleDeliveryFailure);
+    announceReady(transport, hostId, handleDeliveryFailure);
     const version = stateSections === undefined ? app.state.version : stateSyncVersion;
     const publication = publishState(
       app,
@@ -492,6 +506,8 @@ export function createWorkerApp(options: CreateWorkerAppOptions): WorkerAppHost 
       "snapshot",
       stateSections,
       version,
+      undefined,
+      hostId,
     );
 
     if (!publication.published) {
@@ -554,6 +570,7 @@ export function createWorkerApp(options: CreateWorkerAppOptions): WorkerAppHost 
           ready,
           stateSections,
           () => stateSyncVersion,
+          hostId,
           handleDeliveryFailure,
         );
         return;
@@ -646,6 +663,10 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
   // on a timeout, an abort, or disposal — so protocol decisions must not read
   // the promise state.
   let hasInitialState = false;
+  // The host instance the mirror's baseline came from, when that host names
+  // itself. A different one means the host was replaced, and its versions
+  // restart from its own start rather than continuing this sequence.
+  let baselineHost: string | undefined;
   let readySettled = false;
   let readyTimer: ReturnType<typeof setTimeout> | undefined;
   let resyncTimer: ReturnType<typeof setTimeout> | undefined;
@@ -1111,6 +1132,32 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
     pending.clear();
   };
 
+  // A host without an identity is from a release before hosts carried one, and
+  // a client cannot tell whether such a host was replaced.
+  const isReplacementHost = (host: string | undefined): boolean =>
+    host !== undefined && hasInitialState && host !== baselineHost;
+
+  /**
+   * Lets go of the baseline of a host that another one replaced. The mirror
+   * keeps showing the old state until the new host's first snapshot lands, but
+   * nothing is applied on top of it, and the old version sequence no longer
+   * judges the new host's frames stale.
+   */
+  const forgetReplacedHost = (): void => {
+    baselineHost = undefined;
+    hasInitialState = false;
+    syncedStaleVersion = 0;
+    requestedSyncVersion = undefined;
+
+    // A result the old host already sent waits for state that host will never
+    // publish now, so it settles instead of waiting out its timeout.
+    for (const [id, entry] of pending) {
+      if (entry.result !== undefined) {
+        settlePendingResult(id, entry, entry.result);
+      }
+    }
+  };
+
   const reportConflict = (event: WorkerConflictEvent): void => {
     reportWorkerConflict(onConflict, event);
 
@@ -1182,14 +1229,25 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
     }
 
     if (message.type === "ready") {
+      if (isReplacementHost(message.host)) {
+        forgetReplacedHost();
+      }
+
       // The host announces itself before publishing. A client that attached
-      // after the host's initial snapshot would otherwise never see one.
+      // after the host's initial snapshot would otherwise never see one, and a
+      // client whose host was just replaced needs the new host's.
       requestInitialSnapshot();
       return;
     }
 
     if (message.type === "state") {
       const isPatchOnly = message.state === undefined && message.sync === "patch";
+
+      // A full snapshot from a replacement host, even one whose `ready` this
+      // client missed, becomes the new baseline whatever its version.
+      if (!isPatchOnly && isReplacementHost(message.host)) {
+        forgetReplacedHost();
+      }
 
       if (hasInitialState && message.version <= state.version) {
         if (message.version <= syncedStaleVersion) {
@@ -1212,7 +1270,9 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
         return;
       }
 
-      if (isPatchOnly && snapshot === undefined) {
+      // Without a baseline from the current host, a patch has nothing to apply
+      // to — not even a mirror kept from a host that was replaced.
+      if (isPatchOnly && !hasInitialState) {
         reportConflict({
           currentVersion: state.version,
           incomingVersion: message.version,
@@ -1254,6 +1314,11 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
       }
 
       state.version = message.version;
+
+      if (!isPatchOnly) {
+        baselineHost = message.host;
+      }
+
       if (requestedSyncVersion !== undefined && requestedSyncVersion <= state.version) {
         syncedStaleVersion = Math.max(syncedStaleVersion, state.version);
         requestedSyncVersion = undefined;
@@ -1793,6 +1858,7 @@ async function handleSync(
   ready: Promise<void>,
   sections: readonly WorkerStateSection[] | undefined,
   getStateVersion: () => number,
+  hostId: string,
   onDeliveryError: WorkerDeliveryErrorHandler,
 ): Promise<void> {
   try {
@@ -1816,6 +1882,7 @@ async function handleSync(
         sections,
         getStateVersion(),
         message.id,
+        hostId,
       ),
       onDeliveryError,
     );
@@ -1849,11 +1916,16 @@ function postWorkerMessage(
 
 function announceReady(
   transport: WorkerTransport,
+  hostId: string,
   onDeliveryError: WorkerDeliveryErrorHandler,
 ): void {
   // The announcement is a hint that lets late clients ask for a snapshot; the
   // snapshot published right after is the signal `host.ready` depends on.
-  postWorkerMessage(transport, { protocol: workerProtocolVersion, type: "ready" }, onDeliveryError);
+  postWorkerMessage(
+    transport,
+    { host: hostId, protocol: workerProtocolVersion, type: "ready" },
+    onDeliveryError,
+  );
 }
 
 function observeWorkerDelivery(
@@ -1880,6 +1952,7 @@ function publishState(
   sections?: readonly WorkerStateSection[],
   version: number = app.state.version,
   syncId?: number,
+  hostId?: string,
 ): WorkerStatePublication {
   // Coaction 4 can replace the entire root to preserve an object graph. Such
   // a patch has no section key, so a section-limited mirror needs a fresh
@@ -1903,8 +1976,15 @@ function publishState(
   const state = filterWorkerState(app.store.getPureState(), sections);
   const message: WorkerStateMessage = {
     // Any frame that can become a client's baseline names the revision it is
-    // framed in; a patch-only frame cannot, so it stays as small as it was.
-    ...(isPatch && mode === "patch" ? {} : { protocol: workerProtocolVersion, state }),
+    // framed in and the host it came from; a patch-only frame cannot, so it
+    // stays as small as it was.
+    ...(isPatch && mode === "patch"
+      ? {}
+      : {
+          ...(hostId === undefined ? {} : { host: hostId }),
+          protocol: workerProtocolVersion,
+          state,
+        }),
     ...(sections === undefined ? {} : { sections }),
     sync: isPatch ? "patch" : "snapshot",
     ...(syncId === undefined ? {} : { syncId }),
@@ -2360,13 +2440,13 @@ function createWorkerPeerId(): string {
   // name the first transport of every tab `peer:1`, and two tabs on default ids
   // would drop each other's traffic as their own echo. A per-realm random part
   // keeps defaults apart across tabs; the counter keeps them apart within one.
-  workerPeerRealmId ??= createWorkerPeerRealmId();
+  workerPeerRealmId ??= createRandomWorkerId();
   const id = nextWorkerPeerId;
   nextWorkerPeerId += 1;
   return `peer:${workerPeerRealmId}:${id}`;
 }
 
-function createWorkerPeerRealmId(): string {
+function createRandomWorkerId(): string {
   const webCrypto = (
     globalThis as {
       readonly crypto?: { getRandomValues?(array: Uint32Array): Uint32Array };
@@ -2379,8 +2459,8 @@ function createWorkerPeerRealmId(): string {
     ).join("");
   }
 
-  // A peer id routes messages; it is not a secret, so a runtime without Web
-  // Crypto still gets a per-realm value rather than a shared constant.
+  // These ids route and identify; they are not secrets, so a runtime without
+  // Web Crypto still gets a distinct value rather than a shared constant.
   return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
 }
 
@@ -2422,14 +2502,18 @@ function isWorkerMessage(message: unknown): message is WorkerMessage {
         (message.sync !== "patch" ||
           isWorkerStateRoot(message.state) ||
           message.patches !== undefined) &&
-        (message.protocol === undefined || isWorkerStateVersion(message.protocol))
+        (message.protocol === undefined || isWorkerStateVersion(message.protocol)) &&
+        (message.host === undefined || typeof message.host === "string")
       );
 
     case "sync":
       return isWorkerMessageId(message.id) && isOptionalWorkerStateVersion(message.stateVersion);
 
     case "ready":
-      return message.protocol === undefined || isWorkerStateVersion(message.protocol);
+      return (
+        (message.protocol === undefined || isWorkerStateVersion(message.protocol)) &&
+        (message.host === undefined || typeof message.host === "string")
+      );
 
     default:
       return false;

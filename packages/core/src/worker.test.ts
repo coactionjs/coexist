@@ -2792,7 +2792,9 @@ describe("worker runtime", () => {
 
     await host.ready;
 
-    expect(announced).toEqual([{ protocol: workerProtocolVersion, type: "ready" }]);
+    expect(announced).toEqual([
+      { host: expect.any(String), protocol: workerProtocolVersion, type: "ready" },
+    ]);
 
     stopClient();
     await host.dispose();
@@ -2888,6 +2890,258 @@ describe("worker runtime", () => {
 
     client.dispose();
     stopHost();
+  });
+
+  it("names each host instance on its handshake and on the frames a client adopts", async () => {
+    const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+    const frames: WorkerMessage[] = [];
+    const stopClient = clientTransport.subscribe((message) => {
+      frames.push(message);
+    });
+    const first = createWorkerApp({
+      providers: [WorkerCounter],
+      sync: "patch",
+      transport: hostTransport,
+    });
+
+    await first.ready;
+    first.app.getModule(WorkerCounter).increase();
+    await waitUntil(() => frames.length === 3, "the patch update");
+    await first.dispose();
+
+    const second = createWorkerApp({ providers: [WorkerCounter], transport: hostTransport });
+
+    await second.ready;
+
+    const [ready, snapshot, patch, replacementReady] = frames as [
+      WorkerMessage & { host?: string },
+      WorkerStateMessage,
+      WorkerStateMessage,
+      WorkerMessage & { host?: string },
+    ];
+
+    expect(ready.host).toEqual(expect.any(String));
+    expect(snapshot.host).toBe(ready.host);
+    expect(patch.host).toBeUndefined();
+    expect(replacementReady.host).not.toBe(ready.host);
+
+    stopClient();
+    await second.dispose();
+  });
+
+  it("re-syncs from a replacement host instead of judging its versions stale", async () => {
+    const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+    const syncRequests: WorkerMessage[] = [];
+    const conflicts: WorkerConflictEvent[] = [];
+    const watched: number[] = [];
+    const stopHost = hostTransport.subscribe((message) => {
+      if (message.type === "sync") {
+        syncRequests.push(message);
+      }
+    });
+    const client = createWorkerClient({
+      onConflict: (event) => {
+        conflicts.push(event);
+      },
+      readyTimeout: 0,
+      requestInitialSync: false,
+      transport: clientTransport,
+    });
+
+    hostTransport.post({
+      host: "closed-tab",
+      protocol: workerProtocolVersion,
+      state: { workerCounter: { count: 5 } },
+      sync: "snapshot",
+      type: "state",
+      version: 5,
+    });
+    await client.ready;
+    client.watch(selectWorkerCount, (count) => {
+      watched.push(count);
+    });
+
+    // The tab that hosted closed, and the next tab started its own host, which
+    // numbers its versions from its own start.
+    hostTransport.post({ host: "next-tab", protocol: workerProtocolVersion, type: "ready" });
+
+    expect(syncRequests).toHaveLength(1);
+
+    // A patch from the replacement has no baseline to land on yet.
+    hostTransport.post({
+      patches: [{ op: "replace", path: ["workerCounter", "count"], value: 9 }],
+      sync: "patch",
+      type: "state",
+      version: 2,
+    });
+
+    expect(client.select(selectWorkerCount)).toBe(5);
+
+    hostTransport.post({
+      host: "next-tab",
+      protocol: workerProtocolVersion,
+      state: { workerCounter: { count: 1 } },
+      sync: "snapshot",
+      type: "state",
+      version: 1,
+    });
+
+    expect(client.select(selectWorkerCount)).toBe(1);
+    expect(client.state.version).toBe(1);
+    expect(watched).toEqual([1]);
+    expect(conflicts.map((event) => event.reason)).toEqual(["missing-snapshot"]);
+
+    client.dispose();
+    stopHost();
+  });
+
+  it("adopts a replacement host's snapshot even when its handshake was missed", async () => {
+    const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+    const client = createWorkerClient({
+      readyTimeout: 0,
+      requestInitialSync: false,
+      transport: clientTransport,
+    });
+
+    hostTransport.post({
+      host: "closed-tab",
+      state: { workerCounter: { count: 5 } },
+      sync: "snapshot",
+      type: "state",
+      version: 5,
+    });
+    await client.ready;
+    hostTransport.post({
+      host: "next-tab",
+      state: { workerCounter: { count: 2 } },
+      sync: "snapshot",
+      type: "state",
+      version: 2,
+    });
+
+    expect(client.select(selectWorkerCount)).toBe(2);
+    expect(client.state.version).toBe(2);
+
+    client.dispose();
+  });
+
+  it("still judges frames from the same host, or an unnamed one, by version", async () => {
+    const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+    const syncRequests: WorkerMessage[] = [];
+    const conflicts: WorkerConflictEvent[] = [];
+    const stopHost = hostTransport.subscribe((message) => {
+      if (message.type === "sync") {
+        syncRequests.push(message);
+      }
+    });
+    const client = createWorkerClient({
+      onConflict: (event) => {
+        conflicts.push(event);
+      },
+      readyTimeout: 0,
+      requestInitialSync: false,
+      transport: clientTransport,
+    });
+
+    hostTransport.post({
+      host: "tab",
+      state: { workerCounter: { count: 5 } },
+      sync: "snapshot",
+      type: "state",
+      version: 5,
+    });
+    await client.ready;
+    hostTransport.post({ host: "tab", protocol: workerProtocolVersion, type: "ready" });
+    hostTransport.post({
+      host: "tab",
+      state: { workerCounter: { count: 3 } },
+      sync: "snapshot",
+      type: "state",
+      version: 3,
+    });
+    // A host from a release before hosts were named cannot be told apart.
+    hostTransport.post({ protocol: workerProtocolVersion, type: "ready" });
+    hostTransport.post({
+      state: { workerCounter: { count: 4 } },
+      sync: "snapshot",
+      type: "state",
+      version: 4,
+    });
+
+    expect(client.select(selectWorkerCount)).toBe(5);
+    expect(syncRequests).toHaveLength(0);
+    expect(conflicts.map((event) => event.reason)).toEqual(["stale-message", "stale-message"]);
+
+    client.dispose();
+    stopHost();
+  });
+
+  it("settles results the replaced host sent before its state could follow", async () => {
+    const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+    const stopHost = hostTransport.subscribe(() => undefined);
+    const client = createWorkerClient({
+      readyTimeout: 0,
+      requestInitialSync: false,
+      transport: clientTransport,
+    });
+
+    hostTransport.post({
+      host: "closed-tab",
+      state: { workerCounter: { count: 1 } },
+      sync: "snapshot",
+      type: "state",
+      version: 1,
+    });
+    await client.ready;
+
+    const call = client.call("workerCounter", "increase", 1);
+
+    // The result names a version the mirror has not reached; the closed host
+    // will never publish it.
+    hostTransport.post({ id: 1, stateVersion: 2, type: "result", value: 2 });
+    hostTransport.post({ host: "next-tab", protocol: workerProtocolVersion, type: "ready" });
+
+    await expect(call).resolves.toBe(2);
+
+    client.dispose();
+    stopHost();
+  });
+
+  it("follows a replacement host over a shared channel", async () => {
+    const channel = "worker-replacement-host";
+    const clientChannel = createMemoryBroadcastChannel(channel);
+    const client = createWorkerClient({
+      readyTimeout: 1000,
+      transport: createBroadcastWorkerTransport(clientChannel, { targetPeerId: "host" }),
+    });
+    const closedTabChannel = createMemoryBroadcastChannel(channel);
+    const closedTab = createWorkerApp({
+      providers: [WorkerCounter],
+      sync: "patch",
+      transport: createBroadcastWorkerTransport(closedTabChannel, { peerId: "host" }),
+    });
+
+    await client.ready;
+    await expect(client.module<WorkerCounter>("workerCounter").increase(3)).resolves.toBe(3);
+    await closedTab.dispose();
+    closedTabChannel.close?.();
+
+    const nextTabChannel = createMemoryBroadcastChannel(channel);
+    const nextTab = createWorkerApp({
+      providers: [WorkerCounter],
+      sync: "patch",
+      transport: createBroadcastWorkerTransport(nextTabChannel, { peerId: "host" }),
+    });
+
+    await nextTab.ready;
+    await waitUntil(() => client.select(selectWorkerCount) === 0, "the replacement's snapshot");
+    await expect(client.module<WorkerCounter>("workerCounter").increase(2)).resolves.toBe(2);
+    await waitUntil(() => client.select(selectWorkerCount) === 2, "the replacement's patch");
+
+    client.dispose();
+    await nextTab.dispose();
+    clientChannel.close?.();
+    nextTabChannel.close?.();
   });
 
   it("rejects client readiness when no host answers within the ready timeout", async () => {
