@@ -27,7 +27,7 @@ It is **Stable** within a deliberately narrow operational model. Stable covers t
 - **One authoritative host.** State lives on the host; clients read a mirror and write through delegated actions. Concurrent writes are last-writer-wins on the host, and a client whose mirror falls behind detects the gap and re-syncs a snapshot; it does not reconcile competing writes. The runtime does not merge concurrent writes.
 - **Trusted transports only.** A bare `WorkerTransport` does not authenticate its peer. BroadcastChannel `authToken` routes messages rather than authenticating them. Schema validation, quotas, and the action allowlist are defense-in-depth, not a security boundary against hostile same-origin code — see the worker [trust boundary](./worker-runtime.md#trust-boundary).
 - **Framework worker bootstrapping is yours.** Adapters consume a `WorkerClient`; spawning the worker, bundling its entry, and handling its lifecycle are application concerns.
-- **The wire protocol is internal.** The API is stable; the frames are not. Both endpoints must come from the same `@coexist/core` version, enforced at `ready` via `workerProtocolVersion` ([below](#the-worker-protocol-is-outside-the-compatibility-promise)).
+- **The wire protocol is internal.** The API is stable; the frames are not. Deploy both endpoints from the same `@coexist/core` version. A client refuses a host whose `workerProtocolVersion` differs, but that revision changes only with a breaking wire change, so it does not tell every mixed pair apart ([below](#the-worker-protocol-is-outside-the-compatibility-promise)).
 
 Depend on it for a dedicated `Worker`, a `MessagePort`, a same-origin iframe you control, or a trusted `BroadcastChannel`. If you need CRDT-style merge, offline queueing, or an adversarial transport boundary, use a system designed for that; those are out of scope, not unfinished.
 
@@ -110,7 +110,7 @@ Being explicit is the point. "A protocol change is a minor bump, not a major" wa
 
 Build against the worker **API** freely — it is ordinary `2.x` API, held to the same report and the same deprecation cycle. Do not implement a third-party host or client against the **frames**, and do not persist or bridge them. The API is stable; the encoding is not.
 
-Both endpoints must come from the same `@coexist/core` version, and that is enforced rather than assumed. The host stamps `workerProtocolVersion` on its `ready` handshake, and a client that sees a different revision rejects `client.ready` with `WorkerProtocolMismatchError` instead of mirroring frames it may misread. A host with no version in its handshake predates versioning and is accepted.
+Both endpoints must come from the same `@coexist/core` version. What the runtime enforces is the part correctness depends on, the wire revision. The host stamps `workerProtocolVersion` on its `ready` handshake and on every frame that carries the full state, so a client that attached after the handshake still learns it before adopting any state. A client that sees a different revision rejects `client.ready` with `WorkerProtocolMismatchError`, rejects its pending and later calls with the same error, and ignores the rest of that host's frames instead of mirroring frames it may misread. The revision moves only with a breaking wire change, so two releases that share one connect normally; that is compatible, not verified. A host whose frames carry no revision predates versioning and is accepted.
 
 ### What is a breaking change for the worker API
 

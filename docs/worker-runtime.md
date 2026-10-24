@@ -99,7 +99,7 @@ Observers never alter protocol handling: throwing from one is contained and cann
 
 If the initial sync request cannot even be posted, `ready` rejects with `WorkerInitialSyncError` whose `cause` is the transport failure. Because a client asks for its own snapshot — and asks again whenever the host announces `ready` — a client that attaches _after_ the host published still catches up rather than hanging.
 
-A rejected `ready` does not disable the client: a snapshot that arrives later is still applied and still notifies watchers. `ready` simply cannot re-settle, so treat its rejection as "startup was not observed in time", not as "this client is dead".
+A rejected `ready` does not disable the client: a snapshot that arrives later is still applied and still notifies watchers. `ready` simply cannot re-settle, so treat its rejection as "startup was not observed in time", not as "this client is dead". The one exception is `WorkerProtocolMismatchError`: a client that refused its host stays refused.
 
 RPC calls default to a 30-second timeout (`requestTimeout` on `createWorkerClient`; `0` disables it). Use `callWithOptions()` for a per-call timeout or `AbortSignal`. Remote invocation is restricted to methods explicitly listed in the module's `actions` metadata; ordinary methods, lifecycle hooks, computed properties, and arbitrary callable fields are not remotely exposed by default. When a plain method intentionally belongs to the RPC surface, list it by module name with `createWorkerApp({ expose: { counter: ["refresh"] }, ... })`.
 
@@ -107,7 +107,7 @@ RPC calls default to a 30-second timeout (`requestTimeout` on `createWorkerClien
 
 Every inbound protocol envelope is runtime-validated: call IDs, module/method names, argument arrays, result errors, state versions/sections, sync fields, and patch operations/paths must match the complete message schema. Malformed input is dropped and can be observed with `onInvalidMessage`. Unsafe patch path segments such as `__proto__` are rejected.
 
-The host also stamps `workerProtocolVersion` on its `ready` handshake. A client seeing a different revision rejects `client.ready` with `WorkerProtocolMismatchError` rather than mirroring frames it may misread — both endpoints must come from the same `@coexist/core` version. A handshake with no version predates versioning and is accepted.
+The host also stamps `workerProtocolVersion` on its `ready` handshake and on every frame that carries the full state, so a client that attaches after the handshake still meets it on its first snapshot. A client seeing a different revision rejects `client.ready` with `WorkerProtocolMismatchError`, rejects its calls with the same error, and ignores that host's frames rather than mirroring frames it may misread — both endpoints must come from the same `@coexist/core` version. The check compares wire revisions, not package versions, and a host whose frames carry no revision predates versioning and is accepted.
 
 Schema validation says nothing about size, so both endpoints also enforce quotas. Tune them with `limits` on `createWorkerApp` / `createWorkerClient`:
 
@@ -323,7 +323,7 @@ Not covered: full shared-runtime conflict _resolution_ (the host is authoritativ
 - Await `client.ready` before treating worker-backed state as available, and render a loading or error state if it rejects.
 - Dispose both ends. `client.dispose()` rejects pending calls; `host.dispose()` disposes the hosted app, not the `Worker` object itself.
 - Observe `onDeliveryError` on the host and `onConflict`/`onResync` on the client; a silent transport failure is otherwise indistinguishable from a slow action.
-- Deploy host and client from the same `@coexist/core` version. A mixed-version pair fails `client.ready` with `WorkerProtocolMismatchError` instead of mirroring frames it may misread.
+- Deploy host and client from the same `@coexist/core` version. A client refuses a host that speaks another wire revision — `client.ready` and its calls reject with `WorkerProtocolMismatchError`, and none of that host's frames are mirrored — but releases that share a revision are not told apart.
 - Keep transports trusted. Use `targetOrigin`/`allowedOrigins`/`expectedSource` for iframes, and an authenticated channel for cross-origin RPC; a bare transport does not authenticate its peer.
 
 ## Next

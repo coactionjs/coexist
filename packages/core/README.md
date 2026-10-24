@@ -482,21 +482,21 @@ The worker runtime intentionally does not implement full shared-runtime conflict
 
 All errors extend `CoexistError`:
 
-| Error                                | Thrown when                                                           |
-| ------------------------------------ | --------------------------------------------------------------------- |
-| `MissingProviderError`               | A token has no registered provider.                                   |
-| `DuplicateProviderError`             | A non-`multi` token is registered twice.                              |
-| `AmbiguousProviderError`             | `get()` is called for a token with multiple providers (use `getAll`). |
-| `CircularDependencyError`            | A provider depends on itself transitively.                            |
-| `AsyncProviderInSyncResolutionError` | A sync `get()` hits an async factory (use `getAsync`/`buildAsync`).   |
-| `LifetimeLeakError`                  | A longer-lived provider depends on a shorter-lived one.               |
-| `FrozenContainerError`               | The provider graph is mutated after freezing.                         |
-| `DisposedContainerError`             | A container is used after disposal begins.                            |
-| `InjectContextError`                 | `inject()` is used outside provider resolution.                       |
-| `WorkerReadyTimeoutError`            | No worker snapshot arrived within `readyTimeout`.                     |
-| `WorkerProtocolMismatchError`        | The host announced a different `workerProtocolVersion`.               |
-| `WorkerHostUnavailableError`         | The client signal aborted before the first worker snapshot.           |
-| `WorkerInitialSyncError`             | The client could not post its initial snapshot request.               |
+| Error                                | Thrown when                                                                 |
+| ------------------------------------ | --------------------------------------------------------------------------- |
+| `MissingProviderError`               | A token has no registered provider.                                         |
+| `DuplicateProviderError`             | A non-`multi` token is registered twice.                                    |
+| `AmbiguousProviderError`             | `get()` is called for a token with multiple providers (use `getAll`).       |
+| `CircularDependencyError`            | A provider depends on itself transitively.                                  |
+| `AsyncProviderInSyncResolutionError` | A sync `get()` hits an async factory (use `getAsync`/`buildAsync`).         |
+| `LifetimeLeakError`                  | A longer-lived provider depends on a shorter-lived one.                     |
+| `FrozenContainerError`               | The provider graph is mutated after freezing.                               |
+| `DisposedContainerError`             | A container is used after disposal begins.                                  |
+| `InjectContextError`                 | `inject()` is used outside provider resolution.                             |
+| `WorkerReadyTimeoutError`            | No worker snapshot arrived within `readyTimeout`.                           |
+| `WorkerProtocolMismatchError`        | The host speaks a different `workerProtocolVersion`; the client refuses it. |
+| `WorkerHostUnavailableError`         | The client signal aborted before the first worker snapshot.                 |
+| `WorkerInitialSyncError`             | The client could not post its initial snapshot request.                     |
 
 ## API reference
 

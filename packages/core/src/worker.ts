@@ -160,6 +160,12 @@ export interface WorkerStateMessage {
   readonly sync: "patch" | "snapshot";
   readonly syncId?: number;
   readonly version: number;
+  /**
+   * The protocol revision the host speaks, on every frame that carries the full
+   * `state`. A client that attached after the `ready` announcement learns the
+   * revision here, before it adopts any state.
+   */
+  readonly protocol?: number;
 }
 
 export interface WorkerReadyMessage {
@@ -635,6 +641,9 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
   let resyncReason: WorkerConflictReason | undefined;
   let resyncAttempt = 0;
   let disposed = false;
+  // The revision of a host that speaks another protocol. Once set, nothing that
+  // host sends is applied again: any frame may mean something else here.
+  let refusedProtocol: number | undefined;
   let resolveReady!: () => void;
   let rejectReady!: (error: unknown) => void;
   const ready = new Promise<void>((resolve, reject) => {
@@ -687,6 +696,12 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
     callWithOptions(module, method, args, callOptions = {}) {
       if (disposed) {
         return Promise.reject(new CoexistError("Worker client has been disposed."));
+      }
+
+      if (refusedProtocol !== undefined) {
+        return Promise.reject(
+          new WorkerProtocolMismatchError(workerProtocolVersion, refusedProtocol),
+        );
       }
 
       if (pending.size >= limits.maxPendingCalls) {
@@ -1065,6 +1080,25 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
       resyncOptions.maxDelay,
     );
 
+  /**
+   * Stops mirroring a host that speaks another protocol revision: `ready` and
+   * every pending call reject, later calls reject too, and the host's frames
+   * are ignored from here on, because each may be framed differently than this
+   * client reads it.
+   */
+  const refuseHost = (protocol: number): void => {
+    refusedProtocol = protocol;
+    clearResyncTimers();
+    failReady(new WorkerProtocolMismatchError(workerProtocolVersion, protocol));
+
+    for (const entry of pending.values()) {
+      entry.cleanup();
+      entry.reject(new WorkerProtocolMismatchError(workerProtocolVersion, protocol));
+    }
+
+    pending.clear();
+  };
+
   const reportConflict = (event: WorkerConflictEvent): void => {
     reportWorkerConflict(onConflict, event);
 
@@ -1108,6 +1142,10 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
   };
 
   unsubscribe = transport.subscribe((message) => {
+    if (refusedProtocol !== undefined) {
+      return;
+    }
+
     if (!isWorkerMessage(message)) {
       reportInvalidWorkerMessage(onInvalidMessage, message);
       return;
@@ -1118,15 +1156,20 @@ export function createWorkerClient(options: CreateWorkerClientOptions): WorkerCl
       return;
     }
 
-    if (message.type === "ready") {
+    if (
+      (message.type === "ready" || message.type === "state") &&
+      message.protocol !== undefined &&
+      message.protocol !== workerProtocolVersion
+    ) {
       // A host that speaks a different revision may frame state, patches, or
       // results differently. Mirroring it would corrupt local state silently,
-      // so refuse the connection instead.
-      if (message.protocol !== undefined && message.protocol !== workerProtocolVersion) {
-        failReady(new WorkerProtocolMismatchError(workerProtocolVersion, message.protocol));
-        return;
-      }
+      // so refuse the connection instead. A client that attached after the
+      // `ready` announcement meets the revision on its first snapshot.
+      refuseHost(message.protocol);
+      return;
+    }
 
+    if (message.type === "ready") {
       // The host announces itself before publishing. A client that attached
       // after the host's initial snapshot would otherwise never see one.
       requestInitialSnapshot();
@@ -1847,7 +1890,9 @@ function publishState(
 
   const state = filterWorkerState(app.store.getPureState(), sections);
   const message: WorkerStateMessage = {
-    ...(isPatch && mode === "patch" ? {} : { state }),
+    // Any frame that can become a client's baseline names the revision it is
+    // framed in; a patch-only frame cannot, so it stays as small as it was.
+    ...(isPatch && mode === "patch" ? {} : { protocol: workerProtocolVersion, state }),
     ...(sections === undefined ? {} : { sections }),
     sync: isPatch ? "patch" : "snapshot",
     ...(syncId === undefined ? {} : { syncId }),
@@ -2184,12 +2229,14 @@ function createMemoryWorkerTransport(
 }
 
 /**
- * The wire revision `createWorkerApp` and `createWorkerClient` speak. It is
- * announced in the `ready` handshake so a version mismatch fails loudly at
- * connection time rather than as corrupted state later. The wire protocol is
- * internal and outside the package's compatibility promise, so a breaking wire
- * change bumps this revision and ships in a minor release; the public API
- * remains stable.
+ * The wire revision `createWorkerApp` and `createWorkerClient` speak. The host
+ * stamps it on the `ready` handshake and on every frame that carries the full
+ * state, so a client refuses a host that speaks another revision — even one it
+ * attached to after the handshake — rather than mirroring frames it may
+ * misread. It compares wire revisions, not package versions: two releases that
+ * share a revision connect normally. The wire protocol is internal and outside
+ * the package's compatibility promise, so a breaking wire change bumps this
+ * revision and ships in a minor release; the public API remains stable.
  */
 export const workerProtocolVersion = 1;
 
@@ -2362,7 +2409,8 @@ function isWorkerMessage(message: unknown): message is WorkerMessage {
         (message.sync !== "snapshot" || isWorkerStateRoot(message.state)) &&
         (message.sync !== "patch" ||
           isWorkerStateRoot(message.state) ||
-          message.patches !== undefined)
+          message.patches !== undefined) &&
+        (message.protocol === undefined || isWorkerStateVersion(message.protocol))
       );
 
     case "sync":

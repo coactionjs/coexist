@@ -532,6 +532,7 @@ interface WorkerStateMessage {
     readonly sync: "patch" | "snapshot";
     readonly syncId?: number;
     readonly version: number;
+    readonly protocol?: number;
 }
 type WorkerStateSection = string;
 type WorkerStateSelector<T> = (state: unknown, client: WorkerClient) => T;

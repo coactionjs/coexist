@@ -2798,6 +2798,98 @@ describe("worker runtime", () => {
     await host.dispose();
   });
 
+  it("stamps the protocol version on every state frame a client can adopt", async () => {
+    const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+    const frames: WorkerStateMessage[] = [];
+    const stopClient = clientTransport.subscribe((message) => {
+      if (message.type === "state") {
+        frames.push(message);
+      }
+    });
+    const host = createWorkerApp({
+      providers: [WorkerCounter],
+      sync: "patch",
+      transport: hostTransport,
+    });
+
+    await host.ready;
+    host.app.getModule(WorkerCounter).increase();
+    await waitUntil(() => frames.length === 2, "the patch update");
+
+    // The snapshot can become a baseline; a patch-only update cannot, so it
+    // stays as small as before.
+    expect(frames.map((frame) => [frame.sync, frame.protocol])).toEqual([
+      ["snapshot", workerProtocolVersion],
+      ["patch", undefined],
+    ]);
+
+    stopClient();
+    await host.dispose();
+  });
+
+  it("refuses a host of another revision that a late client meets only on a snapshot", async () => {
+    // The host announced `ready` before this client existed, so the answer to
+    // the client's own snapshot request is the first frame it receives.
+    const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+    const stopHost = hostTransport.subscribe((message) => {
+      if (message.type === "sync") {
+        hostTransport.post({
+          protocol: workerProtocolVersion + 1,
+          state: { workerCounter: { count: 41 } },
+          sync: "snapshot",
+          syncId: message.id,
+          type: "state",
+          version: 1,
+        });
+      }
+    });
+    const client = createWorkerClient({ readyTimeout: 0, transport: clientTransport });
+
+    await expect(client.ready).rejects.toBeInstanceOf(WorkerProtocolMismatchError);
+    expect(client.getState()).toBeUndefined();
+
+    client.dispose();
+    stopHost();
+  });
+
+  it("stops mirroring a refused host and rejects its calls", async () => {
+    const [hostTransport, clientTransport] = createMemoryWorkerTransportPair();
+    const calls: WorkerMessage[] = [];
+    const stopHost = hostTransport.subscribe((message) => {
+      if (message.type === "call") {
+        calls.push(message);
+      }
+    });
+    const client = createWorkerClient({
+      readyTimeout: 0,
+      requestInitialSync: false,
+      transport: clientTransport,
+    });
+    const pendingCall = client.call("workerCounter", "increase", 1);
+
+    hostTransport.post({ protocol: workerProtocolVersion + 1, type: "ready" });
+    // Neither the snapshot nor the result that follow the refused announcement
+    // may be read: this client cannot know how that host frames them.
+    hostTransport.post({
+      state: { workerCounter: { count: 7 } },
+      sync: "snapshot",
+      type: "state",
+      version: 1,
+    });
+    hostTransport.post({ id: 1, type: "result", value: 7 });
+
+    await expect(client.ready).rejects.toBeInstanceOf(WorkerProtocolMismatchError);
+    await expect(pendingCall).rejects.toBeInstanceOf(WorkerProtocolMismatchError);
+    await expect(client.call("workerCounter", "increase", 1)).rejects.toBeInstanceOf(
+      WorkerProtocolMismatchError,
+    );
+    expect(client.getState()).toBeUndefined();
+    expect(calls).toHaveLength(1);
+
+    client.dispose();
+    stopHost();
+  });
+
   it("rejects client readiness when no host answers within the ready timeout", async () => {
     const [, clientTransport] = createMemoryWorkerTransportPair();
     const client = createWorkerClient({
